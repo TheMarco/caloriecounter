@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library';
+import { CloseIconComponent } from '@/components/icons';
 
 interface BarcodeScannerProps {
   onDetect: (code: string) => void;
@@ -62,13 +63,15 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
             (result, error) => {
               if (result) {
                 const code = result.getText();
-                console.log('Barcode detected:', code);
+                console.log('📷 BarcodeScanner: Barcode detected:', code);
+                console.log('📤 BarcodeScanner: Calling onDetect callback');
                 onDetect(code);
+                console.log('🛑 BarcodeScanner: Stopping scanning');
                 stopScanning();
               }
-              
+
               if (error && !(error instanceof NotFoundException)) {
-                console.error('Scanning error:', error);
+                console.error('❌ BarcodeScanner: Scanning error:', error);
               }
             }
           );
@@ -114,9 +117,9 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
         <h2 className="text-lg font-semibold">Scan Barcode</h2>
         <button
           onClick={onClose}
-          className="text-white hover:text-gray-300 text-xl font-bold"
+          className="text-white hover:text-gray-300 p-1"
         >
-          ✕
+          <CloseIconComponent size="lg" className="text-white hover:text-gray-300" />
         </button>
       </div>
 

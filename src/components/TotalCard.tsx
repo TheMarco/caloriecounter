@@ -1,8 +1,11 @@
 'use client';
 
 import type { TotalCardProps } from '@/types';
+import { useSettings } from '@/hooks/useSettings';
 
-export function TotalCard({ total, target = 2000, date }: TotalCardProps) {
+export function TotalCard({ total, date }: Omit<TotalCardProps, 'target'>) {
+  const { settings } = useSettings();
+  const target = settings.dailyTarget;
   const percentage = target > 0 ? Math.min((total / target) * 100, 100) : 0;
   const remaining = Math.max(target - total, 0);
   const isOverTarget = total > target;
@@ -31,10 +34,10 @@ export function TotalCard({ total, target = 2000, date }: TotalCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
       <div className="text-center">
         {/* Date */}
-        <p className="text-sm text-gray-500 mb-2">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
           {formatDate(date)}
         </p>
 
@@ -43,18 +46,18 @@ export function TotalCard({ total, target = 2000, date }: TotalCardProps) {
           <div className={`text-4xl font-bold mb-2 ${getStatusColor()}`}>
             {total.toLocaleString()}
           </div>
-          <p className="text-lg text-gray-600">calories consumed</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400">calories consumed</p>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-4">
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div 
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+            <div
               className={`h-3 rounded-full transition-all duration-300 ${getProgressColor()}`}
               style={{ width: `${Math.min(percentage, 100)}%` }}
             ></div>
           </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span>0</span>
             <span>{target.toLocaleString()}</span>
           </div>
@@ -68,7 +71,7 @@ export function TotalCard({ total, target = 2000, date }: TotalCardProps) {
               <p className="text-sm">Consider lighter meals or more activity</p>
             </div>
           ) : (
-            <div className="text-gray-600">
+            <div className="text-gray-600 dark:text-gray-400">
               <p className="font-medium">{remaining.toLocaleString()} calories remaining</p>
               <p className="text-sm">{percentage.toFixed(0)}% of daily target</p>
             </div>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,11 +59,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
-          <OfflineIndicator />
-          {children}
-          <InstallPrompt />
-        </SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <OfflineIndicator />
+            {children}
+            <InstallPrompt />
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -12,6 +12,7 @@ export function useTodayEntries() {
 
   const loadEntries = useCallback(async () => {
     try {
+      console.log('📥 useTodayEntries: Loading entries...');
       setIsLoading(true);
       setError(null);
 
@@ -20,10 +21,11 @@ export function useTodayEntries() {
         getTodayTotal(),
       ]);
 
+      console.log('📊 useTodayEntries: Loaded', todayEntries.length, 'entries, total:', todayTotal);
       setEntries(todayEntries);
       setTotal(todayTotal);
     } catch (err) {
-      console.error('Failed to load entries:', err);
+      console.error('❌ useTodayEntries: Failed to load entries:', err);
       setError(err instanceof Error ? err.message : 'Failed to load entries');
     } finally {
       setIsLoading(false);
@@ -64,6 +66,7 @@ export function useTodayEntries() {
   }, [entries, loadEntries]);
 
   const refreshEntries = useCallback(() => {
+    console.log('🔄 useTodayEntries: Refreshing entries...');
     loadEntries();
   }, [loadEntries]);
 

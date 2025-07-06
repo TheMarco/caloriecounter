@@ -13,6 +13,11 @@ import { useBarcode } from '@/hooks/useBarcode';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useTextInput } from '@/hooks/useTextInput';
 import { useTodayEntries } from '@/hooks/useTodayEntries';
+import {
+  HomeIconComponent,
+  ChartIconComponent,
+  SettingsIconComponent
+} from '@/components/icons';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +45,7 @@ export default function Home() {
     if (!barcode.isScanning && !barcode.isLoading &&
         !voice.isProcessing && !voice.showConfirmDialog &&
         !textInput.isProcessing && !textInput.showConfirmDialog) {
+      console.log('🔄 Main page: Triggering entries refresh');
       todayEntries.refreshEntries();
     }
   }, [barcode.isScanning, barcode.isLoading, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries.refreshEntries]);
@@ -56,12 +62,16 @@ export default function Home() {
     textInput.startTextInput();
   };
 
+
+
   const handleBarcodeDetected = async (code: string) => {
     try {
+      console.log('🎯 Main page: Barcode detected:', code);
       await barcode.handleBarcodeDetected(code);
+      console.log('✅ Main page: Barcode processing completed');
       // Entries will be refreshed by the useEffect above
     } catch (error) {
-      console.error('Failed to process barcode:', error);
+      console.error('❌ Main page: Failed to process barcode:', error);
     }
   };
 
@@ -95,11 +105,11 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b-2 border-gray-200">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b-2 border-gray-200 dark:border-gray-700">
         <div className="max-w-md mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-center text-gray-900">Calorie Counter</h1>
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">Calorie Counter</h1>
         </div>
       </header>
 
@@ -108,9 +118,10 @@ export default function Home() {
         {/* Today's Total Card */}
         <TotalCard
           total={todayEntries.total}
-          target={2000}
           date={todayEntries.todayDate}
         />
+
+
 
         {/* Quick Add Buttons */}
         <AddFab
@@ -128,21 +139,27 @@ export default function Home() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around py-2">
-            <button className="flex flex-col items-center py-2 px-4 text-gray-900">
-              <div className="text-xl mb-1">🏠</div>
+            <button className="flex flex-col items-center py-2 px-4 text-gray-900 dark:text-white">
+              <div className="mb-1">
+                <HomeIconComponent size="lg" solid className="text-gray-900 dark:text-white" />
+              </div>
               <div className="text-xs font-medium">Today</div>
             </button>
-            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900">
-              <div className="text-xl mb-1">📊</div>
+            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <div className="mb-1">
+                <ChartIconComponent size="lg" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" />
+              </div>
               <div className="text-xs font-medium">History</div>
             </a>
-            <button className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900">
-              <div className="text-xl mb-1">⚙️</div>
+            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <div className="mb-1">
+                <SettingsIconComponent size="lg" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" />
+              </div>
               <div className="text-xs font-medium">Settings</div>
-            </button>
+            </a>
           </div>
         </div>
       </nav>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { MicrophoneIconComponent, CloseIconComponent } from '@/components/icons';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -144,9 +145,9 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
           <h2 className="text-lg font-semibold">Voice Input</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+            className="text-gray-500 hover:text-gray-700 p-1"
           >
-            ✕
+            <CloseIconComponent size="lg" className="text-gray-500 hover:text-gray-700" />
           </button>
         </div>
 
@@ -189,7 +190,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
                 <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${
                   isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-300'
                 }`}>
-                  <span className="text-2xl text-white">🎤</span>
+                  <MicrophoneIconComponent size="xl" className="text-white" />
                 </div>
               </div>
 

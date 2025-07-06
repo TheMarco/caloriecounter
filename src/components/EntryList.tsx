@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import type { Entry } from '@/types';
+import {
+  MicrophoneIconComponent,
+  PencilIconComponent,
+  DeleteIconComponent,
+  BarcodeIconComponent
+} from '@/components/icons';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface EntryListProps {
   entries: Entry[];
@@ -12,16 +19,31 @@ interface EntryListProps {
 
 export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    isOpen: boolean;
+    entry: Entry | null;
+  }>({ isOpen: false, entry: null });
 
-  const handleDelete = async (id: string) => {
-    if (deletingId) return; // Prevent multiple deletes
-    
-    setDeletingId(id);
+  const handleDeleteClick = (entry: Entry) => {
+    setConfirmDelete({ isOpen: true, entry });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete.entry) return;
+
     try {
-      await onDelete(id);
+      setDeletingId(confirmDelete.entry.id);
+      await onDelete(confirmDelete.entry.id);
+      setConfirmDelete({ isOpen: false, entry: null });
+    } catch (error) {
+      console.error('Failed to delete entry:', error);
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDelete({ isOpen: false, entry: null });
   };
 
   const formatTime = (timestamp: number) => {
@@ -35,19 +57,19 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'barcode':
-        return '📷';
+        return <BarcodeIconComponent size="sm" className="text-gray-500" />;
       case 'voice':
-        return '🎤';
+        return <MicrophoneIconComponent size="sm" className="text-gray-500" />;
       case 'text':
-        return '✏️';
+        return <PencilIconComponent size="sm" className="text-gray-500" />;
       default:
-        return '📝';
+        return <PencilIconComponent size="sm" className="text-gray-500" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white rounded-lg shadow-sm border mb-8">
         <div className="p-4 border-b">
           <h3 className="font-semibold">Today&apos;s Entries</h3>
         </div>
@@ -73,7 +95,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
 
   if (entries.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white rounded-lg shadow-sm border mb-8">
         <div className="p-4 border-b">
           <h3 className="font-semibold">Today&apos;s Entries</h3>
         </div>
@@ -89,7 +111,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
+    <div className="bg-white rounded-lg shadow-sm border mb-8">
       <div className="p-4 border-b">
         <h3 className="font-semibold">Today&apos;s Entries</h3>
         <p className="text-sm text-gray-500">{entries.length} item{entries.length !== 1 ? 's' : ''}</p>
@@ -149,7 +171,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
                 )}
                 
                 <button
-                  onClick={() => handleDelete(entry.id)}
+                  onClick={() => handleDeleteClick(entry)}
                   disabled={deletingId === entry.id}
                   className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
                   title="Delete entry"
@@ -157,9 +179,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
                   {deletingId === entry.id ? (
                     <div className="w-4 h-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent"></div>
                   ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <DeleteIconComponent size="sm" className="text-gray-400 hover:text-red-600" />
                   )}
                 </button>
               </div>
@@ -167,6 +187,23 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
           </div>
         ))}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDelete.isOpen}
+        title="Delete Entry"
+        message={
+          confirmDelete.entry
+            ? `Are you sure you want to delete "${confirmDelete.entry.food}"? This action cannot be undone.`
+            : ''
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={deletingId === confirmDelete.entry?.id}
+        variant="danger"
+      />
     </div>
   );
 }

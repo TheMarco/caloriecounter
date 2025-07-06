@@ -30,17 +30,14 @@ export const FOOD_UNITS = [
 export const INPUT_METHODS = {
   barcode: {
     label: 'Barcode',
-    icon: '📷',
     description: 'Scan product barcode',
   },
   voice: {
     label: 'Voice',
-    icon: '🎤',
     description: 'Speak your food',
   },
   text: {
     label: 'Text',
-    icon: '✏️',
     description: 'Type food name',
   },
 } as const;

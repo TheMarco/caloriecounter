@@ -5,6 +5,11 @@ import Link from 'next/link';
 import { getDailyTotals } from '@/utils/idb';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { DateRange } from '@/types';
+import {
+  HomeIconComponent,
+  ChartIconComponent,
+  SettingsIconComponent
+} from '@/components/icons';
 
 export default function HistoryPage() {
   const [selectedRange, setSelectedRange] = useState<DateRange>('7d');
@@ -91,7 +96,7 @@ export default function HistoryPage() {
               <div className="text-2xl font-bold text-blue-600">
                 {isLoading ? '...' : averageCalories.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Daily Average</div>
+              <div className="text-sm text-gray-700">Daily Average</div>
             </div>
           </div>
           
@@ -100,7 +105,7 @@ export default function HistoryPage() {
               <div className="text-2xl font-bold text-green-600">
                 {isLoading ? '...' : maxCalories.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Highest Day</div>
+              <div className="text-sm text-gray-700">Highest Day</div>
             </div>
           </div>
           
@@ -109,7 +114,7 @@ export default function HistoryPage() {
               <div className="text-2xl font-bold text-purple-600">
                 {isLoading ? '...' : totalCalories.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Total Calories</div>
+              <div className="text-sm text-gray-700">Total Calories</div>
             </div>
           </div>
           
@@ -118,7 +123,7 @@ export default function HistoryPage() {
               <div className="text-2xl font-bold text-orange-600">
                 {isLoading ? '...' : daysWithData}
               </div>
-              <div className="text-sm text-gray-500">Active Days</div>
+              <div className="text-sm text-gray-700">Active Days</div>
             </div>
           </div>
         </div>
@@ -132,9 +137,11 @@ export default function HistoryPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           ) : chartData.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="h-64 flex items-center justify-center text-gray-700">
               <div className="text-center">
-                <div className="text-4xl mb-2">📊</div>
+                <div className="mb-4 flex justify-center">
+                <ChartIconComponent size="xl" className="text-gray-400" />
+              </div>
                 <p>No data available</p>
                 <p className="text-sm">Start logging your meals to see trends!</p>
               </div>
@@ -221,21 +228,27 @@ export default function HistoryPage() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around py-2">
-            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-400">
-              <div className="text-xl mb-1">🏠</div>
-              <div className="text-xs">Today</div>
+            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900">
+              <div className="mb-1">
+                <HomeIconComponent size="lg" className="text-gray-600 hover:text-gray-900" />
+              </div>
+              <div className="text-xs font-medium">Today</div>
             </Link>
-            <button className="flex flex-col items-center py-2 px-4 text-black">
-              <div className="text-xl mb-1">📊</div>
-              <div className="text-xs">History</div>
+            <button className="flex flex-col items-center py-2 px-4 text-gray-900">
+              <div className="mb-1">
+                <ChartIconComponent size="lg" solid className="text-gray-900" />
+              </div>
+              <div className="text-xs font-medium">History</div>
             </button>
-            <button className="flex flex-col items-center py-2 px-4 text-gray-400">
-              <div className="text-xl mb-1">⚙️</div>
-              <div className="text-xs">Settings</div>
-            </button>
+            <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900">
+              <div className="mb-1">
+                <SettingsIconComponent size="lg" className="text-gray-600 hover:text-gray-900" />
+              </div>
+              <div className="text-xs font-medium">Settings</div>
+            </Link>
           </div>
         </div>
       </nav>
