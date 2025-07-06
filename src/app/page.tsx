@@ -48,7 +48,7 @@ export default function Home() {
       console.log('🔄 Main page: Triggering entries refresh');
       todayEntries.refreshEntries();
     }
-  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries]);
+  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries.refreshEntries]);
 
   const handleScan = () => {
     barcode.startScanning();
@@ -125,32 +125,37 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-6 pb-24">
-        {todayEntries.isLoading && (
+        {/* Only show loading on initial load, not on refreshes */}
+        {isLoading && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50 mx-auto mb-4"></div>
             <p className="text-white/70">Loading your data...</p>
           </div>
         )}
 
-        {/* Today's Total Card */}
-        <TotalCard
-          total={todayEntries.total}
-          date={todayEntries.todayDate}
-        />
+        {!isLoading && (
+          <>
+            {/* Today's Total Card */}
+            <TotalCard
+              total={todayEntries.total}
+              date={todayEntries.todayDate}
+            />
 
-        {/* Quick Add Buttons */}
-        <AddFab
-          onScan={handleScan}
-          onVoice={handleVoice}
-          onText={handleText}
-        />
+            {/* Quick Add Buttons */}
+            <AddFab
+              onScan={handleScan}
+              onVoice={handleVoice}
+              onText={handleText}
+            />
 
-        {/* Today's Entries */}
-        <EntryList
-          entries={todayEntries.entries}
-          onDelete={todayEntries.deleteEntry}
-          isLoading={todayEntries.isLoading}
-        />
+            {/* Today's Entries */}
+            <EntryList
+              entries={todayEntries.entries}
+              onDelete={todayEntries.deleteEntry}
+              isLoading={todayEntries.isRefreshing}
+            />
+          </>
+        )}
       </main>
 
       {/* Bottom Navigation */}

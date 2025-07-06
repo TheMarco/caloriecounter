@@ -8,12 +8,17 @@ export function useTodayEntries() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEntries = useCallback(async () => {
+  const loadEntries = useCallback(async (isInitialLoad = false) => {
     try {
       console.log('📥 useTodayEntries: Loading entries...');
-      setIsLoading(true);
+      if (isInitialLoad) {
+        setIsLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
       setError(null);
 
       const [todayEntries, todayTotal] = await Promise.all([
@@ -29,6 +34,7 @@ export function useTodayEntries() {
       setError(err instanceof Error ? err.message : 'Failed to load entries');
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
@@ -61,18 +67,18 @@ export function useTodayEntries() {
       setError(err instanceof Error ? err.message : 'Failed to delete entry');
 
       // Reload entries to ensure consistency
-      loadEntries();
+      loadEntries(false);
     }
   }, [entries, loadEntries]);
 
   const refreshEntries = useCallback(() => {
     console.log('🔄 useTodayEntries: Refreshing entries...');
-    loadEntries();
+    loadEntries(false); // Not an initial load
   }, [loadEntries]);
 
   // Load entries on mount
   useEffect(() => {
-    loadEntries();
+    loadEntries(true); // Initial load
   }, [loadEntries]);
 
   // Auto-refresh when the day changes
@@ -83,7 +89,7 @@ export function useTodayEntries() {
 
       if (lastDay !== currentDay) {
         localStorage.setItem('lastRefreshDay', currentDay);
-        loadEntries();
+        loadEntries(false); // Not an initial load
       }
     };
 
@@ -97,6 +103,7 @@ export function useTodayEntries() {
     entries,
     total,
     isLoading,
+    isRefreshing,
     error,
     deleteEntry: handleDeleteEntry,
     refreshEntries,
