@@ -1,0 +1,176 @@
+// Food parsing API route using OpenAI
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import type { ParseFoodResponse } from '@/types';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const { text } = await request.json();
+
+    if (!text || typeof text !== 'string' || text.trim().length < 2) {
+      return NextResponse.json<ParseFoodResponse>({
+        success: false,
+        error: 'Invalid food description',
+      }, { status: 400 });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      // Fallback parsing without OpenAI
+      return fallbackParsing(text);
+    }
+
+    const prompt = `You are a nutrition parser. Parse this food description and respond with JSON only:
+
+"${text}"
+
+Respond with this exact JSON structure:
+{
+  "food": "standardized food name",
+  "quantity": number,
+  "unit": "g|ml|cup|tbsp|tsp|piece|slice",
+  "kcal": estimated_calories_per_100g_or_unit,
+  "notes": "any_additional_info"
+}
+
+Rules:
+- Guess typical portion if vague (e.g., "apple" = 150g, "banana" = 120g)
+- Use metric units when possible
+- Estimate calories based on common nutritional knowledge
+- Keep food names simple and standardized`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a nutrition expert. Respond only with valid JSON.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 150,
+      temperature: 0.1,
+    });
+
+    const responseText = completion.choices[0]?.message?.content?.trim();
+    
+    if (!responseText) {
+      throw new Error('No response from OpenAI');
+    }
+
+    try {
+      // Clean the response text to remove markdown formatting
+      let cleanedResponse = responseText;
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\s*/, '').replace(/\s*```$/, '');
+      }
+      if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      const parsed = JSON.parse(cleanedResponse);
+
+      // Validate the parsed response
+      if (!parsed.food || !parsed.quantity || !parsed.unit) {
+        throw new Error('Invalid response format');
+      }
+
+      return NextResponse.json<ParseFoodResponse>({
+        success: true,
+        data: {
+          food: parsed.food,
+          quantity: Number(parsed.quantity),
+          unit: parsed.unit,
+          kcal: parsed.kcal ? Number(parsed.kcal) : undefined,
+          notes: parsed.notes,
+        },
+      });
+
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', parseError);
+      return fallbackParsing(text);
+    }
+
+  } catch (error) {
+    console.error('Food parsing error:', error);
+    
+    return NextResponse.json<ParseFoodResponse>({
+      success: false,
+      error: 'Failed to parse food description',
+    }, { status: 500 });
+  }
+}
+
+// Fallback parsing without AI
+function fallbackParsing(text: string): NextResponse<ParseFoodResponse> {
+  const cleanText = text.toLowerCase().trim();
+  
+  // Simple pattern matching for common foods
+  const patterns = [
+    { regex: /(\d+)\s*(g|gram|grams)\s+(.+)/, unit: 'g' },
+    { regex: /(\d+)\s*(ml|milliliter|milliliters)\s+(.+)/, unit: 'ml' },
+    { regex: /(\d+)\s*(cup|cups)\s+(.+)/, unit: 'cup' },
+    { regex: /(\d+)\s*(tbsp|tablespoon|tablespoons)\s+(.+)/, unit: 'tbsp' },
+    { regex: /(\d+)\s*(tsp|teaspoon|teaspoons)\s+(.+)/, unit: 'tsp' },
+    { regex: /(\d+)\s*(piece|pieces)\s+(.+)/, unit: 'piece' },
+    { regex: /(\d+)\s*(slice|slices)\s+(.+)/, unit: 'slice' },
+  ];
+
+  for (const pattern of patterns) {
+    const match = cleanText.match(pattern.regex);
+    if (match) {
+      return NextResponse.json<ParseFoodResponse>({
+        success: true,
+        data: {
+          food: match[3].trim(),
+          quantity: parseInt(match[1]),
+          unit: pattern.unit,
+          notes: 'Parsed without AI assistance',
+        },
+      });
+    }
+  }
+
+  // Default parsing - assume it's a single item
+  const commonPortions: Record<string, { quantity: number; unit: string; kcal?: number }> = {
+    'apple': { quantity: 150, unit: 'g', kcal: 52 },
+    'banana': { quantity: 120, unit: 'g', kcal: 89 },
+    'orange': { quantity: 130, unit: 'g', kcal: 47 },
+    'egg': { quantity: 50, unit: 'g', kcal: 155 },
+    'bread': { quantity: 30, unit: 'g', kcal: 265 },
+    'rice': { quantity: 100, unit: 'g', kcal: 130 },
+    'chicken': { quantity: 100, unit: 'g', kcal: 165 },
+  };
+
+  for (const [food, portion] of Object.entries(commonPortions)) {
+    if (cleanText.includes(food)) {
+      return NextResponse.json<ParseFoodResponse>({
+        success: true,
+        data: {
+          food: food,
+          quantity: portion.quantity,
+          unit: portion.unit,
+          kcal: portion.kcal,
+          notes: 'Estimated portion size',
+        },
+      });
+    }
+  }
+
+  // Last resort - return the text as-is with default values
+  return NextResponse.json<ParseFoodResponse>({
+    success: true,
+    data: {
+      food: cleanText,
+      quantity: 100,
+      unit: 'g',
+      notes: 'Please adjust quantity and calories manually',
+    },
+  });
+}
