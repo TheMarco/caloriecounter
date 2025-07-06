@@ -105,11 +105,11 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-black">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b-2 border-gray-200 dark:border-gray-700">
+      <header className="bg-white dark:bg-black shadow-sm border-b-2 border-gray-200 dark:border-gray-600">
         <div className="max-w-md mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">Calorie Counter</h1>
+          <h1 className="text-2xl font-bold text-center text-black dark:text-white">Calorie Counter</h1>
         </div>
       </header>
 
@@ -139,24 +139,24 @@ export default function Home() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t-2 border-gray-200 dark:border-gray-600">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around py-2">
-            <button className="flex flex-col items-center py-2 px-4 text-gray-900 dark:text-white">
+            <button className="flex flex-col items-center py-2 px-4 text-black dark:text-white">
               <div className="mb-1">
-                <HomeIconComponent size="lg" solid className="text-gray-900 dark:text-white" />
+                <HomeIconComponent size="lg" solid className="text-black dark:text-white" />
               </div>
               <div className="text-xs font-medium">Today</div>
             </button>
-            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
               <div className="mb-1">
-                <ChartIconComponent size="lg" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" />
+                <ChartIconComponent size="lg" className="text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" />
               </div>
               <div className="text-xs font-medium">History</div>
             </a>
-            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" />
+                <SettingsIconComponent size="lg" className="text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </a>

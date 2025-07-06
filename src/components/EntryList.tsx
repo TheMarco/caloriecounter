@@ -57,33 +57,33 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'barcode':
-        return <BarcodeIconComponent size="sm" className="text-gray-500" />;
+        return <BarcodeIconComponent size="sm" className="text-gray-600 dark:text-gray-400" />;
       case 'voice':
-        return <MicrophoneIconComponent size="sm" className="text-gray-500" />;
+        return <MicrophoneIconComponent size="sm" className="text-gray-600 dark:text-gray-400" />;
       case 'text':
-        return <PencilIconComponent size="sm" className="text-gray-500" />;
+        return <PencilIconComponent size="sm" className="text-gray-600 dark:text-gray-400" />;
       default:
-        return <PencilIconComponent size="sm" className="text-gray-500" />;
+        return <PencilIconComponent size="sm" className="text-gray-600 dark:text-gray-400" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border mb-8">
-        <div className="p-4 border-b">
-          <h3 className="font-semibold">Today&apos;s Entries</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 mb-8">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-600">
+          <h3 className="font-semibold text-black dark:text-white">Today&apos;s Entries</h3>
         </div>
         <div className="p-4">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                   </div>
-                  <div className="w-12 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-12 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 </div>
               </div>
             ))}
@@ -95,14 +95,14 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
 
   if (entries.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border mb-8">
-        <div className="p-4 border-b">
-          <h3 className="font-semibold">Today&apos;s Entries</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 mb-8">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-600">
+          <h3 className="font-semibold text-black dark:text-white">Today&apos;s Entries</h3>
         </div>
         <div className="p-8 text-center">
           <div className="text-4xl mb-4">🍽️</div>
-          <p className="text-gray-500 mb-2">No entries yet today</p>
-          <p className="text-sm text-gray-400">
+          <p className="text-gray-600 dark:text-gray-300 mb-2">No entries yet today</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Add your first meal using the buttons above!
           </p>
         </div>
@@ -111,16 +111,16 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border mb-8">
-      <div className="p-4 border-b">
-        <h3 className="font-semibold">Today&apos;s Entries</h3>
-        <p className="text-sm text-gray-500">{entries.length} item{entries.length !== 1 ? 's' : ''}</p>
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 mb-8">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-600">
+        <h3 className="font-semibold text-black dark:text-white">Today&apos;s Entries</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">{entries.length} item{entries.length !== 1 ? 's' : ''}</p>
       </div>
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-200 dark:divide-gray-600">
         {entries.map((entry) => (
           <div
             key={entry.id}
-            className="p-4 hover:bg-gray-50 transition-colors"
+            className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1">
@@ -132,16 +132,16 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
                 {/* Food Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <h4 className="font-medium text-gray-900 truncate">
+                    <h4 className="font-medium text-black dark:text-white truncate">
                       {entry.food}
                     </h4>
                     {entry.confidence && entry.confidence < 0.8 && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                      <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">
                         Low confidence
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                     <span>{entry.qty} {entry.unit}</span>
                     <span>•</span>
                     <span>{formatTime(entry.ts)}</span>
@@ -150,7 +150,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
 
                 {/* Calories */}
                 <div className="text-right">
-                  <div className="font-semibold text-gray-900">
+                  <div className="font-semibold text-black dark:text-white">
                     {entry.kcal} cal
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
                 {onEdit && (
                   <button
                     onClick={() => onEdit(entry)}
-                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     title="Edit entry"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,13 +173,13 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
                 <button
                   onClick={() => handleDeleteClick(entry)}
                   disabled={deletingId === entry.id}
-                  className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                   title="Delete entry"
                 >
                   {deletingId === entry.id ? (
                     <div className="w-4 h-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent"></div>
                   ) : (
-                    <DeleteIconComponent size="sm" className="text-gray-400 hover:text-red-600" />
+                    <DeleteIconComponent size="sm" className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
                   )}
                 </button>
               </div>

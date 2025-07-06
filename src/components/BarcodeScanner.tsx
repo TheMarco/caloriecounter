@@ -35,18 +35,6 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
         throw new Error('Camera not supported in this browser');
       }
 
-      // Request camera permission
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment' // Use back camera if available
-        } 
-      });
-      
-      setHasPermission(true);
-
-      // Stop the stream immediately as ZXing will handle it
-      stream.getTracks().forEach(track => track.stop());
-
       // Initialize the barcode reader
       if (!readerRef.current) {
         readerRef.current = new BrowserMultiFormatReader();
@@ -54,7 +42,7 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
 
       const reader = readerRef.current;
 
-      // Start scanning
+      // Start scanning - ZXing will handle camera access
       if (videoRef.current) {
         try {
           await reader.decodeFromVideoDevice(
@@ -75,8 +63,12 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
               }
             }
           );
+
+          // If we get here, camera access was successful
+          setHasPermission(true);
         } catch (scanError) {
           console.error('Failed to start scanning:', scanError);
+          setHasPermission(false);
           setError('Failed to start camera scanning');
           onError?.('Failed to start camera scanning');
         }
@@ -85,7 +77,7 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
     } catch (err) {
       console.error('Camera access error:', err);
       setHasPermission(false);
-      
+
       const errorMessage = err instanceof Error ? err.message : 'Camera access denied';
       setError(errorMessage);
       onError?.(errorMessage);

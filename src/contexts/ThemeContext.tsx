@@ -39,11 +39,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     const root = document.documentElement;
-    
+
+    // Remove both classes first to avoid conflicts
+    root.classList.remove('dark', 'light');
+
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
-      root.classList.remove('dark');
+      root.classList.add('light');
     }
 
     // Save to localStorage
