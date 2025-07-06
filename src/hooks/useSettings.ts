@@ -6,14 +6,12 @@ import { useTheme } from '@/contexts/ThemeContext';
 export interface AppSettings {
   dailyTarget: number;
   notifications: boolean;
-  darkMode: boolean;
   units: 'metric' | 'imperial';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   dailyTarget: 2000,
   notifications: true,
-  darkMode: false,
   units: 'metric',
 };
 
@@ -22,16 +20,7 @@ const SETTINGS_KEY = 'calorie-counter-settings';
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Safely get theme context (may not be available during SSR)
-  let setTheme: ((theme: 'light' | 'dark') => void) | null = null;
-  try {
-    const themeContext = useTheme();
-    setTheme = themeContext.setTheme;
-  } catch {
-    // Theme context not available (e.g., during SSR)
-    setTheme = null;
-  }
+  const { theme, setTheme, isDark } = useTheme();
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -41,17 +30,13 @@ export function useSettings() {
         const parsed = JSON.parse(savedSettings);
         const loadedSettings = { ...DEFAULT_SETTINGS, ...parsed };
         setSettings(loadedSettings);
-        // Apply theme immediately (if available)
-        if (setTheme) {
-          setTheme(loadedSettings.darkMode ? 'dark' : 'light');
-        }
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [setTheme]);
+  }, []);
 
   // Save settings to localStorage
   const saveSettings = useCallback((newSettings: Partial<AppSettings>) => {
@@ -71,15 +56,8 @@ export function useSettings() {
     key: K,
     value: AppSettings[K]
   ) => {
-    const success = saveSettings({ [key]: value });
-
-    // Apply theme change immediately (if available)
-    if (key === 'darkMode' && success && setTheme) {
-      setTheme(value as boolean ? 'dark' : 'light');
-    }
-
-    return success;
-  }, [saveSettings, setTheme]);
+    return saveSettings({ [key]: value });
+  }, [saveSettings]);
 
   // Reset to defaults
   const resetSettings = useCallback(() => {
@@ -93,11 +71,25 @@ export function useSettings() {
     }
   }, []);
 
+  // Theme-related functions
+  const toggleDarkMode = useCallback(() => {
+    setTheme(isDark ? 'light' : 'dark');
+  }, [isDark, setTheme]);
+
+  const setDarkMode = useCallback((enabled: boolean) => {
+    setTheme(enabled ? 'dark' : 'light');
+  }, [setTheme]);
+
   return {
     settings,
     isLoading,
     saveSettings,
     updateSetting,
     resetSettings,
+    // Theme-related
+    darkMode: isDark,
+    toggleDarkMode,
+    setDarkMode,
+    theme,
   };
 }

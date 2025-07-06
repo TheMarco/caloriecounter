@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -8,9 +8,13 @@ interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  isDark: boolean;
+  isLight: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const THEME_STORAGE_KEY = 'calorie-counter-theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
@@ -19,16 +23,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Load theme from localStorage on mount
   useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem('theme') as Theme;
+      // First check for saved theme preference
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         setThemeState(savedTheme);
       } else {
         // Check system preference
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setThemeState(systemPrefersDark ? 'dark' : 'light');
+        const initialTheme = systemPrefersDark ? 'dark' : 'light';
+        setThemeState(initialTheme);
+        localStorage.setItem(THEME_STORAGE_KEY, initialTheme);
       }
     } catch (error) {
       console.error('Failed to load theme:', error);
+      setThemeState('light');
     } finally {
       setMounted(true);
     }
@@ -39,39 +47,58 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     const root = document.documentElement;
+    const body = document.body;
 
     // Remove both classes first to avoid conflicts
     root.classList.remove('dark', 'light');
+    body.classList.remove('dark', 'light');
 
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.add('light');
-    }
+    // Add the current theme class
+    root.classList.add(theme);
+    body.classList.add(theme);
 
     // Save to localStorage
     try {
-      localStorage.setItem('theme', theme);
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch (error) {
       console.error('Failed to save theme:', error);
     }
+
+    // Dispatch custom event for other components to listen to
+    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
   }, [theme, mounted]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setThemeState(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  }, []);
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
+  const setTheme = useCallback((newTheme: Theme) => {
+    if (newTheme !== theme) {
+      setThemeState(newTheme);
+    }
+  }, [theme]);
+
+  const contextValue = {
+    theme,
+    toggleTheme,
+    setTheme,
+    isDark: theme === 'dark',
+    isLight: theme === 'light'
   };
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
-    return <div className="min-h-screen bg-gray-50">{children}</div>;
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="animate-pulse">
+          {children}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

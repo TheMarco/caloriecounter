@@ -53,38 +53,38 @@ export function ConfirmDialog({
   const styles = getVariantStyles();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-md w-full mx-4 border border-gray-200/50 dark:border-gray-800/50">
         {/* Header */}
         <div className="p-6 pb-4">
           <div className="flex items-center space-x-4">
-            <div className={`w-12 h-12 rounded-full ${styles.iconBg} flex items-center justify-center flex-shrink-0`}>
+            <div className={`w-14 h-14 rounded-2xl ${styles.iconBg} flex items-center justify-center flex-shrink-0`}>
               {styles.icon}
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-black dark:text-white">{title}</h3>
+              <h3 className="text-xl font-bold text-black dark:text-white">{title}</h3>
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="px-6 pb-6">
-          <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{message}</p>
+          <p className="text-gray-700 dark:text-gray-200 leading-relaxed font-medium">{message}</p>
         </div>
 
         {/* Actions */}
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg flex space-x-3 justify-end">
+        <div className="px-6 py-6 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl flex space-x-3 justify-end">
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold hover:scale-105 active:scale-95"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 text-white rounded-md transition-colors flex items-center space-x-2 ${styles.confirmButton}`}
+            className={`px-6 py-3 text-white rounded-xl transition-all duration-200 flex items-center space-x-2 font-semibold hover:scale-105 active:scale-95 disabled:scale-100 ${styles.confirmButton}`}
           >
             {isLoading ? (
               <>

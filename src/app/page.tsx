@@ -105,23 +105,28 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black transition-theme">
       {/* Header */}
-      <header className="bg-white dark:bg-black shadow-sm border-b-2 border-gray-200 dark:border-gray-600">
-        <div className="max-w-md mx-auto px-4 py-4">
+      <header className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-10 transition-theme">
+        <div className="max-w-md mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold text-center text-black dark:text-white">Calorie Counter</h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-4 py-6 pb-20">
+      <main className="max-w-md mx-auto px-6 py-6 pb-24">
+        {todayEntries.isLoading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 dark:border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-700 dark:text-gray-200">Loading your data...</p>
+          </div>
+        )}
+
         {/* Today's Total Card */}
         <TotalCard
           total={todayEntries.total}
           date={todayEntries.todayDate}
         />
-
-
 
         {/* Quick Add Buttons */}
         <AddFab
@@ -139,24 +144,24 @@ export default function Home() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t-2 border-gray-200 dark:border-gray-600">
-        <div className="max-w-md mx-auto px-4">
-          <div className="flex justify-around py-2">
-            <button className="flex flex-col items-center py-2 px-4 text-black dark:text-white">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 transition-theme">
+        <div className="max-w-md mx-auto px-6">
+          <div className="flex justify-around py-3">
+            <button className="flex flex-col items-center py-2 px-4 text-blue-500 dark:text-blue-400">
               <div className="mb-1">
-                <HomeIconComponent size="lg" solid className="text-black dark:text-white" />
+                <HomeIconComponent size="lg" solid className="text-blue-500 dark:text-blue-400" />
               </div>
               <div className="text-xs font-medium">Today</div>
             </button>
-            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
+            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
               <div className="mb-1">
-                <ChartIconComponent size="lg" className="text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" />
+                <ChartIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">History</div>
             </a>
-            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
+            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" className="text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" />
+                <SettingsIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </a>

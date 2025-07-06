@@ -12,7 +12,7 @@ import {
 } from '@/components/icons';
 
 export default function Settings() {
-  const { settings, isLoading, updateSetting, resetSettings } = useSettings();
+  const { settings, isLoading, updateSetting, resetSettings, darkMode, toggleDarkMode } = useSettings();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -49,36 +49,43 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black transition-theme">
       {/* Header */}
-      <header className="bg-white dark:bg-black shadow-sm border-b-2 border-gray-200 dark:border-gray-600">
-        <div className="max-w-md mx-auto px-4 py-4">
+      <header className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-10 transition-theme">
+        <div className="max-w-md mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold text-center text-black dark:text-white">Settings</h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-4 py-6 pb-20">
+      <main className="max-w-md mx-auto px-6 py-6 pb-24">
+
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 dark:border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-700 dark:text-gray-200">Loading settings...</p>
+          </div>
+        )}
 
         {/* Daily Target */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">Daily Calorie Target</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Daily Calorie Target</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
                 Target Calories per Day
               </label>
               <input
                 type="number"
                 value={settings.dailyTarget}
                 onChange={(e) => updateSetting('dailyTarget', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-black dark:text-white"
+                className="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-black dark:text-white transition-all font-medium text-lg"
                 min="1000"
                 max="5000"
                 step="50"
                 disabled={isLoading}
               />
-              <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 font-medium">
                 Recommended: 1,800-2,400 calories for most adults
               </p>
             </div>
@@ -86,48 +93,62 @@ export default function Settings() {
         </div>
 
         {/* Preferences */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">Preferences</h2>
-          <div className="space-y-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Preferences</h2>
+          <div className="space-y-6">
 
             {/* Units */}
             <div>
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
                 Measurement Units
               </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center text-gray-800 dark:text-gray-200">
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  settings.units === 'metric'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-200'
+                }`}>
                   <input
                     type="radio"
                     value="metric"
                     checked={settings.units === 'metric'}
                     onChange={(e) => updateSetting('units', e.target.value as 'metric')}
-                    className="mr-2"
+                    className="sr-only"
                     disabled={isLoading}
                   />
-                  Metric (g, kg, ml, l)
+                  <div className="text-center w-full">
+                    <div className="font-semibold">Metric</div>
+                    <div className="text-xs mt-1 opacity-75">g, kg, ml, l</div>
+                  </div>
                 </label>
-                <label className="flex items-center text-gray-800 dark:text-gray-200">
+                <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  settings.units === 'imperial'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-200'
+                }`}>
                   <input
                     type="radio"
                     value="imperial"
                     checked={settings.units === 'imperial'}
                     onChange={(e) => updateSetting('units', e.target.value as 'imperial')}
-                    className="mr-2"
+                    className="sr-only"
                     disabled={isLoading}
                   />
-                  Imperial (oz, lb, fl oz, cups)
+                  <div className="text-center w-full">
+                    <div className="font-semibold">Imperial</div>
+                    <div className="text-xs mt-1 opacity-75">oz, lb, fl oz, cups</div>
+                  </div>
                 </label>
               </div>
             </div>
 
             {/* Notifications */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl transition-theme">
               <div>
-                <label className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   Enable Notifications
                 </label>
-                <p className="text-xs text-gray-700 dark:text-gray-300">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                   Get reminders to log your meals
                 </p>
               </div>
@@ -139,73 +160,73 @@ export default function Settings() {
                   className="sr-only peer"
                   disabled={isLoading}
                 />
-                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-12 h-7 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500 peer-disabled:opacity-50 shadow-sm"></div>
               </label>
             </div>
 
             {/* Dark Mode */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl transition-theme">
               <div>
-                <label className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   Dark Mode
                 </label>
-                <p className="text-xs text-gray-700 dark:text-gray-300">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                   Switch to dark theme
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={settings.darkMode}
-                  onChange={(e) => updateSetting('darkMode', e.target.checked)}
+                  checked={darkMode}
+                  onChange={toggleDarkMode}
                   className="sr-only peer"
                   disabled={isLoading}
                 />
-                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+                <div className="w-12 h-7 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500 peer-disabled:opacity-50 shadow-sm"></div>
               </label>
             </div>
           </div>
         </div>
 
         {/* Data Management */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">Data Management</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Data Management</h2>
           <div className="space-y-4">
             <button
               onClick={handleClearData}
-              className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              className="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
             >
               Clear All Data
             </button>
-            <p className="text-xs text-gray-800 dark:text-gray-200">
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
               This will permanently delete all your calorie entries and cannot be undone.
             </p>
           </div>
         </div>
 
         {/* App Info */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">About</h2>
-          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-            <div className="flex items-center space-x-2">
-              <InfoIconComponent size="sm" className="text-gray-600 dark:text-gray-400" />
-              <span>Calorie Counter PWA v1.0.0</span>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-8 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">About</h2>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
+              <InfoIconComponent size="sm" className="text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold text-blue-700 dark:text-blue-300">Calorie Counter PWA v1.0.0</span>
             </div>
-            <p className="text-xs text-gray-800 dark:text-gray-200">
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium leading-relaxed">
               A lightning-fast calorie tracking app with barcode scanning and voice input.
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <button
             onClick={handleSave}
             disabled={isSaving || isLoading}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-3 rounded-md font-medium transition-colors flex items-center justify-center space-x-2"
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-3 hover:scale-105 active:scale-95 disabled:scale-100"
           >
             {isSaving ? (
-              <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             ) : (
               <CheckIconComponent size="sm" className="text-white" />
             )}
@@ -214,7 +235,7 @@ export default function Settings() {
 
           <button
             onClick={handleReset}
-            className="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-md font-medium transition-colors"
+            className="w-full bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
           >
             Reset to Defaults
           </button>
@@ -222,24 +243,24 @@ export default function Settings() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t-2 border-gray-200 dark:border-gray-600">
-        <div className="max-w-md mx-auto px-4">
-          <div className="flex justify-around py-2">
-            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 transition-theme">
+        <div className="max-w-md mx-auto px-6">
+          <div className="flex justify-around py-3">
+            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
               <div className="mb-1">
-                <HomeIconComponent size="lg" className="text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" />
+                <HomeIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Today</div>
             </Link>
-            <Link href="/history" className="flex flex-col items-center py-2 px-4 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
+            <Link href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
               <div className="mb-1">
-                <ChartIconComponent size="lg" className="text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" />
+                <ChartIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">History</div>
             </Link>
-            <button className="flex flex-col items-center py-2 px-4 text-black dark:text-white">
+            <button className="flex flex-col items-center py-2 px-4 text-blue-500 dark:text-blue-400">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" solid className="text-black dark:text-white" />
+                <SettingsIconComponent size="lg" solid className="text-blue-500 dark:text-blue-400" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </button>

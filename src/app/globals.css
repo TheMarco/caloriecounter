@@ -1,85 +1,207 @@
 @import "tailwindcss";
 
+/* Apple-inspired Design System */
 :root {
+  /* Light Mode Colors */
   --background: #ffffff;
-  --foreground: #000000;
+  --background-secondary: #f8f9fa;
+  --background-tertiary: #f1f3f4;
+  --foreground: #1d1d1f;
+  --foreground-secondary: #424245;
+  --foreground-tertiary: #86868b;
+
+  /* Card & Surface Colors */
   --card-background: #ffffff;
-  --card-foreground: #000000;
-  --border: #e5e7eb;
-  --input: #ffffff;
-  --primary: #3b82f6;
+  --card-background-hover: #f8f9fa;
+  --card-border: #e5e5e7;
+  --card-shadow: rgba(0, 0, 0, 0.04);
+  --card-shadow-hover: rgba(0, 0, 0, 0.08);
+
+  /* Interactive Elements */
+  --primary: #007aff;
+  --primary-hover: #0056cc;
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #374151;
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-  --accent: #f3f4f6;
-  --accent-foreground: #374151;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
+  --secondary: #f1f3f4;
+  --secondary-hover: #e8eaed;
+  --secondary-foreground: #1d1d1f;
+
+  /* Status Colors */
+  --success: #34c759;
+  --warning: #ff9500;
+  --error: #ff3b30;
+  --info: #007aff;
+
+  /* Input & Form Elements */
+  --input-background: #ffffff;
+  --input-border: #d1d1d6;
+  --input-border-focus: #007aff;
+  --input-placeholder: #86868b;
+
+  /* Spacing & Layout */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Typography */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 }
 
 :root.dark {
+  /* Dark Mode Colors */
   --background: #000000;
+  --background-secondary: #1c1c1e;
+  --background-tertiary: #2c2c2e;
   --foreground: #ffffff;
-  --card-background: #111111;
-  --card-foreground: #ffffff;
-  --border: #333333;
-  --input: #111111;
-  --primary: #3b82f6;
+  --foreground-secondary: #ebebf5;
+  --foreground-tertiary: #8e8e93;
+
+  /* Card & Surface Colors */
+  --card-background: #1c1c1e;
+  --card-background-hover: #2c2c2e;
+  --card-border: #38383a;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: rgba(0, 0, 0, 0.4);
+
+  /* Interactive Elements */
+  --primary: #0a84ff;
+  --primary-hover: #409cff;
   --primary-foreground: #ffffff;
-  --secondary: #1a1a1a;
-  --secondary-foreground: #e5e5e5;
-  --muted: #1a1a1a;
-  --muted-foreground: #a3a3a3;
-  --accent: #1a1a1a;
-  --accent-foreground: #e5e5e5;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
+  --secondary: #2c2c2e;
+  --secondary-hover: #3a3a3c;
+  --secondary-foreground: #ffffff;
+
+  /* Status Colors */
+  --success: #30d158;
+  --warning: #ff9f0a;
+  --error: #ff453a;
+  --info: #0a84ff;
+
+  /* Input & Form Elements */
+  --input-background: #1c1c1e;
+  --input-border: #38383a;
+  --input-border-focus: #0a84ff;
+  --input-placeholder: #8e8e93;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-tertiary: var(--foreground-tertiary);
   --color-card: var(--card-background);
-  --color-card-foreground: var(--card-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
+  --color-card-hover: var(--card-background-hover);
+  --color-card-border: var(--card-border);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --color-input: var(--input-background);
+  --color-input-border: var(--input-border);
+  --color-input-border-focus: var(--input-border-focus);
+  --color-input-placeholder: var(--input-placeholder);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* System Dark Mode Preference */
 @media (prefers-color-scheme: dark) {
   :root:not(.dark):not(.light) {
     --background: #000000;
+    --background-secondary: #1c1c1e;
+    --background-tertiary: #2c2c2e;
     --foreground: #ffffff;
-    --card-background: #111111;
-    --card-foreground: #ffffff;
-    --border: #333333;
-    --input: #111111;
-    --secondary: #1a1a1a;
-    --secondary-foreground: #e5e5e5;
-    --muted: #1a1a1a;
-    --muted-foreground: #a3a3a3;
-    --accent: #1a1a1a;
-    --accent-foreground: #e5e5e5;
+    --foreground-secondary: #ebebf5;
+    --foreground-tertiary: #8e8e93;
+    --card-background: #1c1c1e;
+    --card-background-hover: #2c2c2e;
+    --card-border: #38383a;
+    --primary: #0a84ff;
+    --primary-hover: #409cff;
+    --secondary: #2c2c2e;
+    --secondary-hover: #3a3a3c;
+    --secondary-foreground: #ffffff;
+    --input-background: #1c1c1e;
+    --input-border: #38383a;
+    --input-border-focus: #0a84ff;
+    --input-placeholder: #8e8e93;
   }
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Apple-style Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--foreground-tertiary);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Selection Styles */
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Smooth Transitions */
+.transition-theme {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
