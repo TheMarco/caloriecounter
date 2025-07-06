@@ -22,6 +22,7 @@ export function FoodConfirmDialog({
   const [editedQty, setEditedQty] = useState(0);
   const [editedUnit, setEditedUnit] = useState('');
   const [editedKcal, setEditedKcal] = useState(0);
+  const [originalKcalPerUnit, setOriginalKcalPerUnit] = useState(0);
 
   // Update local state when foodData changes
   useEffect(() => {
@@ -30,8 +31,27 @@ export function FoodConfirmDialog({
       setEditedQty(foodData.quantity);
       setEditedUnit(foodData.unit);
       setEditedKcal(foodData.kcal || 0);
+
+      // Calculate calories per unit for automatic recalculation
+      const kcalPerUnit = foodData.quantity > 0 ? (foodData.kcal || 0) / foodData.quantity : 0;
+      setOriginalKcalPerUnit(kcalPerUnit);
     }
   }, [foodData]);
+
+  // Recalculate calories when quantity changes
+  useEffect(() => {
+    if (originalKcalPerUnit > 0 && editedQty > 0) {
+      const newKcal = Math.round(originalKcalPerUnit * editedQty);
+      setEditedKcal(newKcal);
+    } else if (editedQty === 0) {
+      setEditedKcal(0);
+    }
+  }, [editedQty, originalKcalPerUnit]);
+
+  const handleQuantityChange = (newQty: number) => {
+    setEditedQty(newQty);
+    // The useEffect above will automatically recalculate calories
+  };
 
   const handleConfirm = () => {
     onConfirm({
@@ -97,7 +117,7 @@ export function FoodConfirmDialog({
                 <input
                   type="number"
                   value={editedQty}
-                  onChange={(e) => setEditedQty(Number(e.target.value))}
+                  onChange={(e) => handleQuantityChange(Number(e.target.value))}
                   className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
                   min="0"
                   step="0.1"
@@ -130,6 +150,7 @@ export function FoodConfirmDialog({
             <div>
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Calories
+                <span className="text-xs text-white/50 ml-2">(auto-calculated)</span>
               </label>
               <input
                 type="number"
@@ -138,6 +159,9 @@ export function FoodConfirmDialog({
                 className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
                 min="0"
               />
+              <p className="text-xs text-white/50 mt-1">
+                Calories update automatically when you change the quantity
+              </p>
             </div>
 
             {/* Notes */}
