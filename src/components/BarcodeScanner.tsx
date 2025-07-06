@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library';
+import { BrowserMultiFormatReader, NotFoundException, DecodeHintType, BarcodeFormat } from '@zxing/library';
 import { CloseIconComponent } from '@/components/icons';
 
 interface BarcodeScannerProps {
@@ -35,18 +35,59 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
         throw new Error('Camera not supported in this browser');
       }
 
-      // Initialize the barcode reader
+      // Initialize the barcode reader with optimized hints
       if (!readerRef.current) {
-        readerRef.current = new BrowserMultiFormatReader();
+        const hints = new Map();
+
+        // Enable TRY_HARDER for better accuracy
+        hints.set(DecodeHintType.TRY_HARDER, true);
+
+        // Specify common barcode formats for food products
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128,
+          BarcodeFormat.CODE_39,
+        ]);
+
+        // Reduce time between scans for more responsive scanning
+        readerRef.current = new BrowserMultiFormatReader(hints, 100);
       }
 
       const reader = readerRef.current;
 
-      // Start scanning - ZXing will handle camera access
+      // Start scanning - try to use back camera if available
       if (videoRef.current) {
         try {
+          // Try to get back camera first (better for barcode scanning)
+          let selectedDeviceId = null;
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            // Look for back camera
+            const backCamera = videoDevices.find(device =>
+              device.label.toLowerCase().includes('back') ||
+              device.label.toLowerCase().includes('rear') ||
+              device.label.toLowerCase().includes('environment')
+            );
+
+            if (backCamera) {
+              selectedDeviceId = backCamera.deviceId;
+              console.log('📷 Using back camera:', backCamera.label);
+            } else if (videoDevices.length > 0) {
+              // Use the last camera (often the back camera on mobile)
+              selectedDeviceId = videoDevices[videoDevices.length - 1].deviceId;
+              console.log('📷 Using camera:', videoDevices[videoDevices.length - 1].label);
+            }
+          } catch (deviceError) {
+            console.log('📷 Could not enumerate devices, using default camera:', deviceError);
+          }
+
           await reader.decodeFromVideoDevice(
-            null, // Use default video device
+            selectedDeviceId,
             videoRef.current,
             (result, error) => {
               if (result) {
@@ -183,6 +224,34 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
           playsInline
           muted
         />
+
+        {/* Scanning Overlay */}
+        {isScanning && hasPermission && !error && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {/* Scanning Frame */}
+            <div className="relative">
+              {/* Main scanning area */}
+              <div className="w-64 h-40 border-2 border-white/50 rounded-lg relative">
+                {/* Corner indicators */}
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
+
+                {/* Scanning line animation */}
+                <div className="absolute inset-0 overflow-hidden rounded-lg">
+                  <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse"></div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="mt-4 text-center">
+                <p className="text-white text-sm font-medium">Position barcode within the frame</p>
+                <p className="text-white/70 text-xs mt-1">Hold steady for best results</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Scanning overlay */}
         {isScanning && (

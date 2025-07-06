@@ -20,6 +20,7 @@ export function FoodConfirmDialog({
 }: FoodConfirmDialogProps) {
   const [editedFood, setEditedFood] = useState('');
   const [editedQty, setEditedQty] = useState(0);
+  const [editedQtyString, setEditedQtyString] = useState('0');
   const [editedUnit, setEditedUnit] = useState('');
   const [editedKcal, setEditedKcal] = useState(0);
   const [originalKcalPerUnit, setOriginalKcalPerUnit] = useState(0);
@@ -29,6 +30,7 @@ export function FoodConfirmDialog({
     if (foodData) {
       setEditedFood(foodData.food);
       setEditedQty(foodData.quantity);
+      setEditedQtyString(foodData.quantity.toString());
       setEditedUnit(foodData.unit);
       setEditedKcal(foodData.kcal || 0);
 
@@ -48,8 +50,12 @@ export function FoodConfirmDialog({
     }
   }, [editedQty, originalKcalPerUnit]);
 
-  const handleQuantityChange = (newQty: number) => {
-    setEditedQty(newQty);
+  const handleQuantityChange = (value: string) => {
+    setEditedQtyString(value);
+
+    // Convert to number for calculations
+    const numValue = value === '' ? 0 : parseFloat(value) || 0;
+    setEditedQty(numValue);
     // The useEffect above will automatically recalculate calories
   };
 
@@ -115,12 +121,19 @@ export function FoodConfirmDialog({
                   Quantity
                 </label>
                 <input
-                  type="number"
-                  value={editedQty}
-                  onChange={(e) => handleQuantityChange(Number(e.target.value))}
+                  type="text"
+                  inputMode="decimal"
+                  value={editedQtyString}
+                  onChange={(e) => handleQuantityChange(e.target.value)}
+                  onBlur={(e) => {
+                    // Clean up the input on blur - remove leading zeros, ensure valid number
+                    const numValue = parseFloat(e.target.value) || 0;
+                    const cleanValue = numValue.toString();
+                    setEditedQtyString(cleanValue);
+                    setEditedQty(numValue);
+                  }}
                   className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
-                  min="0"
-                  step="0.1"
+                  placeholder="0"
                 />
               </div>
               <div>

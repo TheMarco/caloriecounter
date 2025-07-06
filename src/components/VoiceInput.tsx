@@ -16,14 +16,45 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSpeechTimeRef = useRef<number>(0);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
     setIsListening(false);
   }, []);
+
+  const handleManualStop = useCallback(() => {
+    // If we have a transcript, process it before stopping
+    if (transcript.trim()) {
+      console.log('Manual stop with transcript:', transcript);
+      onTranscript(transcript.trim());
+    }
+    stopListening();
+  }, [transcript, onTranscript, stopListening]);
+
+  const handleSilenceTimeout = useCallback(() => {
+    console.log('Silence timeout reached, processing transcript:', transcript);
+    if (transcript.trim()) {
+      onTranscript(transcript.trim());
+    }
+    stopListening();
+  }, [transcript, onTranscript, stopListening]);
+
+  const resetSilenceTimer = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+    }
+    silenceTimerRef.current = setTimeout(handleSilenceTimeout, 2000); // 2 second silence threshold
+    lastSpeechTimeRef.current = Date.now();
+  }, [handleSilenceTimeout]);
 
   const startListening = useCallback(async () => {
     try {
@@ -38,13 +69,15 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
 
-      recognition.continuous = false;
+      recognition.continuous = true;  // Keep listening continuously
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
       recognition.onstart = () => {
         setIsListening(true);
         console.log('Voice recognition started');
+        // Start the silence timer when recognition begins
+        resetSilenceTimer();
       };
 
       recognition.onresult = (event) => {
@@ -60,12 +93,19 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
           }
         }
 
-        setTranscript(finalTranscript || interimTranscript);
+        const currentTranscript = finalTranscript || interimTranscript;
+        setTranscript(currentTranscript);
 
+        // Reset silence timer whenever we get speech input
+        if (currentTranscript.trim()) {
+          resetSilenceTimer();
+        }
+
+        // Don't auto-stop on final transcript anymore - let silence timer handle it
         if (finalTranscript) {
-          console.log('Final transcript:', finalTranscript);
-          onTranscript(finalTranscript.trim());
-          stopListening();
+          console.log('Final transcript received:', finalTranscript);
+          // Just reset the timer, don't stop immediately
+          resetSilenceTimer();
         }
       };
 
@@ -111,7 +151,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
       setError(errorMessage);
       onError?.(errorMessage);
     }
-  }, [onTranscript, onError, stopListening]);
+  }, [onTranscript, onError, stopListening, resetSilenceTimer]);
 
   useEffect(() => {
     if (!isActive) {
@@ -238,7 +278,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
                 )}
                 {isListening && (
                   <button
-                    onClick={stopListening}
+                    onClick={handleManualStop}
                     className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
                   >
                     Stop
