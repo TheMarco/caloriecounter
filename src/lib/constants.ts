@@ -79,7 +79,6 @@ export const IDB_CONFIG = {
 // UI constants
 export const UI_CONFIG = {
   DEBOUNCE_DELAY: 500, // ms for text input debouncing
-  TOAST_DURATION: 3000, // ms for toast notifications
   ANIMATION_DURATION: 200, // ms for UI animations
   MAX_RECENT_FOODS: 10, // number of recent foods to show
 } as const;

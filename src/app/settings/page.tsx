@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSettings } from '@/hooks/useSettings';
+
 import {
   HomeIconComponent,
   ChartIconComponent,
@@ -12,8 +13,13 @@ import {
 } from '@/components/icons';
 
 export default function Settings() {
-  const { settings, isLoading, updateSetting, resetSettings, darkMode, toggleDarkMode } = useSettings();
+  const { settings, isLoading, updateSetting, resetSettings } = useSettings();
   const [isSaving, setIsSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -48,12 +54,33 @@ export default function Settings() {
     }
   };
 
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-black">
+        <div className="animate-pulse">
+          <header className="bg-black shadow-sm border-b border-gray-800">
+            <div className="max-w-md mx-auto px-6 py-4">
+              <h1 className="text-2xl font-bold text-center text-white">Settings</h1>
+            </div>
+          </header>
+          <main className="max-w-md mx-auto px-6 py-6">
+            <div className="bg-gray-900 rounded-2xl shadow-sm border border-gray-800 p-6 mb-6">
+              <div className="h-4 bg-gray-700 rounded w-1/3 mb-4"></div>
+              <div className="h-10 bg-gray-700 rounded"></div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-theme">
+    <div className="min-h-screen bg-black transition-theme">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-10 transition-theme">
+      <header className="bg-black/80 backdrop-blur-xl border-b border-gray-800/50 sticky top-0 z-10 transition-theme">
         <div className="max-w-md mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-center text-black dark:text-white">Settings</h1>
+          <h1 className="text-2xl font-bold text-center text-white">Settings</h1>
         </div>
       </header>
 
@@ -63,29 +90,29 @@ export default function Settings() {
         {isLoading && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 dark:border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-700 dark:text-gray-200">Loading settings...</p>
+            <p className="text-gray-200">Loading settings...</p>
           </div>
         )}
 
         {/* Daily Target */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Daily Calorie Target</h2>
+        <div className="bg-gray-900 rounded-2xl shadow-sm border border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-white mb-6">Daily Calorie Target</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-gray-200 mb-3">
                 Target Calories per Day
               </label>
               <input
                 type="number"
                 value={settings.dailyTarget}
                 onChange={(e) => updateSetting('dailyTarget', Number(e.target.value))}
-                className="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-black dark:text-white transition-all font-medium text-lg"
+                className="w-full px-4 py-4 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-800 text-white transition-all font-medium text-lg"
                 min="1000"
                 max="5000"
                 step="50"
                 disabled={isLoading}
               />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 font-medium">
+              <p className="text-sm text-gray-400 mt-3 font-medium">
                 Recommended: 1,800-2,400 calories for most adults
               </p>
             </div>
@@ -93,8 +120,8 @@ export default function Settings() {
         </div>
 
         {/* Preferences */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Preferences</h2>
+        <div className="bg-gray-900 rounded-2xl shadow-sm border border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-white mb-6">Preferences</h2>
           <div className="space-y-6">
 
             {/* Units */}
@@ -142,55 +169,15 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Notifications */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl transition-theme">
-              <div>
-                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  Enable Notifications
-                </label>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Get reminders to log your meals
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.notifications}
-                  onChange={(e) => updateSetting('notifications', e.target.checked)}
-                  className="sr-only peer"
-                  disabled={isLoading}
-                />
-                <div className="w-12 h-7 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500 peer-disabled:opacity-50 shadow-sm"></div>
-              </label>
-            </div>
 
-            {/* Dark Mode */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl transition-theme">
-              <div>
-                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  Dark Mode
-                </label>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Switch to dark theme
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={darkMode}
-                  onChange={toggleDarkMode}
-                  className="sr-only peer"
-                  disabled={isLoading}
-                />
-                <div className="w-12 h-7 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500 peer-disabled:opacity-50 shadow-sm"></div>
-              </label>
-            </div>
+
+
           </div>
         </div>
 
         {/* Data Management */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Data Management</h2>
+        <div className="bg-gray-900 rounded-2xl shadow-sm border border-gray-800/50 p-6 mb-6 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-white mb-6">Data Management</h2>
           <div className="space-y-4">
             <button
               onClick={handleClearData}
@@ -198,21 +185,21 @@ export default function Settings() {
             >
               Clear All Data
             </button>
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+            <p className="text-sm text-gray-300 font-medium">
               This will permanently delete all your calorie entries and cannot be undone.
             </p>
           </div>
         </div>
 
         {/* App Info */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-8 transition-theme hover:shadow-md hover:scale-105 duration-200">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">About</h2>
+        <div className="bg-gray-900 rounded-2xl shadow-sm border border-gray-800/50 p-6 mb-8 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <h2 className="text-lg font-semibold text-white mb-6">About</h2>
           <div className="space-y-3">
             <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
               <InfoIconComponent size="sm" className="text-blue-600 dark:text-blue-400" />
               <span className="font-semibold text-blue-700 dark:text-blue-300">Calorie Counter PWA v1.0.0</span>
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium leading-relaxed">
+            <p className="text-sm text-gray-300 font-medium leading-relaxed">
               A lightning-fast calorie tracking app with barcode scanning and voice input.
             </p>
           </div>
@@ -243,18 +230,18 @@ export default function Settings() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 transition-theme">
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-gray-800/50 transition-theme">
         <div className="max-w-md mx-auto px-6">
           <div className="flex justify-around py-3">
-            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-400 hover:text-white transition-colors">
               <div className="mb-1">
-                <HomeIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
+                <HomeIconComponent size="lg" className="text-gray-400 hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Today</div>
             </Link>
-            <Link href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+            <Link href="/history" className="flex flex-col items-center py-2 px-4 text-gray-400 hover:text-white transition-colors">
               <div className="mb-1">
-                <ChartIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
+                <ChartIconComponent size="lg" className="text-gray-400 hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">History</div>
             </Link>

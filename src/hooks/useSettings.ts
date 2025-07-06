@@ -1,17 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
 
 export interface AppSettings {
   dailyTarget: number;
-  notifications: boolean;
   units: 'metric' | 'imperial';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   dailyTarget: 2000,
-  notifications: true,
   units: 'metric',
 };
 
@@ -20,7 +17,6 @@ const SETTINGS_KEY = 'calorie-counter-settings';
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
-  const { theme, setTheme, isDark } = useTheme();
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -71,25 +67,11 @@ export function useSettings() {
     }
   }, []);
 
-  // Theme-related functions
-  const toggleDarkMode = useCallback(() => {
-    setTheme(isDark ? 'light' : 'dark');
-  }, [isDark, setTheme]);
-
-  const setDarkMode = useCallback((enabled: boolean) => {
-    setTheme(enabled ? 'dark' : 'light');
-  }, [setTheme]);
-
   return {
     settings,
     isLoading,
     saveSettings,
     updateSetting,
     resetSettings,
-    // Theme-related
-    darkMode: isDark,
-    toggleDarkMode,
-    setDarkMode,
-    theme,
   };
 }

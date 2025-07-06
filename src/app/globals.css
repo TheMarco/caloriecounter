@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Prevent white flash by setting default dark background */
+html, body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
 /* Apple-inspired Design System */
 :root {
   /* Light Mode Colors */
@@ -119,6 +125,28 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Explicit Light Mode */
+:root.light {
+  --background: #ffffff;
+  --background-secondary: #f8f9fa;
+  --background-tertiary: #f1f3f4;
+  --foreground: #1d1d1f;
+  --foreground-secondary: #424245;
+  --foreground-tertiary: #86868b;
+  --card-background: #ffffff;
+  --card-background-hover: #f8f9fa;
+  --card-border: #e5e5e7;
+  --primary: #007aff;
+  --primary-hover: #0056cc;
+  --secondary: #f1f3f4;
+  --secondary-hover: #e8eaed;
+  --secondary-foreground: #1d1d1f;
+  --input-background: #ffffff;
+  --input-border: #d1d1d6;
+  --input-border-focus: #007aff;
+  --input-placeholder: #86868b;
+}
+
 /* System Dark Mode Preference */
 @media (prefers-color-scheme: dark) {
   :root:not(.dark):not(.light) {
@@ -152,6 +180,9 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Default to light mode to prevent flash */
+  background-color: #ffffff;
+  color: #1d1d1f;
 }
 
 body {

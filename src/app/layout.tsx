@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,17 +54,48 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" suppressHydrationWarning style={{ backgroundColor: '#000000', color: '#ffffff' }}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                document.documentElement.style.backgroundColor = '#000000';
+                document.documentElement.style.color = '#ffffff';
+                document.body.style.backgroundColor = '#000000';
+                document.body.style.color = '#ffffff';
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+        suppressHydrationWarning
+        style={{ backgroundColor: '#000000', color: '#ffffff' }}
       >
-        <ThemeProvider>
-          <SessionProvider>
-            <OfflineIndicator />
-            {children}
-            <InstallPrompt />
-          </SessionProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <OfflineIndicator />
+          {children}
+          <InstallPrompt />
+        </SessionProvider>
+        {process.env.NODE_ENV === 'development' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                      registration.unregister();
+                    }
+                  });
+                }
+              `,
+            }}
+          />
+        )}
       </body>
     </html>
   );
