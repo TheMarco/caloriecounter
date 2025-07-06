@@ -61,7 +61,7 @@ export function useTodayEntries() {
       // Reload entries to ensure consistency
       loadEntries();
     }
-  }, [entries]);
+  }, [entries, loadEntries]);
 
   const refreshEntries = useCallback(() => {
     loadEntries();
@@ -70,7 +70,7 @@ export function useTodayEntries() {
   // Load entries on mount
   useEffect(() => {
     loadEntries();
-  }, []); // Remove loadEntries from dependency array
+  }, [loadEntries]);
 
   // Auto-refresh when the day changes
   useEffect(() => {
@@ -88,7 +88,7 @@ export function useTodayEntries() {
     const interval = setInterval(checkDayChange, 60000);
 
     return () => clearInterval(interval);
-  }, []); // Remove loadEntries from dependency array
+  }, [loadEntries]);
 
   return {
     entries,

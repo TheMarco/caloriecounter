@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { parseFood } from '@/utils/api';
 import type { ParseFoodResponse } from '@/types';
 
@@ -19,11 +19,11 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Common food suggestions
-  const commonFoods = [
+  const commonFoods = useMemo(() => [
     'apple', 'banana', 'orange', 'chicken breast', 'salmon', 'rice', 'pasta',
     'bread', 'egg', 'milk', 'yogurt', 'cheese', 'broccoli', 'spinach',
     'potato', 'sweet potato', 'avocado', 'almonds', 'oatmeal', 'quinoa'
-  ];
+  ], []);
 
   useEffect(() => {
     if (isActive && inputRef.current) {
@@ -33,14 +33,14 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
 
   useEffect(() => {
     if (inputText.length >= 2) {
-      const filtered = commonFoods.filter(food => 
+      const filtered = commonFoods.filter(food =>
         food.toLowerCase().includes(inputText.toLowerCase())
       );
       setSuggestions(filtered.slice(0, 5));
     } else {
       setSuggestions([]);
     }
-  }, [inputText]);
+  }, [inputText, commonFoods]);
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -83,7 +83,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
   const handleSuggestionClick = (suggestion: string) => {
     setInputText(suggestion);
     setSuggestions([]);
-    handleAutoparse(suggestion);
+    // User can click "Parse Food" button to parse the suggestion
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

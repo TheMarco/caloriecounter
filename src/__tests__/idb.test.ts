@@ -10,8 +10,8 @@ import {
 describe('IndexedDB utilities', () => {
   beforeEach(async () => {
     // Clear all data from fake IndexedDB
-    const FDBFactory = require('fake-indexeddb/lib/FDBFactory');
-    const FDBKeyRange = require('fake-indexeddb/lib/FDBKeyRange');
+    const { default: FDBFactory } = await import('fake-indexeddb/lib/FDBFactory');
+    const { default: FDBKeyRange } = await import('fake-indexeddb/lib/FDBKeyRange');
 
     global.indexedDB = new FDBFactory();
     global.IDBKeyRange = FDBKeyRange;
@@ -20,7 +20,7 @@ describe('IndexedDB utilities', () => {
     try {
       const { clear } = await import('idb-keyval');
       await clear();
-    } catch (e) {
+    } catch {
       // Ignore errors during cleanup
     }
   });
@@ -93,7 +93,7 @@ describe('IndexedDB utilities', () => {
         { food: 'banana', qty: 120, unit: 'g', kcal: 89, method: 'voice' as const },
       ];
 
-      const addedEntries = await Promise.all(entries.map(addEntry));
+      await Promise.all(entries.map(addEntry));
       const todayEntries = await getTodayEntries();
 
       expect(todayEntries).toHaveLength(2);
@@ -102,7 +102,7 @@ describe('IndexedDB utilities', () => {
     });
 
     it('should return entries sorted by timestamp (most recent first)', async () => {
-      const entry1 = await addEntry({
+      await addEntry({
         food: 'first',
         qty: 100,
         unit: 'g',
@@ -113,7 +113,7 @@ describe('IndexedDB utilities', () => {
       // Wait a bit to ensure different timestamps
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      const entry2 = await addEntry({
+      await addEntry({
         food: 'second',
         qty: 100,
         unit: 'g',

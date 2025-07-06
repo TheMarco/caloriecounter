@@ -1,5 +1,5 @@
-// import { render, screen } from '@testing-library/react';
-// import { TotalCard } from '@/components/TotalCard';
+import { render, screen } from '@testing-library/react';
+import { TotalCard } from '@/components/TotalCard';
 
 describe.skip('TotalCard', () => {
   const defaultProps = {
