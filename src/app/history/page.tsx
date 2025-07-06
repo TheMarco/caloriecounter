@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useStats } from '@/utils/api';
 import { getDailyTotals } from '@/utils/idb';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { DateRange } from '@/types';
@@ -12,8 +11,7 @@ export default function HistoryPage() {
   const [localData, setLocalData] = useState<Array<{ date: string; total: number }>>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   
-  // Use SWR for cloud data (when available)
-  const { isLoading: isLoadingCloud } = useStats(selectedRange);
+  // Only using local IndexedDB data
 
   // Load local data from IndexedDB
   useEffect(() => {
@@ -45,7 +43,7 @@ export default function HistoryPage() {
   const maxCalories = Math.max(...localData.map(item => item.total), 0);
   const daysWithData = localData.filter(item => item.total > 0).length;
 
-  const isLoading = isLoadingLocal || isLoadingCloud;
+  const isLoading = isLoadingLocal;
 
   return (
     <div className="min-h-screen bg-gray-50">
