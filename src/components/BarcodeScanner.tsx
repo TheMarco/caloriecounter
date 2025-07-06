@@ -103,50 +103,76 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
   }
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-black text-white p-4 flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Scan Barcode</h2>
+      <div className="bg-black/20 backdrop-blur-xl border-b border-white/10 text-white p-6 flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-blue-500/20 rounded-2xl border border-blue-400/30">
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 4h5.4" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">Scan Barcode</h2>
+            <p className="text-white/60 text-sm">Point camera at product barcode</p>
+          </div>
+        </div>
         <button
           onClick={onClose}
-          className="text-white hover:text-gray-300 p-1"
+          className="text-white/60 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all"
         >
-          <CloseIconComponent size="lg" className="text-white hover:text-gray-300" />
+          <CloseIconComponent size="lg" className="text-white/60 hover:text-white" />
         </button>
       </div>
 
       {/* Camera View */}
       <div className="flex-1 relative">
         {hasPermission === false && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black text-white text-center p-4">
-            <div>
-              <p className="mb-4">Camera access is required to scan barcodes.</p>
-              <button
-                onClick={startScanning}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Grant Camera Access
-              </button>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md text-white text-center p-6">
+            <div className="card-glass rounded-3xl p-8 max-w-md">
+              <div className="mb-6">
+                <div className="p-4 bg-red-500/20 rounded-2xl border border-red-400/30 mx-auto w-fit mb-4">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <p className="mb-6 text-white/80">Camera access is required to scan barcodes.</p>
+                <button
+                  onClick={startScanning}
+                  className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                >
+                  Grant Camera Access
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black text-white text-center p-4">
-            <div>
-              <p className="mb-4 text-red-400">{error}</p>
-              <button
-                onClick={startScanning}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={onClose}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md text-white text-center p-6">
+            <div className="card-glass rounded-3xl p-8 max-w-md">
+              <div className="mb-6">
+                <div className="p-4 bg-red-500/20 rounded-2xl border border-red-400/30 mx-auto w-fit mb-4">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="mb-6 text-red-300">{error}</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={startScanning}
+                    className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -161,19 +187,36 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
         {/* Scanning overlay */}
         {isScanning && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="border-2 border-white w-64 h-32 relative">
-              <div className="absolute inset-0 border-2 border-red-500 animate-pulse"></div>
+            <div className="relative">
+              {/* Scanning frame */}
+              <div className="border-4 border-white/80 w-72 h-40 relative rounded-2xl">
+                <div className="absolute inset-0 border-4 border-blue-400 animate-pulse rounded-2xl"></div>
+
+                {/* Corner indicators */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-blue-400 rounded-tl-2xl"></div>
+                <div className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-blue-400 rounded-tr-2xl"></div>
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-blue-400 rounded-bl-2xl"></div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-blue-400 rounded-br-2xl"></div>
+              </div>
+
+              {/* Scanning line */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-64 h-1 bg-blue-400 animate-pulse shadow-lg shadow-blue-400/50"></div>
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* Instructions */}
-      <div className="bg-black text-white p-4 text-center">
-        <p className="text-sm">
-          {isScanning 
-            ? 'Point your camera at a barcode to scan' 
+      <div className="bg-black/20 backdrop-blur-xl border-t border-white/10 text-white p-6 text-center">
+        <p className="text-white/80 font-medium">
+          {isScanning
+            ? 'Position the barcode within the frame'
             : 'Preparing camera...'}
+        </p>
+        <p className="text-white/60 text-sm mt-2">
+          Make sure the barcode is clearly visible and well-lit
         </p>
       </div>
     </div>

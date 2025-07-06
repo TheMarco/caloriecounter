@@ -51,37 +51,47 @@ export default function HistoryPage() {
   const isLoading = isLoadingLocal;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-theme">
+    <div className="min-h-screen gradient-bg transition-theme">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-10 transition-theme">
-        <div className="max-w-md mx-auto px-6 py-4">
+      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 transition-theme">
+        <div className="max-w-md mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-black dark:text-white">History</h1>
-            <Link
-              href="/"
-              className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium transition-colors flex items-center space-x-1"
-            >
-              <span>←</span>
-              <span>Back</span>
+            <Link href="/" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </Link>
+            <h1 className="text-2xl font-bold text-white">History</h1>
+            <div className="w-10 h-10"></div> {/* Spacer for centering */}
           </div>
+          <p className="text-white/70 text-center mt-2 text-sm">Your calorie tracking history</p>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-6 pb-24">
         {/* Date Range Selector */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">Time Period</h2>
+        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="p-3 bg-blue-500/20 rounded-2xl">
+              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Time Period</h2>
+              <p className="text-white/60 text-sm">Select date range to view</p>
+            </div>
+          </div>
           <div className="grid grid-cols-3 gap-3">
             {(['7d', '30d', '90d'] as DateRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`py-3 px-4 rounded-2xl text-sm font-medium transition-all duration-200 backdrop-blur-sm ${
                   selectedRange === range
-                    ? 'bg-blue-500 dark:bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                    ? 'bg-blue-500/30 border border-blue-400/50 text-blue-300 shadow-lg'
+                    : 'bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 hover:scale-105'
                 }`}
               >
                 {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
@@ -92,59 +102,69 @@ export default function HistoryPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-5 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-500 dark:text-blue-400">
+              <div className="text-2xl font-bold text-blue-400">
                 {isLoading ? '...' : averageCalories.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Daily Average</div>
+              <div className="text-sm text-white/60 mt-1">Daily Average</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-5 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-500 dark:text-green-400">
+              <div className="text-2xl font-bold text-green-400">
                 {isLoading ? '...' : maxCalories.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Highest Day</div>
+              <div className="text-sm text-white/60 mt-1">Highest Day</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-5 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-500 dark:text-purple-400">
+              <div className="text-2xl font-bold text-purple-400">
                 {isLoading ? '...' : totalCalories.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Calories</div>
+              <div className="text-sm text-white/60 mt-1">Total Calories</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-5 transition-theme hover:shadow-md hover:scale-105 duration-200">
+          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-500 dark:text-orange-400">
+              <div className="text-2xl font-bold text-orange-400">
                 {isLoading ? '...' : daysWithData}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Days</div>
+              <div className="text-sm text-white/60 mt-1">Active Days</div>
             </div>
           </div>
         </div>
 
         {/* Chart */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 mb-6 transition-theme">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Daily Calories</h2>
+        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="p-3 bg-green-500/20 rounded-2xl">
+              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Daily Calories</h2>
+              <p className="text-white/60 text-sm">Your calorie trends over time</p>
+            </div>
+          </div>
 
           {isLoading ? (
             <div className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 dark:border-blue-400"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50"></div>
             </div>
           ) : chartData.length === 0 ? (
             <div className="h-64 flex items-center justify-center">
               <div className="text-center">
                 <div className="mb-4 flex justify-center">
-                  <ChartIconComponent size="xl" className="text-gray-400 dark:text-gray-600" />
+                  <ChartIconComponent size="xl" className="text-white/40" />
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 font-medium">No data available</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Start logging your meals to see trends!</p>
+                <p className="text-white/80 font-medium">No data available</p>
+                <p className="text-sm text-white/60 mt-1">Start logging your meals to see trends!</p>
               </div>
             </div>
           ) : (
@@ -237,24 +257,24 @@ export default function HistoryPage() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 transition-theme">
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-theme">
         <div className="max-w-md mx-auto px-6">
-          <div className="flex justify-around py-3">
-            <Link href="/" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+          <div className="flex justify-around py-4">
+            <Link href="/" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
-                <HomeIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
+                <HomeIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Today</div>
             </Link>
-            <button className="flex flex-col items-center py-2 px-4 text-blue-500 dark:text-blue-400">
+            <button className="flex flex-col items-center py-2 px-4 text-blue-400">
               <div className="mb-1">
-                <ChartIconComponent size="lg" solid className="text-blue-500 dark:text-blue-400" />
+                <ChartIconComponent size="lg" solid className="text-blue-400" />
               </div>
               <div className="text-xs font-medium">History</div>
             </button>
-            <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+            <Link href="/settings" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
+                <SettingsIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </Link>

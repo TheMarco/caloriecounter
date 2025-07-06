@@ -42,13 +42,13 @@ export default function Home() {
 
   // Refresh entries when any input method completes
   useEffect(() => {
-    if (!barcode.isScanning && !barcode.isLoading &&
+    if (!barcode.isScanning && !barcode.isLoading && !barcode.isProcessing && !barcode.showConfirmDialog &&
         !voice.isProcessing && !voice.showConfirmDialog &&
         !textInput.isProcessing && !textInput.showConfirmDialog) {
       console.log('🔄 Main page: Triggering entries refresh');
       todayEntries.refreshEntries();
     }
-  }, [barcode.isScanning, barcode.isLoading, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries.refreshEntries]);
+  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries.refreshEntries]);
 
   const handleScan = () => {
     barcode.startScanning();
@@ -72,6 +72,15 @@ export default function Home() {
       // Entries will be refreshed by the useEffect above
     } catch (error) {
       console.error('❌ Main page: Failed to process barcode:', error);
+    }
+  };
+
+  const handleBarcodeConfirm = async (data: { food: string; qty: number; unit: string; kcal: number }) => {
+    try {
+      await barcode.handleConfirmFood(data);
+      // Entries will be refreshed by the useEffect above
+    } catch (error) {
+      console.error('Failed to save barcode entry:', error);
     }
   };
 
@@ -105,11 +114,12 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-theme">
+    <div className="min-h-screen gradient-bg transition-theme">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-10 transition-theme">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-center text-black dark:text-white">Calorie Counter</h1>
+      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 transition-theme">
+        <div className="max-w-md mx-auto px-6 py-6">
+          <h1 className="text-2xl font-bold text-center text-white">Calorie Counter</h1>
+          <p className="text-white/70 text-center mt-2 text-sm">Track your daily nutrition</p>
         </div>
       </header>
 
@@ -117,8 +127,8 @@ export default function Home() {
       <main className="max-w-md mx-auto px-6 py-6 pb-24">
         {todayEntries.isLoading && (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 dark:border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-700 dark:text-gray-200">Loading your data...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50 mx-auto mb-4"></div>
+            <p className="text-white/70">Loading your data...</p>
           </div>
         )}
 
@@ -144,24 +154,24 @@ export default function Home() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 transition-theme">
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-theme">
         <div className="max-w-md mx-auto px-6">
-          <div className="flex justify-around py-3">
-            <button className="flex flex-col items-center py-2 px-4 text-blue-500 dark:text-blue-400">
+          <div className="flex justify-around py-4">
+            <button className="flex flex-col items-center py-2 px-4 text-blue-400">
               <div className="mb-1">
-                <HomeIconComponent size="lg" solid className="text-blue-500 dark:text-blue-400" />
+                <HomeIconComponent size="lg" solid className="text-blue-400" />
               </div>
               <div className="text-xs font-medium">Today</div>
             </button>
-            <a href="/history" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+            <a href="/history" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
-                <ChartIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
+                <ChartIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">History</div>
             </a>
-            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors" />
+                <SettingsIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </a>
@@ -191,6 +201,15 @@ export default function Home() {
         onFoodParsed={textInput.handleFoodParsed}
         onError={textInput.handleTextError}
         onClose={textInput.stopTextInput}
+      />
+
+      {/* Barcode Food Confirmation Dialog */}
+      <FoodConfirmDialog
+        isOpen={barcode.showConfirmDialog}
+        foodData={barcode.parsedFood}
+        isLoading={barcode.isProcessing}
+        onConfirm={handleBarcodeConfirm}
+        onCancel={barcode.handleCancelConfirm}
       />
 
       {/* Voice Food Confirmation Dialog */}

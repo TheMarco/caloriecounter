@@ -9,6 +9,9 @@ export function useBarcode() {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [parsedFood, setParsedFood] = useState<{ food: string; quantity: number; unit: string; kcal: number; notes?: string } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const startScanning = () => {
     setIsScanning(true);
@@ -40,25 +43,21 @@ export function useBarcode() {
       const { food, kcal, unit, serving_size } = response.data;
       console.log('📦 Product data:', { food, kcal, unit, serving_size });
 
-      // Create entry with the scanned product
-      const entryData = {
+      // Stop scanning and show confirmation dialog
+      stopScanning();
+
+      // Prepare food data for confirmation dialog
+      const foodData = {
         food,
-        qty: serving_size || 100,
+        quantity: serving_size || 100,
         unit,
         kcal: Math.round(kcal * ((serving_size || 100) / 100)),
-        method: 'barcode' as const,
-        confidence: 1.0,
+        notes: `Scanned product: ${food}`
       };
-      console.log('💾 Creating entry with data:', entryData);
 
-      const entry = await addEntry(entryData);
-      console.log('✅ Entry created successfully:', entry);
-
-      // Stop scanning after successful detection
-      stopScanning();
-      console.log('🛑 Scanning stopped');
-
-      return entry;
+      setParsedFood(foodData);
+      setShowConfirmDialog(true);
+      console.log('📋 Showing confirmation dialog with data:', foodData);
 
     } catch (err) {
       console.error('❌ Barcode processing error:', err);
@@ -71,6 +70,45 @@ export function useBarcode() {
     }
   };
 
+  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number }) => {
+    try {
+      setIsProcessing(true);
+
+      // Create entry with the confirmed data
+      const entryData = {
+        food: data.food,
+        qty: data.qty,
+        unit: data.unit,
+        kcal: data.kcal,
+        method: 'barcode' as const,
+        confidence: 1.0,
+      };
+      console.log('💾 Creating entry with confirmed data:', entryData);
+
+      const entry = await addEntry(entryData);
+      console.log('✅ Entry created successfully:', entry);
+
+      // Close dialog
+      setShowConfirmDialog(false);
+      setParsedFood(null);
+
+      return entry;
+
+    } catch (err) {
+      console.error('❌ Failed to save barcode entry:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save entry';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirmDialog(false);
+    setParsedFood(null);
+  };
+
   const handleScanError = (error: string) => {
     console.error('Scan error:', error);
     setError(error);
@@ -80,9 +118,14 @@ export function useBarcode() {
     isScanning,
     isLoading,
     error,
+    showConfirmDialog,
+    parsedFood,
+    isProcessing,
     startScanning,
     stopScanning,
     handleBarcodeDetected,
     handleScanError,
+    handleConfirmFood,
+    handleCancelConfirm,
   };
 }

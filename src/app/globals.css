@@ -6,6 +6,42 @@ html, body {
   color: #ffffff !important;
 }
 
+/* Beautiful gradient backgrounds - much darker like the screenshot */
+.gradient-bg {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+.gradient-bg-subtle {
+  background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 25%, #0e1420 50%, #0a1f35 75%, #2d1b69 100%);
+}
+
+/* Subtle moving gradient animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
 /* Apple-inspired Design System */
 :root {
   /* Light Mode Colors */

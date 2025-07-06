@@ -97,23 +97,30 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 m-4 max-w-md w-full">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="card-glass rounded-3xl p-6 m-4 max-w-md w-full shadow-2xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Add Food</h2>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-purple-500/20 rounded-2xl border border-purple-400/30">
+              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-white">Add Food</h2>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+            className="text-white/60 hover:text-white text-xl font-bold p-2 rounded-xl hover:bg-white/10 transition-all"
           >
             ✕
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-white/80 mb-3">
               What did you eat?
             </label>
             <input
@@ -123,20 +130,20 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="e.g., 2 slices of bread, 1 apple, 100g chicken breast"
-              className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-gray-900 bg-white placeholder-gray-500"
+              className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all text-base"
               disabled={isLoading}
             />
           </div>
 
           {/* Suggestions */}
           {suggestions.length > 0 && (
-            <div className="border-2 border-gray-300 rounded-md max-h-32 overflow-y-auto">
+            <div className="border border-white/20 rounded-2xl max-h-32 overflow-y-auto backdrop-blur-sm bg-white/5">
               {suggestions.map((suggestion, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm text-gray-900 border-b border-gray-200 last:border-b-0"
+                  className="w-full text-left px-4 py-3 hover:bg-white/10 text-sm text-white/80 hover:text-white border-b border-white/10 last:border-b-0 transition-all"
                 >
                   {suggestion}
                 </button>
@@ -146,16 +153,16 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
 
           {/* Loading indicator */}
           {isLoading && (
-            <div className="flex items-center justify-center py-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-2"></div>
-              <span className="text-sm text-gray-900 font-medium">Analyzing...</span>
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-400 mr-3"></div>
+              <span className="text-sm text-white/80 font-medium">Analyzing...</span>
             </div>
           )}
 
           {/* Instructions */}
-          <div className="text-xs text-gray-700">
-            <p className="font-medium">Examples:</p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
+          <div className="text-xs text-white/60 bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+            <p className="font-medium text-white/80 mb-2">Examples:</p>
+            <ul className="list-disc list-inside space-y-1">
               <li>&quot;2 slices of whole wheat bread&quot;</li>
               <li>&quot;1 medium apple&quot;</li>
               <li>&quot;100g grilled chicken breast&quot;</li>
@@ -164,18 +171,18 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-6">
             <button
               type="submit"
               disabled={!inputText.trim() || isLoading}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-md font-medium"
+              className="flex-1 bg-purple-500/20 hover:bg-purple-500/30 disabled:bg-white/5 disabled:text-white/40 border border-purple-400/30 hover:border-purple-400/50 disabled:border-white/10 text-purple-300 hover:text-purple-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:scale-100"
             >
               {isLoading ? 'Analyzing...' : 'Parse Food'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md font-medium"
+              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
             >
               Cancel
             </button>

@@ -138,87 +138,100 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 m-4 max-w-sm w-full">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="card-glass rounded-3xl p-6 m-4 max-w-sm w-full shadow-2xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Voice Input</h2>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-green-500/20 rounded-2xl border border-green-400/30">
+              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-white">Voice Input</h2>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-1"
+            className="text-white/60 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all"
           >
-            <CloseIconComponent size="lg" className="text-gray-500 hover:text-gray-700" />
+            <CloseIconComponent size="lg" className="text-white/60 hover:text-white" />
           </button>
         </div>
 
         {/* Content */}
         <div className="text-center">
           {hasPermission === false && (
-            <div className="mb-4">
-              <p className="text-red-600 mb-4">Microphone access is required for voice input.</p>
-              <button
-                onClick={startListening}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Grant Microphone Access
-              </button>
+            <div className="mb-6">
+              <div className="bg-red-500/20 border border-red-400/30 p-4 rounded-2xl backdrop-blur-sm mb-4">
+                <p className="text-red-300 mb-4">Microphone access is required for voice input.</p>
+                <button
+                  onClick={startListening}
+                  className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                >
+                  Grant Microphone Access
+                </button>
+              </div>
             </div>
           )}
 
           {error && (
-            <div className="mb-4">
-              <p className="text-red-600 mb-4">{error}</p>
-              <button
-                onClick={startListening}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={onClose}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
+            <div className="mb-6">
+              <div className="bg-red-500/20 border border-red-400/30 p-4 rounded-2xl backdrop-blur-sm mb-4">
+                <p className="text-red-300 mb-4">{error}</p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={startListening}
+                    className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {!error && hasPermission !== false && (
             <>
               {/* Microphone Animation */}
-              <div className="mb-4">
-                <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${
-                  isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-300'
+              <div className="mb-6">
+                <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all duration-300 ${
+                  isListening ? 'bg-red-500/30 border-2 border-red-400 animate-pulse shadow-lg shadow-red-500/25' : 'bg-white/10 border-2 border-white/20'
                 }`}>
-                  <MicrophoneIconComponent size="xl" className="text-white" />
+                  <MicrophoneIconComponent size="xl" className={isListening ? "text-red-300" : "text-white/70"} />
                 </div>
               </div>
 
               {/* Status */}
-              <p className="text-gray-600 mb-4">
-                {isListening 
-                  ? 'Listening... Speak now!' 
+              <p className="text-white/80 mb-6 text-lg font-medium">
+                {isListening
+                  ? 'Listening... Speak now!'
                   : 'Preparing microphone...'}
               </p>
 
               {/* Transcript */}
               {transcript && (
-                <div className="bg-gray-100 border-2 border-gray-300 p-3 rounded mb-4">
-                  <p className="text-sm text-gray-900 font-medium">&quot;{transcript}&quot;</p>
+                <div className="bg-blue-500/20 border border-blue-400/30 p-4 rounded-2xl mb-6 backdrop-blur-sm">
+                  <p className="text-sm text-blue-300 font-medium">&quot;{transcript}&quot;</p>
                 </div>
               )}
 
               {/* Instructions */}
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-white/60 mb-6">
                 Say something like: &quot;One grilled boneless chicken thigh&quot;
               </p>
 
               {/* Controls */}
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-3 justify-center">
                 {!isListening && (
                   <button
                     onClick={startListening}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                    className="bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-green-300 hover:text-green-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
                   >
                     Start Listening
                   </button>
@@ -226,14 +239,14 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
                 {isListening && (
                   <button
                     onClick={stopListening}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                    className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
                   >
                     Stop
                   </button>
                 )}
                 <button
                   onClick={onClose}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                  className="bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
                 >
                   Cancel
                 </button>
