@@ -17,6 +17,14 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
   const startListening = useCallback(async () => {
     try {
       setError(null);
@@ -64,7 +72,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         let errorMessage = 'Speech recognition failed';
-        
+
         switch (event.error) {
           case 'no-speech':
             errorMessage = 'No speech detected. Please try again.';
@@ -82,7 +90,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
           default:
             errorMessage = `Speech recognition error: ${event.error}`;
         }
-        
+
         setError(errorMessage);
         onError?.(errorMessage);
         setIsListening(false);
@@ -103,15 +111,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
       setError(errorMessage);
       onError?.(errorMessage);
     }
-  }, [onTranscript, onError]);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
-  }, []);
+  }, [onTranscript, onError, stopListening]);
 
   useEffect(() => {
     if (!isActive) {

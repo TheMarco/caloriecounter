@@ -48,7 +48,7 @@ export default function Home() {
       console.log('🔄 Main page: Triggering entries refresh');
       todayEntries.refreshEntries();
     }
-  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries.refreshEntries]);
+  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries]);
 
   const handleScan = () => {
     barcode.startScanning();

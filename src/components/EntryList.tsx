@@ -78,7 +78,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">Today's Entries</h3>
+              <h3 className="text-xl font-semibold text-white">Today&apos;s Entries</h3>
               <p className="text-white/60 text-sm">Loading your meals...</p>
             </div>
           </div>
@@ -114,7 +114,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">Today's Entries</h3>
+              <h3 className="text-xl font-semibold text-white">Today&apos;s Entries</h3>
               <p className="text-white/60 text-sm">Your daily meal log</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
             </svg>
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">Today's Entries</h3>
+            <h3 className="text-xl font-semibold text-white">Today&apos;s Entries</h3>
             <p className="text-white/60 text-sm">{entries.length} item{entries.length !== 1 ? 's' : ''} logged</p>
           </div>
         </div>
