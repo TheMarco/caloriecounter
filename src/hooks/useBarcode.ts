@@ -51,7 +51,7 @@ export function useBarcode() {
         food,
         quantity: serving_size || 100,
         unit,
-        kcal: Math.round(kcal * ((serving_size || 100) / 100)),
+        kcal: Math.round(kcal), // Use calories as-is from barcode API (already calculated for serving)
         notes: `Scanned product: ${food}`
       };
 
