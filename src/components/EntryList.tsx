@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+
 import type { Entry } from '@/types';
 import {
   MicrophoneIconComponent,
@@ -8,42 +8,24 @@ import {
   DeleteIconComponent,
   BarcodeIconComponent
 } from '@/components/icons';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
+
 
 interface EntryListProps {
   entries: Entry[];
   onDelete: (id: string) => void;
   onEdit?: (entry: Entry) => void;
   isLoading?: boolean;
+  onDeleteConfirm?: (entry: Entry) => void;
 }
 
-export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListProps) {
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{
-    isOpen: boolean;
-    entry: Entry | null;
-  }>({ isOpen: false, entry: null });
-
+export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfirm }: EntryListProps) {
   const handleDeleteClick = (entry: Entry) => {
-    setConfirmDelete({ isOpen: true, entry });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDelete.entry) return;
-
-    try {
-      setDeletingId(confirmDelete.entry.id);
-      await onDelete(confirmDelete.entry.id);
-      setConfirmDelete({ isOpen: false, entry: null });
-    } catch (error) {
-      console.error('Failed to delete entry:', error);
-    } finally {
-      setDeletingId(null);
+    if (onDeleteConfirm) {
+      onDeleteConfirm(entry);
+    } else {
+      // Fallback to direct delete if no confirmation handler provided
+      onDelete(entry.id);
     }
-  };
-
-  const handleCancelDelete = () => {
-    setConfirmDelete({ isOpen: false, entry: null });
   };
 
   const formatTime = (timestamp: number) => {
@@ -190,15 +172,10 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
 
                 <button
                   onClick={() => handleDeleteClick(entry)}
-                  disabled={deletingId === entry.id}
-                  className="w-9 h-9 rounded-full text-white/60 hover:text-red-400 transition-colors disabled:opacity-50 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center"
+                  className="w-9 h-9 rounded-full text-white/60 hover:text-red-400 transition-colors hover:bg-white/10 backdrop-blur-sm flex items-center justify-center"
                   title="Delete entry"
                 >
-                  {deletingId === entry.id ? (
-                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent"></div>
-                  ) : (
-                    <DeleteIconComponent size="sm" className="w-4 h-4 text-white/60 hover:text-red-400" />
-                  )}
+                  <DeleteIconComponent size="sm" className="w-4 h-4 text-white/60 hover:text-red-400" />
                 </button>
               </div>
             </div>
@@ -230,22 +207,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
         ))}
       </div>
 
-      {/* Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={confirmDelete.isOpen}
-        title="Delete Entry"
-        message={
-          confirmDelete.entry
-            ? `Are you sure you want to delete "${confirmDelete.entry.food}"? This action cannot be undone.`
-            : ''
-        }
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        isLoading={deletingId === confirmDelete.entry?.id}
-        variant="danger"
-      />
+
     </div>
   );
 }

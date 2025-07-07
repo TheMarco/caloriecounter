@@ -7,6 +7,7 @@ import { VoiceInput } from '@/components/VoiceInput';
 import { TextInput } from '@/components/TextInput';
 import { FoodConfirmDialog } from '@/components/FoodConfirmDialog';
 import { EditEntryDialog } from '@/components/EditEntryDialog';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AddFab } from '@/components/AddFab';
 import { TotalCard } from '@/components/TotalCard';
 import { EntryList } from '@/components/EntryList';
@@ -26,6 +27,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
+  const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<Entry | null>(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const barcode = useBarcode();
   const voice = useVoiceInput();
   const textInput = useTextInput();
@@ -134,6 +137,29 @@ export default function Home() {
     setEditingEntry(null);
   };
 
+  const handleDeleteConfirm = (entry: Entry) => {
+    setDeleteConfirmEntry(entry);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmEntry) return;
+
+    try {
+      setIsDeleteLoading(true);
+      await todayEntries.deleteEntry(deleteConfirmEntry.id);
+      // Entries will be refreshed by the useEffect
+    } catch (error) {
+      console.error('Failed to delete entry:', error);
+    } finally {
+      setIsDeleteLoading(false);
+      setDeleteConfirmEntry(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmEntry(null);
+  };
+
   if (isLoading || todayEntries.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -186,6 +212,7 @@ export default function Home() {
               onDelete={todayEntries.deleteEntry}
               onEdit={handleEditEntry}
               isLoading={todayEntries.isRefreshing}
+              onDeleteConfirm={handleDeleteConfirm}
             />
           </>
         )}
@@ -276,6 +303,23 @@ export default function Home() {
         isLoading={isEditLoading}
         onSave={handleSaveEdit}
         onCancel={handleCancelEdit}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmEntry}
+        title="Delete Entry"
+        message={
+          deleteConfirmEntry
+            ? `Are you sure you want to delete "${deleteConfirmEntry.food}"? This action cannot be undone.`
+            : ''
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={isDeleteLoading}
+        variant="danger"
       />
     </div>
   );
