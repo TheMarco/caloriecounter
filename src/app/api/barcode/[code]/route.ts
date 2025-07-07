@@ -79,7 +79,13 @@ CALORIE DENSITY SANITY CHECK:
 - Fruits: 40-80 kcal per 100g
 - Vegetables: 15-50 kcal per 100g
 
-CRITICAL: Your calorie calculation must make sense for the serving size. A 355ml beer should be ~140 calories, NOT 533 calories.`;
+CRITICAL EXAMPLES:
+- Dos Equis beer 355ml bottle = 142 calories (40 kcal per 100ml)
+- Coca Cola 355ml can = 150 calories (42 kcal per 100ml)
+- Wine 150ml glass = 120 calories (80 kcal per 100ml)
+- Olive oil 15ml (1 tbsp) = 135 calories (900 kcal per 100ml)
+
+NEVER give results like 533 calories for 355ml beer - that's physically impossible!`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -93,12 +99,16 @@ CRITICAL: Your calorie calculation must make sense for the serving size. A 355ml
       throw new Error('No response from OpenAI');
     }
 
+    console.log('OpenAI barcode response:', responseText);
+
     let nutritionData;
     try {
       nutritionData = JSON.parse(responseText);
     } catch {
       throw new Error('Invalid response format from OpenAI');
     }
+
+    console.log('Parsed nutrition data:', nutritionData);
 
     // Validate the response structure
     if (!nutritionData.food || !nutritionData.kcal || !nutritionData.unit || !nutritionData.serving_size) {
