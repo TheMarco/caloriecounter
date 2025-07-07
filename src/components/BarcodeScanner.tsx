@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { BrowserMultiFormatReader, NotFoundException, DecodeHintType, BarcodeFormat } from '@zxing/library';
+import { BrowserMultiFormatReader } from '@zxing/library';
 import { CloseIconComponent } from '@/components/icons';
 
 interface BarcodeScannerProps {
@@ -35,96 +35,62 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
         throw new Error('Camera not supported in this browser');
       }
 
-      // Initialize the barcode reader with optimized hints
+      // Initialize simple barcode reader
       if (!readerRef.current) {
-        const hints = new Map();
-
-        // Enable TRY_HARDER for better accuracy
-        hints.set(DecodeHintType.TRY_HARDER, true);
-
-        // Specify common barcode formats for food products
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-          BarcodeFormat.EAN_13,
-          BarcodeFormat.EAN_8,
-          BarcodeFormat.UPC_A,
-          BarcodeFormat.UPC_E,
-          BarcodeFormat.CODE_128,
-          BarcodeFormat.CODE_39,
-          BarcodeFormat.ITF,
-          BarcodeFormat.CODABAR,
-        ]);
-
-        // Much faster scanning for better responsiveness
-        readerRef.current = new BrowserMultiFormatReader(hints, 50);
+        // Simple configuration - no complex hints
+        readerRef.current = new BrowserMultiFormatReader();
       }
 
       const reader = readerRef.current;
 
-      // Start scanning - try to use back camera with optimal settings
+      // Start scanning with simple approach
       if (videoRef.current) {
         try {
-          // Try to get back camera first (better for barcode scanning)
-          let selectedDeviceId = null;
+          // Simple camera selection - prefer back camera
+          let selectedDeviceId: string | null = null;
 
           try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            // Look for back camera with priority order
+            // Look for back camera
             const backCamera = videoDevices.find(device => {
               const label = device.label.toLowerCase();
-              return label.includes('back') ||
-                     label.includes('rear') ||
-                     label.includes('environment') ||
-                     label.includes('facing back');
+              return label.includes('back') || label.includes('rear') || label.includes('environment');
             });
 
             if (backCamera) {
               selectedDeviceId = backCamera.deviceId;
-              console.log('📷 Using back camera:', backCamera.label);
-            } else if (videoDevices.length > 1) {
-              // Use the last camera (often the back camera on mobile)
-              selectedDeviceId = videoDevices[videoDevices.length - 1].deviceId;
-              console.log('📷 Using camera:', videoDevices[videoDevices.length - 1].label);
             }
-          } catch (deviceError) {
-            console.log('📷 Could not enumerate devices, using default camera:', deviceError);
+          } catch {
+            console.log('Using default camera');
           }
 
-          // Use the simplified approach - let ZXing handle the camera
+          // Start decoding
           await reader.decodeFromVideoDevice(
             selectedDeviceId,
             videoRef.current,
-            (result, error) => {
+            (result) => {
               if (result) {
                 const code = result.getText();
-                console.log('📷 BarcodeScanner: Barcode detected:', code);
-                console.log('📤 BarcodeScanner: Calling onDetect callback');
                 onDetect(code);
-                console.log('🛑 BarcodeScanner: Stopping scanning');
                 stopScanning();
-              }
-
-              if (error && !(error instanceof NotFoundException)) {
-                console.error('❌ BarcodeScanner: Scanning error:', error);
               }
             }
           );
 
-          // If we get here, camera access was successful
           setHasPermission(true);
         } catch (scanError) {
           console.error('Failed to start scanning:', scanError);
           setHasPermission(false);
-          setError('Failed to start camera scanning');
-          onError?.('Failed to start camera scanning');
+          setError('Failed to start camera');
+          onError?.('Failed to start camera');
         }
       }
 
     } catch (err) {
       console.error('Camera access error:', err);
       setHasPermission(false);
-
       const errorMessage = err instanceof Error ? err.message : 'Camera access denied';
       setError(errorMessage);
       onError?.(errorMessage);
@@ -231,48 +197,18 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
           muted
         />
 
-        {/* Simple Scanning Overlay */}
+        {/* Single Clean Scanning Overlay */}
         {isScanning && hasPermission && !error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            {/* Simple scanning frame */}
-            <div className="relative w-72 h-44">
-              {/* Corner brackets only */}
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-400"></div>
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-400"></div>
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-400"></div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-400"></div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="relative w-80 h-48">
+              {/* Corner brackets */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
 
               {/* Scanning line */}
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-green-400 animate-pulse"></div>
-            </div>
-
-            {/* Instructions */}
-            <div className="mt-8 text-center px-4">
-              <p className="text-white text-lg font-medium">Position barcode in the frame</p>
-              <p className="text-white/70 text-sm mt-2">Hold steady for best results</p>
-            </div>
-          </div>
-        )}
-
-        {/* Scanning overlay */}
-        {isScanning && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative">
-              {/* Scanning frame */}
-              <div className="border-4 border-white/80 w-72 h-40 relative rounded-2xl">
-                <div className="absolute inset-0 border-4 border-blue-400 animate-pulse rounded-2xl"></div>
-
-                {/* Corner indicators */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-blue-400 rounded-tl-2xl"></div>
-                <div className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-blue-400 rounded-tr-2xl"></div>
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-blue-400 rounded-bl-2xl"></div>
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-blue-400 rounded-br-2xl"></div>
-              </div>
-
-              {/* Scanning line */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-64 h-1 bg-blue-400 animate-pulse shadow-lg shadow-blue-400/50"></div>
-              </div>
+              <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white animate-pulse shadow-lg"></div>
             </div>
           </div>
         )}
@@ -281,12 +217,10 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
       {/* Instructions */}
       <div className="bg-black/20 backdrop-blur-xl border-t border-white/10 text-white p-6 text-center">
         <p className="text-white/80 font-medium">
-          {isScanning
-            ? 'Position the barcode within the frame'
-            : 'Preparing camera...'}
+          {isScanning ? 'Point camera at barcode' : 'Starting camera...'}
         </p>
-        <p className="text-white/60 text-sm mt-2">
-          Make sure the barcode is clearly visible and well-lit
+        <p className="text-white/60 text-sm mt-1">
+          Hold steady and ensure good lighting
         </p>
       </div>
     </div>
