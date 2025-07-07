@@ -36,11 +36,14 @@ export async function GET(
                       data.product.product_name_en ||
                       data.product.brands ||
                       'Unknown Product';
+          console.log('📦 OpenFoodFacts product name:', productName);
         }
       }
     } catch {
       console.log('OpenFoodFacts lookup failed, using OpenAI with barcode only');
     }
+
+    console.log('🔍 Barcode:', code, 'Product:', productName);
 
     // Use OpenAI to get accurate nutritional information
     const openai = new OpenAI({
@@ -87,6 +90,8 @@ CRITICAL EXAMPLES:
 
 NEVER give results like 533 calories for 355ml beer - that's physically impossible!`;
 
+    console.log('🤖 Sending prompt to OpenAI:', prompt);
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
@@ -115,14 +120,18 @@ NEVER give results like 533 calories for 355ml beer - that's physically impossib
       throw new Error('Incomplete nutritional data from OpenAI');
     }
 
+    const finalResult = {
+      food: nutritionData.food,
+      kcal: Math.round(nutritionData.kcal),
+      unit: nutritionData.unit,
+      serving_size: Math.round(nutritionData.serving_size),
+    };
+
+    console.log('📊 Final barcode result:', finalResult);
+
     return NextResponse.json<BarcodeResponse>({
       success: true,
-      data: {
-        food: nutritionData.food,
-        kcal: Math.round(nutritionData.kcal),
-        unit: nutritionData.unit,
-        serving_size: Math.round(nutritionData.serving_size),
-      },
+      data: finalResult,
     });
 
   } catch (error) {

@@ -27,13 +27,17 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
 
   const startScanning = useCallback(async () => {
     try {
+      console.log('🎥 Starting barcode scanning...');
       setError(null);
       setIsScanning(true);
 
       // Check for camera permission
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ Camera not supported');
         throw new Error('Camera not supported in this browser');
       }
+
+      console.log('✅ Camera API available');
 
       // Initialize simple barcode reader
       if (!readerRef.current) {
