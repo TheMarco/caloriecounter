@@ -24,6 +24,7 @@ export function useVoiceInput() {
 
   const handleTranscript = async (text: string) => {
     try {
+      // Keep listening state true but set processing true to show processing screen
       setIsProcessing(true);
       setError(null);
 
@@ -38,10 +39,10 @@ export function useVoiceInput() {
 
       console.log('Parsed food:', response.data);
 
-      // Show confirmation dialog
+      // Now stop listening and show confirmation dialog
+      setIsListening(false);
       setParsedFood(response.data);
       setShowConfirmDialog(true);
-      setIsListening(false);
 
     } catch (err) {
       console.error('Voice processing error:', err);

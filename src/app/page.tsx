@@ -195,6 +195,7 @@ export default function Home() {
       {/* Voice Input */}
       <VoiceInput
         isActive={voice.isListening}
+        isProcessing={voice.isProcessing}
         onTranscript={voice.handleTranscript}
         onError={voice.handleVoiceError}
         onClose={voice.stopListening}

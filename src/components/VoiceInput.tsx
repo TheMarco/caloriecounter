@@ -8,25 +8,20 @@ interface VoiceInputProps {
   onError?: (error: string) => void;
   onClose: () => void;
   isActive: boolean;
+  isProcessing?: boolean;
 }
 
-export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceInputProps) {
+export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcessing = false }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSpeechTimeRef = useRef<number>(0);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
-    }
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
     }
     setIsListening(false);
   }, []);
@@ -39,22 +34,6 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
     }
     stopListening();
   }, [transcript, onTranscript, stopListening]);
-
-  const handleSilenceTimeout = useCallback(() => {
-    console.log('Silence timeout reached, processing transcript:', transcript);
-    if (transcript.trim()) {
-      onTranscript(transcript.trim());
-    }
-    stopListening();
-  }, [transcript, onTranscript, stopListening]);
-
-  const resetSilenceTimer = useCallback(() => {
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-    }
-    silenceTimerRef.current = setTimeout(handleSilenceTimeout, 2000); // 2 second silence threshold
-    lastSpeechTimeRef.current = Date.now();
-  }, [handleSilenceTimeout]);
 
   const startListening = useCallback(async () => {
     try {
@@ -69,15 +48,13 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
 
-      recognition.continuous = true;  // Keep listening continuously
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
       recognition.onstart = () => {
         setIsListening(true);
         console.log('Voice recognition started');
-        // Start the silence timer when recognition begins
-        resetSilenceTimer();
       };
 
       recognition.onresult = (event) => {
@@ -93,19 +70,12 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
           }
         }
 
-        const currentTranscript = finalTranscript || interimTranscript;
-        setTranscript(currentTranscript);
+        setTranscript(finalTranscript || interimTranscript);
 
-        // Reset silence timer whenever we get speech input
-        if (currentTranscript.trim()) {
-          resetSilenceTimer();
-        }
-
-        // Don't auto-stop on final transcript anymore - let silence timer handle it
         if (finalTranscript) {
-          console.log('Final transcript received:', finalTranscript);
-          // Just reset the timer, don't stop immediately
-          resetSilenceTimer();
+          console.log('Final transcript:', finalTranscript);
+          onTranscript(finalTranscript.trim());
+          stopListening();
         }
       };
 
@@ -151,7 +121,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
       setError(errorMessage);
       onError?.(errorMessage);
     }
-  }, [onTranscript, onError, stopListening, resetSilenceTimer]);
+  }, [onTranscript, onError, stopListening]);
 
   useEffect(() => {
     if (!isActive) {
@@ -240,16 +210,24 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
             <>
               {/* Microphone Animation */}
               <div className="mb-6">
-                <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all duration-300 ${
-                  isListening ? 'bg-red-500/30 border-2 border-red-400 animate-pulse shadow-lg shadow-red-500/25' : 'bg-white/10 border-2 border-white/20'
-                }`}>
-                  <MicrophoneIconComponent size="xl" className={isListening ? "text-red-300" : "text-white/70"} />
-                </div>
+                {isProcessing ? (
+                  <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all duration-300 bg-blue-500/30 border-2 border-blue-400">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-300"></div>
+                  </div>
+                ) : (
+                  <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isListening ? 'bg-red-500/30 border-2 border-red-400 animate-pulse shadow-lg shadow-red-500/25' : 'bg-white/10 border-2 border-white/20'
+                  }`}>
+                    <MicrophoneIconComponent size="xl" className={isListening ? "text-red-300" : "text-white/70"} />
+                  </div>
+                )}
               </div>
 
               {/* Status */}
               <p className="text-white/80 mb-6 text-lg font-medium">
-                {isListening
+                {isProcessing
+                  ? 'Processing your food...'
+                  : isListening
                   ? 'Listening... Speak now!'
                   : 'Preparing microphone...'}
               </p>
@@ -267,30 +245,32 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive }: VoiceIn
               </p>
 
               {/* Controls */}
-              <div className="flex gap-3 justify-center">
-                {!isListening && (
+              {!isProcessing && (
+                <div className="flex gap-3 justify-center">
+                  {!isListening && (
+                    <button
+                      onClick={startListening}
+                      className="bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-green-300 hover:text-green-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                    >
+                      Start Listening
+                    </button>
+                  )}
+                  {isListening && (
+                    <button
+                      onClick={handleManualStop}
+                      className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                    >
+                      Stop
+                    </button>
+                  )}
                   <button
-                    onClick={startListening}
-                    className="bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-green-300 hover:text-green-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                    onClick={onClose}
+                    className="bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
                   >
-                    Start Listening
+                    Cancel
                   </button>
-                )}
-                {isListening && (
-                  <button
-                    onClick={handleManualStop}
-                    className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
-                  >
-                    Stop
-                  </button>
-                )}
-                <button
-                  onClick={onClose}
-                  className="bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
-                >
-                  Cancel
-                </button>
-              </div>
+                </div>
+              )}
             </>
           )}
         </div>
