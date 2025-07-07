@@ -17,7 +17,7 @@ import { useTextInput } from '@/hooks/useTextInput';
 import { useSettings } from '@/hooks/useSettings';
 import { useTodayEntries } from '@/hooks/useTodayEntries';
 import { updateEntry } from '@/utils/idb';
-import type { Entry } from '@/types';
+import type { Entry, MacroType } from '@/types';
 import {
   HomeIconComponent,
   ChartIconComponent,
@@ -26,6 +26,7 @@ import {
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<MacroType>('calories');
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<Entry | null>(null);
@@ -58,7 +59,8 @@ export default function Home() {
       console.log('🔄 Main page: Triggering entries refresh');
       todayEntries.refreshEntries();
     }
-  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, todayEntries.refreshEntries]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog]);
 
   const handleScan = () => {
     barcode.startScanning();
@@ -192,8 +194,17 @@ export default function Home() {
       {/* Header */}
       <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 transition-theme">
         <div className="max-w-md mx-auto px-6 py-6">
-          <h1 className="text-2xl font-bold text-center text-white">Calorie Counter</h1>
-          <p className="text-white/70 text-center mt-2 text-sm">Track your daily nutrition</p>
+          <div className="flex items-center justify-center space-x-4">
+            <img
+              src="/icons/icon-192.png"
+              alt="Calorie Counter"
+              className="w-16 h-16"
+            />
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-white">Calorie Counter</h1>
+              <p className="text-white/70 text-sm">Track your daily nutrition</p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -219,6 +230,8 @@ export default function Home() {
                 protein: settings.proteinTarget,
               }}
               date={todayEntries.todayDate}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
 
             {/* Quick Add Buttons */}

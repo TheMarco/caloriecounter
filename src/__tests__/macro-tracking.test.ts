@@ -1,5 +1,4 @@
 import { getMacroTotalsForDate, addEntry, clearAllData } from '@/utils/idb';
-import type { Entry } from '@/types';
 
 // Mock IndexedDB
 import 'fake-indexeddb/auto';
@@ -83,7 +82,7 @@ describe('Macro Tracking', () => {
     };
 
     // Add entry without macro data (simulating old entries)
-    await addEntry(entryWithMissingMacros as any);
+    await addEntry(entryWithMissingMacros as Parameters<typeof addEntry>[0]);
 
     const today = new Date().toISOString().slice(0, 10);
     const totals = await getMacroTotalsForDate(today);

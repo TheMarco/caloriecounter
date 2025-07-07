@@ -5,6 +5,7 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  disableDevLogs: true,
   buildExcludes: [/app-build-manifest\.json$/, /react-loadable-manifest\.json$/],
   publicExcludes: ['!noprecache/**/*'],
   runtimeCaching: [

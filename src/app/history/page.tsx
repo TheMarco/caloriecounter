@@ -154,9 +154,6 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        {/* Macro Tabs */}
-        <MacroTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
@@ -197,18 +194,22 @@ export default function HistoryPage() {
         </div>
 
         {/* Chart */}
-        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="p-3 bg-green-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+        <div className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
+          {/* Macro Tabs at top of chart card */}
+          <MacroTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+          <div className="p-6">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="p-3 bg-green-500/20 rounded-2xl">
+                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Daily {getLabel()}</h2>
+                <p className="text-white/60 text-sm">Your {getLabel().toLowerCase()} trends over time</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Daily {getLabel()}</h2>
-              <p className="text-white/60 text-sm">Your {getLabel().toLowerCase()} trends over time</p>
-            </div>
-          </div>
 
           {isLoading ? (
             <div className="h-64 flex items-center justify-center">
@@ -280,40 +281,10 @@ export default function HistoryPage() {
               </ResponsiveContainer>
             </div>
           )}
+          </div>
         </div>
 
-        {/* Insights */}
-        {!isLoading && chartData.length > 0 && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 transition-theme">
-            <h2 className="text-lg font-semibold text-black dark:text-white mb-4">Insights</h2>
-            <div className="space-y-3">
-              {activeTab === 'calories' && currentAverage > 2200 && (
-                <div className="flex items-center space-x-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800/50">
-                  <span className="text-lg">⚠️</span>
-                  <span className="text-sm text-orange-700 dark:text-orange-300">Your average is above 2200 calories per day</span>
-                </div>
-              )}
-              {activeTab === 'calories' && currentAverage < 1500 && daysWithData > 3 && (
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
-                  <span className="text-lg">💡</span>
-                  <span className="text-sm text-blue-700 dark:text-blue-300">Your average is quite low. Make sure you&apos;re eating enough!</span>
-                </div>
-              )}
-              {daysWithData === localData.length && localData.length >= 7 && (
-                <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800/50">
-                  <span className="text-lg">🎉</span>
-                  <span className="text-sm text-green-700 dark:text-green-300">Great consistency! You&apos;ve logged every day.</span>
-                </div>
-              )}
-              {activeTab === 'calories' && currentMax > currentAverage * 1.5 && (
-                <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800/50">
-                  <span className="text-lg">📈</span>
-                  <span className="text-sm text-purple-700 dark:text-purple-300">You had some high-calorie days. Consider balancing with lighter meals.</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+
       </main>
 
       {/* Bottom Navigation */}

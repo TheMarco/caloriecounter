@@ -60,7 +60,7 @@ const MACRO_TABS = [
 
 export function MacroTabs({ activeTab, onTabChange }: MacroTabsProps) {
   return (
-    <div className="flex space-x-1 p-2 bg-black/20 rounded-2xl backdrop-blur-sm border border-white/10 mb-6">
+    <div className="flex bg-black/20 backdrop-blur-sm border-b border-white/10">
       {MACRO_TABS.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
@@ -68,15 +68,18 @@ export function MacroTabs({ activeTab, onTabChange }: MacroTabsProps) {
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
             className={`
-              flex-1 flex items-center justify-center space-x-1 px-2 py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200
+              flex-1 flex items-center justify-center space-x-2 px-3 py-4 font-semibold text-sm transition-all duration-200 relative
               ${isActive
-                ? `${tab.bgColor} ${tab.color} ${tab.borderColor} border-2 shadow-lg`
+                ? `${tab.color} bg-black/30`
                 : 'text-white/60 hover:text-white/80 hover:bg-white/5'
               }
             `}
           >
-            <span className="w-4 h-4 sm:w-5 sm:h-5">{tab.icon}</span>
+            <span className="w-5 h-5">{tab.icon}</span>
             <span className="hidden sm:inline">{tab.label}</span>
+            {isActive && (
+              <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${tab.bgColor.replace('/20', '')}`} />
+            )}
           </button>
         );
       })}

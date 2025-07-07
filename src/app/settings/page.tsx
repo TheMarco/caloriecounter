@@ -11,10 +11,14 @@ import {
   CheckIconComponent,
   InfoIconComponent
 } from '@/components/icons';
+import { exportNutritionData } from '@/utils/csvExport';
 
 export default function Settings() {
   const { settings, isLoading, updateSetting, resetSettings } = useSettings();
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [showLicense, setShowLicense] = useState(false);
+  const [licenseContent, setLicenseContent] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -42,6 +46,35 @@ export default function Settings() {
         alert('Failed to reset settings. Please try again.');
       }
     }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true);
+      await exportNutritionData();
+      alert('Nutrition data exported successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleShowLicense = async () => {
+    try {
+      const response = await fetch('/LICENSE');
+      if (response.ok) {
+        const content = await response.text();
+        setLicenseContent(content);
+      } else {
+        setLicenseContent('License file not found.');
+      }
+    } catch (error) {
+      console.error('Failed to load license:', error);
+      setLicenseContent('Failed to load license file.');
+    }
+    setShowLicense(true);
   };
 
   const handleClearData = () => {
@@ -290,27 +323,41 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* App Info */}
+        {/* About Section */}
         <div className="card-glass card-glass-hover rounded-3xl p-6 mb-8 transition-all duration-300 shadow-2xl">
           <div className="flex items-center space-x-4 mb-6">
             <div className="p-3 bg-purple-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <InfoIconComponent size="lg" className="text-purple-400" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-white">About</h2>
-              <p className="text-white/60 text-sm">Learn more about this app</p>
+              <p className="text-white/60 text-sm">App information and licensing</p>
             </div>
           </div>
+
           <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-4 bg-blue-500/20 rounded-2xl border border-blue-400/30 backdrop-blur-sm">
-              <InfoIconComponent size="sm" className="text-blue-400" />
-              <span className="font-semibold text-blue-300">Calorie Counter PWA v1.0.0</span>
+            <div className="text-center space-y-2">
+              <p className="text-sm text-white/80">
+                Copyright © 2025 by Marco van Hylckama Vlieg
+              </p>
+              <a
+                href="https://ai-created.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors underline"
+              >
+                https://ai-created.com/
+              </a>
             </div>
-            <p className="text-sm text-white/70 font-medium leading-relaxed">
-              A lightning-fast calorie tracking app with barcode scanning and voice input.
-            </p>
+
+            <div className="flex justify-center">
+              <button
+                onClick={handleShowLicense}
+                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 text-purple-300 text-sm font-medium rounded-lg transition-all duration-200"
+              >
+                License
+              </button>
+            </div>
           </div>
         </div>
 
@@ -330,12 +377,23 @@ export default function Settings() {
           </button>
 
           <button
+            onClick={handleExportCSV}
+            disabled={isExporting}
+            className="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 disabled:hover:scale-100 mb-4"
+          >
+            {isExporting ? 'Exporting...' : 'Download Data as CSV'}
+          </button>
+
+          <button
             onClick={handleReset}
             className="w-full bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
           >
             Reset to Defaults
           </button>
         </div>
+
+        {/* Extra padding below reset button */}
+        <div className="pb-8"></div>
       </main>
 
       {/* Bottom Navigation */}
@@ -363,6 +421,30 @@ export default function Settings() {
           </div>
         </div>
       </nav>
+
+      {/* License Overlay */}
+      {showLicense && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="card-glass rounded-3xl p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">License</h2>
+              <button
+                onClick={() => setShowLicense(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200"
+              >
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] bg-black/20 rounded-xl p-4 border border-white/10">
+              <pre className="text-sm text-white/80 whitespace-pre-wrap font-mono leading-relaxed">
+                {licenseContent || 'Loading license...'}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

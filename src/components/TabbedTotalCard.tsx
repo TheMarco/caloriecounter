@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import { MacroTabs } from './MacroTabs';
 import type { TabbedTotalCardProps, MacroType } from '@/types';
 
-export function TabbedTotalCard({ totals, targets, date }: TabbedTotalCardProps) {
-  const [activeTab, setActiveTab] = useState<MacroType>('calories');
+interface TabbedTotalCardWithTabProps extends TabbedTotalCardProps {
+  activeTab: MacroType;
+  onTabChange: (tab: MacroType) => void;
+}
+
+export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange }: TabbedTotalCardWithTabProps) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -73,16 +76,17 @@ export function TabbedTotalCard({ totals, targets, date }: TabbedTotalCardProps)
   const { current, target, percentage, remaining, isOverTarget } = getCurrentData();
 
   return (
-    <div className="card-glass card-glass-hover rounded-3xl p-8 mb-6 transition-all duration-300 shadow-2xl">
-      {/* Date */}
-      <div className="text-center mb-6">
-        <p className="text-sm text-white/60 mb-3 font-medium">
-          {formatDate(date)}
-        </p>
-      </div>
+    <div className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
+      {/* Tabs at top of card */}
+      <MacroTabs activeTab={activeTab} onTabChange={onTabChange} />
 
-      {/* Tabs */}
-      <MacroTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="p-8">
+        {/* Date */}
+        <div className="text-center mb-6">
+          <p className="text-sm text-white/60 mb-3 font-medium">
+            {formatDate(date)}
+          </p>
+        </div>
 
       <div className="text-center">
         {/* Main Total */}
@@ -141,6 +145,7 @@ export function TabbedTotalCard({ totals, targets, date }: TabbedTotalCardProps)
             <div className="text-xs text-white/60 mt-1 font-medium">vs target</div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
