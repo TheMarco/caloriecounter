@@ -27,6 +27,9 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
 
   useEffect(() => {
     if (isActive && inputRef.current) {
+      // Reset input text when dialog opens
+      setInputText('');
+      setSuggestions([]);
       inputRef.current.focus();
     }
   }, [isActive]);

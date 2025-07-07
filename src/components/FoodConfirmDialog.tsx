@@ -20,7 +20,7 @@ export function FoodConfirmDialog({
 }: FoodConfirmDialogProps) {
   const [editedFood, setEditedFood] = useState('');
   const [editedQty, setEditedQty] = useState(0);
-  const [editedQtyString, setEditedQtyString] = useState('0');
+  const [editedQtyString, setEditedQtyString] = useState('');
   const [editedUnit, setEditedUnit] = useState('');
   const [editedKcal, setEditedKcal] = useState(0);
   const [editedFat, setEditedFat] = useState(0);
@@ -72,7 +72,7 @@ export function FoodConfirmDialog({
     if (foodData) {
       setEditedFood(foodData.food);
       setEditedQty(foodData.quantity);
-      setEditedQtyString(foodData.quantity.toString());
+      setEditedQtyString(foodData.quantity === 0 ? '' : foodData.quantity.toString());
       setEditedUnit(foodData.unit);
       setEditedKcal(foodData.kcal || 0);
       setEditedFat(foodData.fat || 0);
@@ -240,10 +240,11 @@ export function FoodConfirmDialog({
               </label>
               <input
                 type="number"
-                value={editedKcal}
-                onChange={(e) => setEditedKcal(Number(e.target.value))}
+                value={editedKcal === 0 ? '' : editedKcal}
+                onChange={(e) => setEditedKcal(e.target.value === '' ? 0 : Number(e.target.value))}
                 className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
                 min="0"
+                placeholder="0"
               />
               <p className="text-xs text-white/50 mt-1">
                 Calories update automatically when you change the quantity

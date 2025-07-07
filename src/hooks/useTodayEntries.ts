@@ -55,6 +55,13 @@ export function useTodayEntries() {
       if (entryToDelete) {
         setEntries(prev => prev.filter(e => e.id !== id));
         setTotal(prev => prev - entryToDelete.kcal);
+        // Update macro totals as well
+        setMacroTotals(prev => ({
+          calories: prev.calories - entryToDelete.kcal,
+          fat: prev.fat - (entryToDelete.fat || 0),
+          carbs: prev.carbs - (entryToDelete.carbs || 0),
+          protein: prev.protein - (entryToDelete.protein || 0),
+        }));
       }
 
       // Delete from IndexedDB
@@ -65,6 +72,12 @@ export function useTodayEntries() {
         if (entryToDelete) {
           setEntries(prev => [...prev, entryToDelete].sort((a, b) => b.ts - a.ts));
           setTotal(prev => prev + entryToDelete.kcal);
+          setMacroTotals(prev => ({
+            calories: prev.calories + entryToDelete.kcal,
+            fat: prev.fat + (entryToDelete.fat || 0),
+            carbs: prev.carbs + (entryToDelete.carbs || 0),
+            protein: prev.protein + (entryToDelete.protein || 0),
+          }));
         }
         throw new Error('Failed to delete entry');
       }

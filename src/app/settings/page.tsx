@@ -21,9 +21,56 @@ export default function Settings() {
   const [licenseContent, setLicenseContent] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
+  // String representations for input fields to allow empty values
+  const [dailyTargetString, setDailyTargetString] = useState('');
+  const [fatTargetString, setFatTargetString] = useState('');
+  const [carbsTargetString, setCarbsTargetString] = useState('');
+  const [proteinTargetString, setProteinTargetString] = useState('');
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Sync string values with settings
+  useEffect(() => {
+    if (!isLoading) {
+      setDailyTargetString(settings.dailyTarget === 0 ? '' : settings.dailyTarget.toString());
+      setFatTargetString(settings.fatTarget === 0 ? '' : settings.fatTarget.toString());
+      setCarbsTargetString(settings.carbsTarget === 0 ? '' : settings.carbsTarget.toString());
+      setProteinTargetString(settings.proteinTarget === 0 ? '' : settings.proteinTarget.toString());
+    }
+  }, [settings, isLoading]);
+
+  // Helper functions to handle input changes
+  const handleDailyTargetChange = (value: string) => {
+    setDailyTargetString(value);
+    const numValue = value === '' ? 0 : parseFloat(value) || 0;
+    updateSetting('dailyTarget', numValue);
+  };
+
+  const handleFatTargetChange = (value: string) => {
+    setFatTargetString(value);
+    const numValue = value === '' ? 0 : parseFloat(value) || 0;
+    updateSetting('fatTarget', numValue);
+  };
+
+  const handleCarbsTargetChange = (value: string) => {
+    setCarbsTargetString(value);
+    const numValue = value === '' ? 0 : parseFloat(value) || 0;
+    updateSetting('carbsTarget', numValue);
+  };
+
+  const handleProteinTargetChange = (value: string) => {
+    setProteinTargetString(value);
+    const numValue = value === '' ? 0 : parseFloat(value) || 0;
+    updateSetting('proteinTarget', numValue);
+  };
+
+  const handleResetToDefaults = () => {
+    if (confirm('Are you sure you want to reset all settings to their default values? This action cannot be undone.')) {
+      resetSettings();
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -156,12 +203,13 @@ export default function Settings() {
               </label>
               <input
                 type="number"
-                value={settings.dailyTarget}
-                onChange={(e) => updateSetting('dailyTarget', Number(e.target.value))}
+                value={dailyTargetString}
+                onChange={(e) => handleDailyTargetChange(e.target.value)}
                 className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
                 min="1000"
                 max="5000"
                 step="50"
+                placeholder="2000"
                 disabled={isLoading}
               />
               <p className="text-sm text-white/50 mt-3 font-medium">
@@ -176,12 +224,13 @@ export default function Settings() {
                 </label>
                 <input
                   type="number"
-                  value={settings.fatTarget}
-                  onChange={(e) => updateSetting('fatTarget', Number(e.target.value))}
+                  value={fatTargetString}
+                  onChange={(e) => handleFatTargetChange(e.target.value)}
                   className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
                   min="20"
                   max="200"
                   step="5"
+                  placeholder="65"
                   disabled={isLoading}
                 />
                 <p className="text-sm text-white/50 mt-2 font-medium">
@@ -195,12 +244,13 @@ export default function Settings() {
                 </label>
                 <input
                   type="number"
-                  value={settings.carbsTarget}
-                  onChange={(e) => updateSetting('carbsTarget', Number(e.target.value))}
+                  value={carbsTargetString}
+                  onChange={(e) => handleCarbsTargetChange(e.target.value)}
                   className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
                   min="50"
                   max="500"
                   step="10"
+                  placeholder="250"
                   disabled={isLoading}
                 />
                 <p className="text-sm text-white/50 mt-2 font-medium">
@@ -214,18 +264,38 @@ export default function Settings() {
                 </label>
                 <input
                   type="number"
-                  value={settings.proteinTarget}
-                  onChange={(e) => updateSetting('proteinTarget', Number(e.target.value))}
+                  value={proteinTargetString}
+                  onChange={(e) => handleProteinTargetChange(e.target.value)}
                   className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
                   min="30"
                   max="300"
                   step="5"
+                  placeholder="100"
                   disabled={isLoading}
                 />
                 <p className="text-sm text-white/50 mt-2 font-medium">
                   Recommended: 46-56g
                 </p>
               </div>
+            </div>
+
+            {/* Reset to Defaults Button */}
+            <div className="pt-4 border-t border-white/20">
+              <button
+                onClick={handleResetToDefaults}
+                disabled={isLoading}
+                className="w-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Reset to Defaults</span>
+                </div>
+              </button>
+              <p className="text-sm text-white/50 mt-2 text-center">
+                This will reset all nutrition targets to their recommended default values
+              </p>
             </div>
           </div>
         </div>
