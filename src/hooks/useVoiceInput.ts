@@ -54,7 +54,7 @@ export function useVoiceInput() {
     }
   };
 
-  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number }) => {
+  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number; fat?: number; carbs?: number; protein?: number }) => {
     try {
       setIsProcessing(true);
 
@@ -64,6 +64,9 @@ export function useVoiceInput() {
         qty: data.qty,
         unit: data.unit,
         kcal: data.kcal,
+        fat: data.fat || 0,
+        carbs: data.carbs || 0,
+        protein: data.protein || 0,
         method: 'voice',
         confidence: 0.9, // High confidence since user confirmed
       });

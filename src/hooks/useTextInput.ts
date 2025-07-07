@@ -28,7 +28,7 @@ export function useTextInput() {
     setIsActive(false);
   };
 
-  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number }) => {
+  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number; fat?: number; carbs?: number; protein?: number }) => {
     try {
       setIsProcessing(true);
 
@@ -38,6 +38,9 @@ export function useTextInput() {
         qty: data.qty,
         unit: data.unit,
         kcal: data.kcal,
+        fat: data.fat || 0,
+        carbs: data.carbs || 0,
+        protein: data.protein || 0,
         method: 'text',
         confidence: 0.8, // Good confidence since user confirmed
       });

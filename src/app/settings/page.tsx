@@ -103,7 +103,7 @@ export default function Settings() {
           </div>
         )}
 
-        {/* Daily Target */}
+        {/* Daily Targets */}
         <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
           <div className="flex items-center space-x-4 mb-6">
             <div className="p-3 bg-blue-500/20 rounded-2xl">
@@ -112,11 +112,11 @@ export default function Settings() {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">Daily Calorie Target</h2>
-              <p className="text-white/60 text-sm">Set your daily calorie goal</p>
+              <h2 className="text-xl font-semibold text-white">Daily Nutrition Targets</h2>
+              <p className="text-white/60 text-sm">Set your daily nutrition goals</p>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-white/80 mb-3">
                 Target Calories per Day
@@ -134,6 +134,65 @@ export default function Settings() {
               <p className="text-sm text-white/50 mt-3 font-medium">
                 Recommended: 1,800-2,400 calories for most adults
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-white/80 mb-3">
+                  Fat Target (grams)
+                </label>
+                <input
+                  type="number"
+                  value={settings.fatTarget}
+                  onChange={(e) => updateSetting('fatTarget', Number(e.target.value))}
+                  className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
+                  min="20"
+                  max="200"
+                  step="5"
+                  disabled={isLoading}
+                />
+                <p className="text-sm text-white/50 mt-2 font-medium">
+                  Recommended: 44-78g
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-white/80 mb-3">
+                  Carbs Target (grams)
+                </label>
+                <input
+                  type="number"
+                  value={settings.carbsTarget}
+                  onChange={(e) => updateSetting('carbsTarget', Number(e.target.value))}
+                  className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
+                  min="50"
+                  max="500"
+                  step="10"
+                  disabled={isLoading}
+                />
+                <p className="text-sm text-white/50 mt-2 font-medium">
+                  Recommended: 225-325g
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-white/80 mb-3">
+                  Protein Target (grams)
+                </label>
+                <input
+                  type="number"
+                  value={settings.proteinTarget}
+                  onChange={(e) => updateSetting('proteinTarget', Number(e.target.value))}
+                  className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
+                  min="30"
+                  max="300"
+                  step="5"
+                  disabled={isLoading}
+                />
+                <p className="text-sm text-white/50 mt-2 font-medium">
+                  Recommended: 46-56g
+                </p>
+              </div>
             </div>
           </div>
         </div>

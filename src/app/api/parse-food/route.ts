@@ -33,6 +33,9 @@ Respond with this exact JSON structure:
   "quantity": number,
   "unit": "g|ml|cup|tbsp|tsp|piece|slice",
   "kcal": total_calories_for_this_serving,
+  "fat": total_fat_grams_for_this_serving,
+  "carbs": total_carbs_grams_for_this_serving,
+  "protein": total_protein_grams_for_this_serving,
   "notes": "any_additional_info"
 }
 
@@ -96,6 +99,9 @@ IMPORTANT RULES:
           quantity: Number(parsed.quantity),
           unit: parsed.unit,
           kcal: parsed.kcal ? Number(parsed.kcal) : undefined,
+          fat: parsed.fat ? Math.round(Number(parsed.fat) * 10) / 10 : undefined,
+          carbs: parsed.carbs ? Math.round(Number(parsed.carbs) * 10) / 10 : undefined,
+          protein: parsed.protein ? Math.round(Number(parsed.protein) * 10) / 10 : undefined,
           notes: parsed.notes,
         },
       });

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getDailyTotals } from '@/utils/idb';
+import { getDailyMacroTotals } from '@/utils/idb';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { DateRange } from '@/types';
+import { MacroTabs } from '@/components/MacroTabs';
+import type { DateRange, MacroType, MacroTotals } from '@/types';
 import {
   HomeIconComponent,
   ChartIconComponent,
@@ -13,7 +14,8 @@ import {
 
 export default function HistoryPage() {
   const [selectedRange, setSelectedRange] = useState<DateRange>('7d');
-  const [localData, setLocalData] = useState<Array<{ date: string; total: number }>>([]);
+  const [activeTab, setActiveTab] = useState<MacroType>('calories');
+  const [localData, setLocalData] = useState<Array<{ date: string; totals: MacroTotals }>>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   
   // Only using local IndexedDB data
@@ -24,7 +26,7 @@ export default function HistoryPage() {
       try {
         setIsLoadingLocal(true);
         const days = selectedRange === '7d' ? 7 : selectedRange === '30d' ? 30 : 90;
-        const data = await getDailyTotals(days);
+        const data = await getDailyMacroTotals(days);
         setLocalData(data);
       } catch (error) {
         console.error('Failed to load local data:', error);
@@ -39,14 +41,66 @@ export default function HistoryPage() {
   // Use local data for now (cloud data when auth is implemented)
   const chartData = localData.map(item => ({
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    calories: item.total,
+    calories: item.totals.calories,
+    fat: item.totals.fat,
+    carbs: item.totals.carbs,
+    protein: item.totals.protein,
     fullDate: item.date,
   }));
 
-  const totalCalories = localData.reduce((sum, item) => sum + item.total, 0);
-  const averageCalories = localData.length > 0 ? Math.round(totalCalories / localData.length) : 0;
-  const maxCalories = Math.max(...localData.map(item => item.total), 0);
-  const daysWithData = localData.filter(item => item.total > 0).length;
+  const getCurrentValues = () => {
+    const values = localData.map(item => item.totals[activeTab]);
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const average = localData.length > 0 ? Math.round(total / localData.length) : 0;
+    const max = Math.max(...values, 0);
+    const daysWithData = values.filter(value => value > 0).length;
+    return { total, average, max, daysWithData };
+  };
+
+  const { total: currentTotal, average: currentAverage, max: currentMax, daysWithData } = getCurrentValues();
+
+  const getUnit = () => {
+    switch (activeTab) {
+      case 'calories':
+        return 'calories';
+      case 'fat':
+      case 'carbs':
+      case 'protein':
+        return 'grams';
+      default:
+        return '';
+    }
+  };
+
+  const getLabel = () => {
+    switch (activeTab) {
+      case 'calories':
+        return 'Calories';
+      case 'fat':
+        return 'Fat';
+      case 'carbs':
+        return 'Carbs';
+      case 'protein':
+        return 'Protein';
+      default:
+        return '';
+    }
+  };
+
+  const getColor = () => {
+    switch (activeTab) {
+      case 'calories':
+        return '#3b82f6'; // blue
+      case 'fat':
+        return '#10b981'; // green
+      case 'carbs':
+        return '#f59e0b'; // orange
+      case 'protein':
+        return '#8b5cf6'; // purple
+      default:
+        return '#3b82f6';
+    }
+  };
 
   const isLoading = isLoadingLocal;
 
@@ -100,12 +154,15 @@ export default function HistoryPage() {
           </div>
         </div>
 
+        {/* Macro Tabs */}
+        <MacroTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-400">
-                {isLoading ? '...' : averageCalories.toLocaleString()}
+                {isLoading ? '...' : activeTab === 'calories' ? currentAverage.toLocaleString() : currentAverage.toFixed(1)}
               </div>
               <div className="text-sm text-white/60 mt-1">Daily Average</div>
             </div>
@@ -114,7 +171,7 @@ export default function HistoryPage() {
           <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-400">
-                {isLoading ? '...' : maxCalories.toLocaleString()}
+                {isLoading ? '...' : activeTab === 'calories' ? currentMax.toLocaleString() : currentMax.toFixed(1)}
               </div>
               <div className="text-sm text-white/60 mt-1">Highest Day</div>
             </div>
@@ -123,9 +180,9 @@ export default function HistoryPage() {
           <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-400">
-                {isLoading ? '...' : totalCalories.toLocaleString()}
+                {isLoading ? '...' : activeTab === 'calories' ? currentTotal.toLocaleString() : currentTotal.toFixed(1)}
               </div>
-              <div className="text-sm text-white/60 mt-1">Total Calories</div>
+              <div className="text-sm text-white/60 mt-1">Total {getLabel()}</div>
             </div>
           </div>
 
@@ -148,8 +205,8 @@ export default function HistoryPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">Daily Calories</h2>
-              <p className="text-white/60 text-sm">Your calorie trends over time</p>
+              <h2 className="text-xl font-semibold text-white">Daily {getLabel()}</h2>
+              <p className="text-white/60 text-sm">Your {getLabel().toLowerCase()} trends over time</p>
             </div>
           </div>
 
@@ -198,7 +255,10 @@ export default function HistoryPage() {
                       }
                       return label;
                     }}
-                    formatter={(value: number) => [`${value.toLocaleString()} calories`, 'Calories']}
+                    formatter={(value: number) => [
+                      `${activeTab === 'calories' ? value.toLocaleString() : value.toFixed(1)} ${getUnit()}`,
+                      getLabel()
+                    ]}
                     contentStyle={{
                       backgroundColor: 'var(--card-background)',
                       border: '1px solid var(--card-border)',
@@ -210,11 +270,11 @@ export default function HistoryPage() {
                   />
                   <Line
                     type="monotone"
-                    dataKey="calories"
-                    stroke="#3b82f6"
+                    dataKey={activeTab}
+                    stroke={getColor()}
                     strokeWidth={3}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 5 }}
-                    activeDot={{ r: 7, stroke: '#3b82f6', strokeWidth: 3, fill: '#ffffff' }}
+                    dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
+                    activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -227,13 +287,13 @@ export default function HistoryPage() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 p-6 transition-theme">
             <h2 className="text-lg font-semibold text-black dark:text-white mb-4">Insights</h2>
             <div className="space-y-3">
-              {averageCalories > 2200 && (
+              {activeTab === 'calories' && currentAverage > 2200 && (
                 <div className="flex items-center space-x-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800/50">
                   <span className="text-lg">⚠️</span>
                   <span className="text-sm text-orange-700 dark:text-orange-300">Your average is above 2200 calories per day</span>
                 </div>
               )}
-              {averageCalories < 1500 && daysWithData > 3 && (
+              {activeTab === 'calories' && currentAverage < 1500 && daysWithData > 3 && (
                 <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
                   <span className="text-lg">💡</span>
                   <span className="text-sm text-blue-700 dark:text-blue-300">Your average is quite low. Make sure you&apos;re eating enough!</span>
@@ -245,7 +305,7 @@ export default function HistoryPage() {
                   <span className="text-sm text-green-700 dark:text-green-300">Great consistency! You&apos;ve logged every day.</span>
                 </div>
               )}
-              {maxCalories > averageCalories * 1.5 && (
+              {activeTab === 'calories' && currentMax > currentAverage * 1.5 && (
                 <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800/50">
                   <span className="text-lg">📈</span>
                   <span className="text-sm text-purple-700 dark:text-purple-300">You had some high-calorie days. Consider balancing with lighter meals.</span>

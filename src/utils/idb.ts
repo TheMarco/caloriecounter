@@ -1,7 +1,7 @@
 // IndexedDB wrapper using idb-keyval for local-first storage
 import { get, set, del, keys, clear } from 'idb-keyval';
 import { createId } from '@paralleldrive/cuid2';
-import type { Entry } from '@/types';
+import type { Entry, MacroTotals } from '@/types';
 
 // Key generators
 export const todayKey = (): string => new Date().toISOString().slice(0, 10);
@@ -101,23 +101,58 @@ export const getTotalCaloriesForDate = async (date: string): Promise<number> => 
   return entries.reduce((total, entry) => total + entry.kcal, 0);
 };
 
+export const getMacroTotalsForDate = async (date: string): Promise<MacroTotals> => {
+  const entries = await getEntriesByDate(date);
+  return entries.reduce((totals, entry) => ({
+    calories: totals.calories + entry.kcal,
+    fat: totals.fat + (entry.fat || 0),
+    carbs: totals.carbs + (entry.carbs || 0),
+    protein: totals.protein + (entry.protein || 0),
+  }), {
+    calories: 0,
+    fat: 0,
+    carbs: 0,
+    protein: 0,
+  });
+};
+
 export const getTodayTotal = async (): Promise<number> => {
   return await getTotalCaloriesForDate(todayKey());
+};
+
+export const getTodayMacroTotals = async (): Promise<MacroTotals> => {
+  return await getMacroTotalsForDate(todayKey());
 };
 
 export const getDailyTotals = async (days: number): Promise<Array<{ date: string; total: number }>> => {
   const results: Array<{ date: string; total: number }> = [];
   const today = new Date();
-  
+
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().slice(0, 10);
-    
+
     const total = await getTotalCaloriesForDate(dateStr);
     results.push({ date: dateStr, total });
   }
-  
+
+  return results.reverse(); // Oldest first for charts
+};
+
+export const getDailyMacroTotals = async (days: number): Promise<Array<{ date: string; totals: MacroTotals }>> => {
+  const results: Array<{ date: string; totals: MacroTotals }> = [];
+  const today = new Date();
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().slice(0, 10);
+
+    const totals = await getMacroTotalsForDate(dateStr);
+    results.push({ date: dateStr, totals });
+  }
+
   return results.reverse(); // Oldest first for charts
 };
 

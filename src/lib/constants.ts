@@ -5,6 +5,18 @@ export const DEFAULT_CALORIE_TARGET = 2000;
 export const MIN_CALORIE_TARGET = 1000;
 export const MAX_CALORIE_TARGET = 5000;
 
+// Daily macro targets (in grams)
+export const DEFAULT_FAT_TARGET = 65;      // ~30% of 2000 calories
+export const DEFAULT_CARBS_TARGET = 250;   // ~50% of 2000 calories
+export const DEFAULT_PROTEIN_TARGET = 100; // ~20% of 2000 calories
+
+export const MIN_FAT_TARGET = 20;
+export const MAX_FAT_TARGET = 200;
+export const MIN_CARBS_TARGET = 50;
+export const MAX_CARBS_TARGET = 500;
+export const MIN_PROTEIN_TARGET = 30;
+export const MAX_PROTEIN_TARGET = 300;
+
 // Date ranges for history view
 export const DATE_RANGES = {
   '7d': { label: '7 Days', days: 7 },

@@ -8,6 +8,9 @@ export type Entry = {
   qty: number;
   unit: string;
   kcal: number;
+  fat: number;       // grams of fat
+  carbs: number;     // grams of carbohydrates
+  protein: number;   // grams of protein
   method: 'barcode' | 'voice' | 'text';
   confidence?: number;
 };
@@ -26,6 +29,9 @@ export type BarcodeResponse = {
   data?: {
     food: string;
     kcal: number;
+    fat: number;
+    carbs: number;
+    protein: number;
     unit: string;
     serving_size?: number;
   };
@@ -39,6 +45,9 @@ export type ParseFoodResponse = {
     quantity: number;
     unit: string;
     kcal?: number;
+    fat?: number;
+    carbs?: number;
+    protein?: number;
     notes?: string;
   };
   error?: string;
@@ -73,6 +82,29 @@ export type EntryListProps = {
 export type TotalCardProps = {
   total: number;
   target?: number;
+  date: string;
+};
+
+// Macro tracking types
+export type MacroType = 'calories' | 'fat' | 'carbs' | 'protein';
+
+export type MacroTotals = {
+  calories: number;
+  fat: number;
+  carbs: number;
+  protein: number;
+};
+
+export type MacroTargets = {
+  calories: number;
+  fat: number;
+  carbs: number;
+  protein: number;
+};
+
+export type TabbedTotalCardProps = {
+  totals: MacroTotals;
+  targets: MacroTargets;
   date: string;
 };
 

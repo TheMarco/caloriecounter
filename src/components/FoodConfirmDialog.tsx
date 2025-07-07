@@ -7,7 +7,7 @@ interface FoodConfirmDialogProps {
   isOpen: boolean;
   foodData: ParseFoodResponse['data'] | null;
   isLoading: boolean;
-  onConfirm: (data: { food: string; qty: number; unit: string; kcal: number }) => void;
+  onConfirm: (data: { food: string; qty: number; unit: string; kcal: number; fat?: number; carbs?: number; protein?: number }) => void;
   onCancel: () => void;
 }
 
@@ -23,10 +23,16 @@ export function FoodConfirmDialog({
   const [editedQtyString, setEditedQtyString] = useState('0');
   const [editedUnit, setEditedUnit] = useState('');
   const [editedKcal, setEditedKcal] = useState(0);
+  const [editedFat, setEditedFat] = useState(0);
+  const [editedCarbs, setEditedCarbs] = useState(0);
+  const [editedProtein, setEditedProtein] = useState(0);
   const [originalData, setOriginalData] = useState<{
     quantity: number;
     unit: string;
     kcal: number;
+    fat?: number;
+    carbs?: number;
+    protein?: number;
   } | null>(null);
 
   // Unit conversion function
@@ -69,26 +75,43 @@ export function FoodConfirmDialog({
       setEditedQtyString(foodData.quantity.toString());
       setEditedUnit(foodData.unit);
       setEditedKcal(foodData.kcal || 0);
+      setEditedFat(foodData.fat || 0);
+      setEditedCarbs(foodData.carbs || 0);
+      setEditedProtein(foodData.protein || 0);
 
       // Store original data for conversions
       setOriginalData({
         quantity: foodData.quantity,
         unit: foodData.unit,
         kcal: foodData.kcal || 0,
+        fat: foodData.fat || 0,
+        carbs: foodData.carbs || 0,
+        protein: foodData.protein || 0,
       });
     }
   }, [foodData]);
 
-  // Recalculate calories when quantity or unit changes
+  // Recalculate calories and macros when quantity or unit changes
   useEffect(() => {
     if (originalData && originalData.quantity > 0) {
-      // Convert current quantity to original units to calculate calories
+      // Convert current quantity to original units to calculate nutrition
       const originalEquivalentQty = convertUnits(editedQty, editedUnit, originalData.unit);
-      const kcalPerOriginalUnit = originalData.kcal / originalData.quantity;
-      const newKcal = Math.round(kcalPerOriginalUnit * originalEquivalentQty);
+      const ratio = originalEquivalentQty / originalData.quantity;
+
+      const newKcal = Math.round(originalData.kcal * ratio);
+      const newFat = Math.round((originalData.fat || 0) * ratio * 10) / 10;
+      const newCarbs = Math.round((originalData.carbs || 0) * ratio * 10) / 10;
+      const newProtein = Math.round((originalData.protein || 0) * ratio * 10) / 10;
+
       setEditedKcal(Math.max(0, newKcal));
+      setEditedFat(Math.max(0, newFat));
+      setEditedCarbs(Math.max(0, newCarbs));
+      setEditedProtein(Math.max(0, newProtein));
     } else if (editedQty === 0) {
       setEditedKcal(0);
+      setEditedFat(0);
+      setEditedCarbs(0);
+      setEditedProtein(0);
     }
   }, [editedQty, editedUnit, originalData]);
 
@@ -112,6 +135,9 @@ export function FoodConfirmDialog({
       qty: editedQty,
       unit: editedUnit,
       kcal: editedKcal,
+      fat: editedFat,
+      carbs: editedCarbs,
+      protein: editedProtein,
     });
   };
 

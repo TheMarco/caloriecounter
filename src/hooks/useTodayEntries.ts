@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getTodayEntries, deleteEntry, getTodayTotal, todayKey } from '@/utils/idb';
-import type { Entry } from '@/types';
+import { getTodayEntries, deleteEntry, getTodayTotal, getTodayMacroTotals, todayKey } from '@/utils/idb';
+import type { Entry, MacroTotals } from '@/types';
 
 export function useTodayEntries() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [total, setTotal] = useState<number>(0);
+  const [macroTotals, setMacroTotals] = useState<MacroTotals>({
+    calories: 0,
+    fat: 0,
+    carbs: 0,
+    protein: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,14 +27,16 @@ export function useTodayEntries() {
       }
       setError(null);
 
-      const [todayEntries, todayTotal] = await Promise.all([
+      const [todayEntries, todayTotal, todayMacroTotals] = await Promise.all([
         getTodayEntries(),
         getTodayTotal(),
+        getTodayMacroTotals(),
       ]);
 
-      console.log('📊 useTodayEntries: Loaded', todayEntries.length, 'entries, total:', todayTotal);
+      console.log('📊 useTodayEntries: Loaded', todayEntries.length, 'entries, total:', todayTotal, 'macros:', todayMacroTotals);
       setEntries(todayEntries);
       setTotal(todayTotal);
+      setMacroTotals(todayMacroTotals);
     } catch (err) {
       console.error('❌ useTodayEntries: Failed to load entries:', err);
       setError(err instanceof Error ? err.message : 'Failed to load entries');
@@ -102,6 +110,7 @@ export function useTodayEntries() {
   return {
     entries,
     total,
+    macroTotals,
     isLoading,
     isRefreshing,
     error,

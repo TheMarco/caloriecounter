@@ -58,6 +58,9 @@ Respond with ONLY a JSON object in this exact format:
 {
   "food": "Product name",
   "kcal": number (calories per serving),
+  "fat": number (grams of fat per serving),
+  "carbs": number (grams of carbohydrates per serving),
+  "protein": number (grams of protein per serving),
   "unit": "ml" or "g",
   "serving_size": number (typical serving size)
 }
@@ -116,13 +119,16 @@ NEVER give results like 533 calories for 355ml beer - that's physically impossib
     console.log('Parsed nutrition data:', nutritionData);
 
     // Validate the response structure
-    if (!nutritionData.food || !nutritionData.kcal || !nutritionData.unit || !nutritionData.serving_size) {
+    if (!nutritionData.food || !nutritionData.kcal || !nutritionData.fat || !nutritionData.carbs || !nutritionData.protein || !nutritionData.unit || !nutritionData.serving_size) {
       throw new Error('Incomplete nutritional data from OpenAI');
     }
 
     const finalResult = {
       food: nutritionData.food,
       kcal: Math.round(nutritionData.kcal),
+      fat: Math.round(nutritionData.fat * 10) / 10, // Round to 1 decimal place
+      carbs: Math.round(nutritionData.carbs * 10) / 10,
+      protein: Math.round(nutritionData.protein * 10) / 10,
       unit: nutritionData.unit,
       serving_size: Math.round(nutritionData.serving_size),
     };

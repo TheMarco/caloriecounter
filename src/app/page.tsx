@@ -9,11 +9,12 @@ import { FoodConfirmDialog } from '@/components/FoodConfirmDialog';
 import { EditEntryDialog } from '@/components/EditEntryDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AddFab } from '@/components/AddFab';
-import { TotalCard } from '@/components/TotalCard';
+import { TabbedTotalCard } from '@/components/TabbedTotalCard';
 import { EntryList } from '@/components/EntryList';
 import { useBarcode } from '@/hooks/useBarcode';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useTextInput } from '@/hooks/useTextInput';
+import { useSettings } from '@/hooks/useSettings';
 import { useTodayEntries } from '@/hooks/useTodayEntries';
 import { updateEntry } from '@/utils/idb';
 import type { Entry } from '@/types';
@@ -33,6 +34,7 @@ export default function Home() {
   const voice = useVoiceInput();
   const textInput = useTextInput();
   const todayEntries = useTodayEntries();
+  const { settings } = useSettings();
 
   useEffect(() => {
     const loadData = async () => {
@@ -117,11 +119,25 @@ export default function Home() {
   const handleSaveEdit = async (updatedEntry: Entry) => {
     try {
       setIsEditLoading(true);
+
+      // Calculate proportional macro values if quantity changed
+      const originalEntry = editingEntry;
+      if (originalEntry && originalEntry.qty !== updatedEntry.qty) {
+        const ratio = updatedEntry.qty / originalEntry.qty;
+        updatedEntry.kcal = Math.round(originalEntry.kcal * ratio);
+        updatedEntry.fat = Math.round((originalEntry.fat || 0) * ratio * 10) / 10;
+        updatedEntry.carbs = Math.round((originalEntry.carbs || 0) * ratio * 10) / 10;
+        updatedEntry.protein = Math.round((originalEntry.protein || 0) * ratio * 10) / 10;
+      }
+
       await updateEntry(updatedEntry.id, {
         food: updatedEntry.food,
         qty: updatedEntry.qty,
         unit: updatedEntry.unit,
         kcal: updatedEntry.kcal,
+        fat: updatedEntry.fat || 0,
+        carbs: updatedEntry.carbs || 0,
+        protein: updatedEntry.protein || 0,
       });
       setEditingEntry(null);
       // Refresh entries to show the updated data
@@ -194,8 +210,14 @@ export default function Home() {
         {!isLoading && (
           <>
             {/* Today's Total Card */}
-            <TotalCard
-              total={todayEntries.total}
+            <TabbedTotalCard
+              totals={todayEntries.macroTotals}
+              targets={{
+                calories: settings.dailyTarget,
+                fat: settings.fatTarget,
+                carbs: settings.carbsTarget,
+                protein: settings.proteinTarget,
+              }}
               date={todayEntries.todayDate}
             />
 

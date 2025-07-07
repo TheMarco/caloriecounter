@@ -4,11 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 
 export interface AppSettings {
   dailyTarget: number;
+  fatTarget: number;
+  carbsTarget: number;
+  proteinTarget: number;
   units: 'metric' | 'imperial';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   dailyTarget: 2000,
+  fatTarget: 65,
+  carbsTarget: 250,
+  proteinTarget: 100,
   units: 'metric',
 };
 

@@ -10,7 +10,7 @@ export function useBarcode() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [parsedFood, setParsedFood] = useState<{ food: string; quantity: number; unit: string; kcal: number; notes?: string } | null>(null);
+  const [parsedFood, setParsedFood] = useState<{ food: string; quantity: number; unit: string; kcal: number; fat?: number; carbs?: number; protein?: number; notes?: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const startScanning = () => {
@@ -40,8 +40,8 @@ export function useBarcode() {
         throw new Error(response.error || 'Product not found');
       }
 
-      const { food, kcal, unit, serving_size } = response.data;
-      console.log('📦 Product data:', { food, kcal, unit, serving_size });
+      const { food, kcal, fat, carbs, protein, unit, serving_size } = response.data;
+      console.log('📦 Product data:', { food, kcal, fat, carbs, protein, unit, serving_size });
 
       // Stop scanning and show confirmation dialog
       stopScanning();
@@ -52,6 +52,9 @@ export function useBarcode() {
         quantity: serving_size || 100,
         unit,
         kcal: Math.round(kcal), // Use calories as-is from barcode API (already calculated for serving)
+        fat: fat || 0,
+        carbs: carbs || 0,
+        protein: protein || 0,
         notes: `Scanned product: ${food}`
       };
 
@@ -70,7 +73,7 @@ export function useBarcode() {
     }
   };
 
-  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number }) => {
+  const handleConfirmFood = async (data: { food: string; qty: number; unit: string; kcal: number; fat?: number; carbs?: number; protein?: number }) => {
     try {
       setIsProcessing(true);
 
@@ -80,6 +83,9 @@ export function useBarcode() {
         qty: data.qty,
         unit: data.unit,
         kcal: data.kcal,
+        fat: data.fat || 0,
+        carbs: data.carbs || 0,
+        protein: data.protein || 0,
         method: 'barcode' as const,
         confidence: 1.0,
       };
