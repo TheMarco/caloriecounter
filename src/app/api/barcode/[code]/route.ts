@@ -1,6 +1,7 @@
 // Barcode lookup API route
 import { NextRequest, NextResponse } from 'next/server';
 import type { BarcodeResponse } from '@/types';
+import OpenAI from 'openai';
 
 export async function GET(
   request: NextRequest,
@@ -17,114 +18,88 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // Try OpenFoodFacts API first
-    const openFoodFactsUrl = `https://world.openfoodfacts.org/api/v0/product/${code}.json`;
-    
-    const response = await fetch(openFoodFactsUrl, {
-      headers: {
-        'User-Agent': 'CalorieCounter/1.0 (https://caloriecounter.app)',
-      },
-    });
+    // First try to get product name from OpenFoodFacts
+    let productName = 'Unknown Product';
 
-    if (!response.ok) {
-      throw new Error('OpenFoodFacts API error');
-    }
-
-    const data = await response.json();
-
-    if (data.status === 1 && data.product) {
-      const product = data.product;
-      
-      // Extract nutritional information
-      const nutriments = product.nutriments || {};
-      const energyKcal = nutriments['energy-kcal_100g'] || 
-                        nutriments['energy-kcal'] || 
-                        (nutriments['energy_100g'] ? Math.round(nutriments['energy_100g'] / 4.184) : null);
-
-      if (!energyKcal) {
-        return NextResponse.json<BarcodeResponse>({
-          success: false,
-          error: 'No calorie information available for this product',
-        }, { status: 404 });
-      }
-
-      // Get reasonable serving size
-      const productName = (product.product_name || product.product_name_en || '').toLowerCase();
-      const categories = (product.categories || '').toLowerCase();
-
-      // Extract package size info
-      const packageQuantity = product.quantity || '';
-      const servingSizeRaw = product.serving_size || product.serving_quantity;
-
-      let servingSize = 100; // Default fallback
-      let unit = 'g';
-
-      // Smart serving size detection based on product type
-      if (categories.includes('beverages') || categories.includes('drinks') ||
-          productName.includes('drink') || productName.includes('soda') ||
-          productName.includes('juice') || productName.includes('water') ||
-          productName.includes('cola') || productName.includes('coke')) {
-
-        // For beverages, try to detect can/bottle size
-        unit = 'ml';
-
-        if (packageQuantity.includes('330') || packageQuantity.includes('33cl')) {
-          servingSize = 330; // Standard can
-        } else if (packageQuantity.includes('250') || packageQuantity.includes('25cl')) {
-          servingSize = 250; // Small can/bottle
-        } else if (packageQuantity.includes('500') || packageQuantity.includes('50cl')) {
-          servingSize = 500; // Standard bottle
-        } else if (packageQuantity.includes('1.5') || packageQuantity.includes('1,5')) {
-          servingSize = 250; // Serving from large bottle
-        } else if (packageQuantity.includes('2l') || packageQuantity.includes('2L')) {
-          servingSize = 250; // Serving from large bottle
-        } else {
-          // Try to parse serving size, default to 250ml for beverages
-          if (servingSizeRaw) {
-            const parsed = typeof servingSizeRaw === 'string' ?
-              parseFloat(servingSizeRaw.replace(/[^\d.]/g, '')) : servingSizeRaw;
-            servingSize = parsed && parsed > 0 && parsed <= 1000 ? parsed : 250;
-          } else {
-            servingSize = 250; // Default beverage serving
-          }
-        }
-
-      } else {
-        // For food items, use serving size if reasonable, otherwise default
-        unit = 'g';
-
-        if (servingSizeRaw) {
-          const parsed = typeof servingSizeRaw === 'string' ?
-            parseFloat(servingSizeRaw.replace(/[^\d.]/g, '')) : servingSizeRaw;
-
-          // Use serving size if it's reasonable (between 10g and 500g)
-          if (parsed && parsed >= 10 && parsed <= 500) {
-            servingSize = parsed;
-          } else if (parsed && parsed > 500) {
-            // If serving size is too large, use a reasonable portion
-            servingSize = Math.min(parsed / 4, 150); // Quarter of package or 150g max
-          } else {
-            servingSize = 100; // Default food serving
-          }
-        }
-      }
-
-      return NextResponse.json<BarcodeResponse>({
-        success: true,
-        data: {
-          food: product.product_name || product.product_name_en || 'Unknown Product',
-          kcal: Math.round(energyKcal),
-          unit,
-          serving_size: Math.round(servingSize),
+    try {
+      const openFoodFactsUrl = `https://world.openfoodfacts.org/api/v0/product/${code}.json`;
+      const response = await fetch(openFoodFactsUrl, {
+        headers: {
+          'User-Agent': 'CalorieCounter/1.0 (https://caloriecounter.app)',
         },
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 1 && data.product) {
+          productName = data.product.product_name ||
+                      data.product.product_name_en ||
+                      data.product.brands ||
+                      'Unknown Product';
+        }
+      }
+    } catch {
+      console.log('OpenFoodFacts lookup failed, using OpenAI with barcode only');
     }
 
-    // If OpenFoodFacts doesn't have the product, return not found
+    // Use OpenAI to get accurate nutritional information
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const prompt = `You are a nutrition expert. I scanned a barcode (${code}) for the product: "${productName}".
+
+Please provide accurate nutritional information for this product with a typical serving size.
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "food": "Product name",
+  "kcal": number (calories per serving),
+  "unit": "g" or "ml",
+  "serving_size": number (typical serving size)
+}
+
+For serving sizes, use realistic portions:
+- Condiments (mayo, ketchup): 1 tablespoon (15g)
+- Beverages: standard can/bottle size (330ml can, 250ml glass)
+- Snacks: single serving portion
+- Main foods: typical meal portion
+
+Make sure the calories match the serving size (not per 100g).`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 200,
+    });
+
+    const responseText = completion.choices[0]?.message?.content?.trim();
+    if (!responseText) {
+      throw new Error('No response from OpenAI');
+    }
+
+    let nutritionData;
+    try {
+      nutritionData = JSON.parse(responseText);
+    } catch {
+      throw new Error('Invalid response format from OpenAI');
+    }
+
+    // Validate the response structure
+    if (!nutritionData.food || !nutritionData.kcal || !nutritionData.unit || !nutritionData.serving_size) {
+      throw new Error('Incomplete nutritional data from OpenAI');
+    }
+
     return NextResponse.json<BarcodeResponse>({
-      success: false,
-      error: 'Product not found in database',
-    }, { status: 404 });
+      success: true,
+      data: {
+        food: nutritionData.food,
+        kcal: Math.round(nutritionData.kcal),
+        unit: nutritionData.unit,
+        serving_size: Math.round(nutritionData.serving_size),
+      },
+    });
 
   } catch (error) {
     console.error('Barcode lookup error:', error);

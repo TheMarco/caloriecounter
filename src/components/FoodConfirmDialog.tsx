@@ -23,7 +23,43 @@ export function FoodConfirmDialog({
   const [editedQtyString, setEditedQtyString] = useState('0');
   const [editedUnit, setEditedUnit] = useState('');
   const [editedKcal, setEditedKcal] = useState(0);
-  const [originalKcalPerUnit, setOriginalKcalPerUnit] = useState(0);
+  const [originalData, setOriginalData] = useState<{
+    quantity: number;
+    unit: string;
+    kcal: number;
+  } | null>(null);
+
+  // Unit conversion function
+  const convertUnits = (fromQty: number, fromUnit: string, toUnit: string): number => {
+    if (fromUnit === toUnit) return fromQty;
+
+    // Convert everything to grams first, then to target unit
+    let grams = fromQty;
+
+    // Convert from original unit to grams
+    switch (fromUnit) {
+      case 'ml': grams = fromQty; break; // Assume 1ml = 1g for most foods
+      case 'cup': grams = fromQty * 240; break; // 1 cup ≈ 240g
+      case 'tbsp': grams = fromQty * 15; break; // 1 tbsp ≈ 15g
+      case 'tsp': grams = fromQty * 5; break; // 1 tsp ≈ 5g
+      case 'oz': grams = fromQty * 28.35; break; // 1 oz ≈ 28.35g
+      case 'lb': grams = fromQty * 453.6; break; // 1 lb ≈ 453.6g
+      case 'piece': case 'slice': case 'serving': grams = fromQty * 50; break; // Estimate
+      default: grams = fromQty; // 'g' or unknown
+    }
+
+    // Convert from grams to target unit
+    switch (toUnit) {
+      case 'ml': return grams; // Assume 1g = 1ml for most foods
+      case 'cup': return grams / 240;
+      case 'tbsp': return grams / 15;
+      case 'tsp': return grams / 5;
+      case 'oz': return grams / 28.35;
+      case 'lb': return grams / 453.6;
+      case 'piece': case 'slice': case 'serving': return grams / 50;
+      default: return grams; // 'g' or unknown
+    }
+  };
 
   // Update local state when foodData changes
   useEffect(() => {
@@ -34,21 +70,27 @@ export function FoodConfirmDialog({
       setEditedUnit(foodData.unit);
       setEditedKcal(foodData.kcal || 0);
 
-      // Calculate calories per unit for automatic recalculation
-      const kcalPerUnit = foodData.quantity > 0 ? (foodData.kcal || 0) / foodData.quantity : 0;
-      setOriginalKcalPerUnit(kcalPerUnit);
+      // Store original data for conversions
+      setOriginalData({
+        quantity: foodData.quantity,
+        unit: foodData.unit,
+        kcal: foodData.kcal || 0,
+      });
     }
   }, [foodData]);
 
-  // Recalculate calories when quantity changes
+  // Recalculate calories when quantity or unit changes
   useEffect(() => {
-    if (originalKcalPerUnit > 0 && editedQty > 0) {
-      const newKcal = Math.round(originalKcalPerUnit * editedQty);
-      setEditedKcal(newKcal);
+    if (originalData && originalData.quantity > 0) {
+      // Convert current quantity to original units to calculate calories
+      const originalEquivalentQty = convertUnits(editedQty, editedUnit, originalData.unit);
+      const kcalPerOriginalUnit = originalData.kcal / originalData.quantity;
+      const newKcal = Math.round(kcalPerOriginalUnit * originalEquivalentQty);
+      setEditedKcal(Math.max(0, newKcal));
     } else if (editedQty === 0) {
       setEditedKcal(0);
     }
-  }, [editedQty, originalKcalPerUnit]);
+  }, [editedQty, editedUnit, originalData]);
 
   const handleQuantityChange = (value: string) => {
     setEditedQtyString(value);
@@ -56,6 +98,11 @@ export function FoodConfirmDialog({
     // Convert to number for calculations
     const numValue = value === '' ? 0 : parseFloat(value) || 0;
     setEditedQty(numValue);
+    // The useEffect above will automatically recalculate calories
+  };
+
+  const handleUnitChange = (newUnit: string) => {
+    setEditedUnit(newUnit);
     // The useEffect above will automatically recalculate calories
   };
 
@@ -142,7 +189,7 @@ export function FoodConfirmDialog({
                 </label>
                 <select
                   value={editedUnit}
-                  onChange={(e) => setEditedUnit(e.target.value)}
+                  onChange={(e) => handleUnitChange(e.target.value)}
                   className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 backdrop-blur-sm transition-all"
                 >
                   <option value="g" className="bg-gray-800 text-white">grams</option>
