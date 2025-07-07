@@ -60,13 +60,7 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
         try {
           // Enhanced camera selection - prefer back camera with higher resolution
           let selectedDeviceId: string | null = null;
-          const baseConstraints = {
-            facingMode: 'environment', // Prefer back camera
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 },
-            focusMode: 'continuous',
-            zoom: true
-          };
+
 
           try {
             const devices = await navigator.mediaDevices.enumerateDevices();
