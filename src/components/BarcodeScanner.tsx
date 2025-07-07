@@ -50,60 +50,108 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
           BarcodeFormat.UPC_E,
           BarcodeFormat.CODE_128,
           BarcodeFormat.CODE_39,
+          BarcodeFormat.ITF,
+          BarcodeFormat.CODABAR,
         ]);
 
-        // Reduce time between scans for more responsive scanning
-        readerRef.current = new BrowserMultiFormatReader(hints, 100);
+        // Much faster scanning for better responsiveness
+        readerRef.current = new BrowserMultiFormatReader(hints, 50);
       }
 
       const reader = readerRef.current;
 
-      // Start scanning - try to use back camera if available
+      // Start scanning - try to use back camera with optimal settings
       if (videoRef.current) {
         try {
           // Try to get back camera first (better for barcode scanning)
           let selectedDeviceId = null;
+          let cameraConstraints = {};
+
           try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            // Look for back camera
-            const backCamera = videoDevices.find(device =>
-              device.label.toLowerCase().includes('back') ||
-              device.label.toLowerCase().includes('rear') ||
-              device.label.toLowerCase().includes('environment')
-            );
+            // Look for back camera with priority order
+            const backCamera = videoDevices.find(device => {
+              const label = device.label.toLowerCase();
+              return label.includes('back') ||
+                     label.includes('rear') ||
+                     label.includes('environment') ||
+                     label.includes('facing back');
+            });
 
             if (backCamera) {
               selectedDeviceId = backCamera.deviceId;
               console.log('📷 Using back camera:', backCamera.label);
-            } else if (videoDevices.length > 0) {
+            } else if (videoDevices.length > 1) {
               // Use the last camera (often the back camera on mobile)
               selectedDeviceId = videoDevices[videoDevices.length - 1].deviceId;
               console.log('📷 Using camera:', videoDevices[videoDevices.length - 1].label);
             }
+
+            // Set optimal camera constraints for barcode scanning
+            cameraConstraints = {
+              video: {
+                deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                width: { ideal: 1280, min: 640 },
+                height: { ideal: 720, min: 480 },
+                facingMode: selectedDeviceId ? undefined : { ideal: 'environment' },
+                focusMode: { ideal: 'continuous' },
+                exposureMode: { ideal: 'continuous' },
+                whiteBalanceMode: { ideal: 'continuous' }
+              }
+            };
           } catch (deviceError) {
             console.log('📷 Could not enumerate devices, using default camera:', deviceError);
+            cameraConstraints = {
+              video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280, min: 640 },
+                height: { ideal: 720, min: 480 }
+              }
+            };
           }
 
-          await reader.decodeFromVideoDevice(
-            selectedDeviceId,
-            videoRef.current,
-            (result, error) => {
-              if (result) {
-                const code = result.getText();
-                console.log('📷 BarcodeScanner: Barcode detected:', code);
-                console.log('📤 BarcodeScanner: Calling onDetect callback');
-                onDetect(code);
-                console.log('🛑 BarcodeScanner: Stopping scanning');
-                stopScanning();
-              }
+          // First, request camera access with optimal constraints
+          const stream = await navigator.mediaDevices.getUserMedia(cameraConstraints);
 
-              if (error && !(error instanceof NotFoundException)) {
-                console.error('❌ BarcodeScanner: Scanning error:', error);
+          // Apply the stream to the video element
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+              if (videoRef.current) {
+                videoRef.current.onloadedmetadata = () => resolve(undefined);
               }
-            }
-          );
+            });
+
+            // Start decoding with the configured video element
+            await reader.decodeFromVideoDevice(
+              selectedDeviceId,
+              videoRef.current,
+              (result, error) => {
+                if (result) {
+                  const code = result.getText();
+                  console.log('📷 BarcodeScanner: Barcode detected:', code);
+                  console.log('📤 BarcodeScanner: Calling onDetect callback');
+
+                  // Stop the camera stream
+                  if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                  }
+
+                  onDetect(code);
+                  console.log('🛑 BarcodeScanner: Stopping scanning');
+                  stopScanning();
+                }
+
+                if (error && !(error instanceof NotFoundException)) {
+                  console.error('❌ BarcodeScanner: Scanning error:', error);
+                }
+              }
+            );
+          }
 
           // If we get here, camera access was successful
           setHasPermission(true);
@@ -230,24 +278,31 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             {/* Scanning Frame */}
             <div className="relative">
-              {/* Main scanning area */}
-              <div className="w-64 h-40 border-2 border-white/50 rounded-lg relative">
-                {/* Corner indicators */}
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
+              {/* Main scanning area - larger for better targeting */}
+              <div className="w-80 h-48 border-2 border-white/50 rounded-2xl relative bg-black/20 backdrop-blur-sm">
+                {/* Corner indicators - more prominent */}
+                <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-2xl"></div>
+                <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-2xl"></div>
+                <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-2xl"></div>
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-2xl"></div>
 
-                {/* Scanning line animation */}
-                <div className="absolute inset-0 overflow-hidden rounded-lg">
-                  <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse"></div>
+                {/* Scanning line animation - more visible */}
+                <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                  <div className="w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse shadow-lg shadow-green-400/50"></div>
+                </div>
+
+                {/* Center crosshair */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-green-400 rounded-full bg-green-400/20 animate-ping"></div>
+                  <div className="absolute w-4 h-4 border-2 border-green-400 rounded-full bg-green-400/40"></div>
                 </div>
               </div>
 
               {/* Instructions */}
-              <div className="mt-4 text-center">
-                <p className="text-white text-sm font-medium">Position barcode within the frame</p>
-                <p className="text-white/70 text-xs mt-1">Hold steady for best results</p>
+              <div className="mt-6 text-center">
+                <p className="text-white text-base font-semibold">Position barcode within the frame</p>
+                <p className="text-white/70 text-sm mt-2">Hold steady and ensure good lighting</p>
+                <p className="text-green-400 text-xs mt-1 font-medium">📱 Try moving closer or further away</p>
               </div>
             </div>
           </div>

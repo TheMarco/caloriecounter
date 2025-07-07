@@ -151,52 +151,38 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
             key={entry.id}
             className="p-6 hover:bg-white/5 transition-all duration-200"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 flex-1">
+            {/* Header Row - Food name and actions */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start space-x-3 flex-1 min-w-0">
                 {/* Method Icon */}
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm" title={`Added via ${entry.method}`}>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm flex-shrink-0 mt-0.5" title={`Added via ${entry.method}`}>
                   {getMethodIcon(entry.method)}
                 </div>
 
-                {/* Food Info */}
+                {/* Food Name */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h4 className="font-semibold text-white truncate text-base">
+                  <div className="flex items-start space-x-2 mb-1">
+                    <h4 className="font-semibold text-white text-lg leading-tight break-words">
                       {entry.food}
                     </h4>
                     {entry.confidence && entry.confidence < 0.8 && (
-                      <span className="text-xs bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 px-2 py-1 rounded-lg font-medium backdrop-blur-sm">
+                      <span className="text-xs bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 px-2 py-1 rounded-lg font-medium backdrop-blur-sm flex-shrink-0 mt-0.5">
                         Low confidence
                       </span>
                     )}
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-white/60 font-medium">
-                    <span>{entry.qty} {entry.unit}</span>
-                    <span>•</span>
-                    <span>{formatTime(entry.ts)}</span>
-                  </div>
-                </div>
-
-                {/* Calories */}
-                <div className="text-right">
-                  <div className="font-bold text-lg text-white">
-                    {entry.kcal}
-                  </div>
-                  <div className="text-xs text-white/60 font-medium">
-                    cal
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center space-x-2 ml-4">
+              <div className="flex items-center space-x-2 ml-3 flex-shrink-0">
                 {onEdit && (
                   <button
                     onClick={() => onEdit(entry)}
-                    className="p-3 text-white/60 hover:text-blue-400 transition-colors rounded-xl hover:bg-white/10 backdrop-blur-sm"
+                    className="w-9 h-9 rounded-full text-white/60 hover:text-blue-400 transition-colors hover:bg-white/10 backdrop-blur-sm flex items-center justify-center"
                     title="Edit entry"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
@@ -205,15 +191,39 @@ export function EntryList({ entries, onDelete, onEdit, isLoading }: EntryListPro
                 <button
                   onClick={() => handleDeleteClick(entry)}
                   disabled={deletingId === entry.id}
-                  className="p-3 text-white/60 hover:text-red-400 transition-colors disabled:opacity-50 rounded-xl hover:bg-white/10 backdrop-blur-sm"
+                  className="w-9 h-9 rounded-full text-white/60 hover:text-red-400 transition-colors disabled:opacity-50 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center"
                   title="Delete entry"
                 >
                   {deletingId === entry.id ? (
-                    <div className="w-5 h-5 animate-spin rounded-full border-2 border-red-400 border-t-transparent"></div>
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent"></div>
                   ) : (
-                    <DeleteIconComponent size="sm" className="w-5 h-5 text-white/60 hover:text-red-400" />
+                    <DeleteIconComponent size="sm" className="w-4 h-4 text-white/60 hover:text-red-400" />
                   )}
                 </button>
+              </div>
+            </div>
+
+            {/* Bottom Row - Quantity, time, and calories */}
+            <div className="flex items-center justify-between pl-13">
+              <div className="flex items-center space-x-3 text-sm text-white/70 font-medium">
+                <span className="bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm">
+                  {entry.qty} {entry.unit}
+                </span>
+                <span className="text-white/50">
+                  {formatTime(entry.ts)}
+                </span>
+              </div>
+
+              {/* Calories - Prominent display */}
+              <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/30 px-4 py-2 rounded-xl backdrop-blur-sm">
+                <div className="text-right">
+                  <div className="font-bold text-xl text-white leading-none">
+                    {entry.kcal}
+                  </div>
+                  <div className="text-xs text-orange-300 font-medium">
+                    calories
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { VoiceInput } from '@/components/VoiceInput';
 import { TextInput } from '@/components/TextInput';
 import { FoodConfirmDialog } from '@/components/FoodConfirmDialog';
+import { EditEntryDialog } from '@/components/EditEntryDialog';
 import { AddFab } from '@/components/AddFab';
 import { TotalCard } from '@/components/TotalCard';
 import { EntryList } from '@/components/EntryList';
@@ -13,6 +14,8 @@ import { useBarcode } from '@/hooks/useBarcode';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useTextInput } from '@/hooks/useTextInput';
 import { useTodayEntries } from '@/hooks/useTodayEntries';
+import { updateEntry } from '@/utils/idb';
+import type { Entry } from '@/types';
 import {
   HomeIconComponent,
   ChartIconComponent,
@@ -21,6 +24,8 @@ import {
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [isEditLoading, setIsEditLoading] = useState(false);
   const barcode = useBarcode();
   const voice = useVoiceInput();
   const textInput = useTextInput();
@@ -102,6 +107,33 @@ export default function Home() {
     }
   };
 
+  const handleEditEntry = (entry: Entry) => {
+    setEditingEntry(entry);
+  };
+
+  const handleSaveEdit = async (updatedEntry: Entry) => {
+    try {
+      setIsEditLoading(true);
+      await updateEntry(updatedEntry.id, {
+        food: updatedEntry.food,
+        qty: updatedEntry.qty,
+        unit: updatedEntry.unit,
+        kcal: updatedEntry.kcal,
+      });
+      setEditingEntry(null);
+      // Refresh entries to show the updated data
+      todayEntries.refreshEntries();
+    } catch (error) {
+      console.error('Failed to update entry:', error);
+    } finally {
+      setIsEditLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEntry(null);
+  };
+
   if (isLoading || todayEntries.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -152,6 +184,7 @@ export default function Home() {
             <EntryList
               entries={todayEntries.entries}
               onDelete={todayEntries.deleteEntry}
+              onEdit={handleEditEntry}
               isLoading={todayEntries.isRefreshing}
             />
           </>
@@ -234,6 +267,15 @@ export default function Home() {
         isLoading={textInput.isProcessing}
         onConfirm={handleTextConfirm}
         onCancel={textInput.handleCancelConfirm}
+      />
+
+      {/* Edit Entry Dialog */}
+      <EditEntryDialog
+        isOpen={!!editingEntry}
+        entry={editingEntry}
+        isLoading={isEditLoading}
+        onSave={handleSaveEdit}
+        onCancel={handleCancelEdit}
       />
     </div>
   );
