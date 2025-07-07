@@ -17,32 +17,37 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const stopListening = useCallback(() => {
+    // Stop speech recognition
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+
+    // Stop and release media stream
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('🎤 Stopped microphone track:', track.kind);
+      });
+      mediaStreamRef.current = null;
+    }
+
     setIsListening(false);
   }, []);
-
-  const handleManualStop = useCallback(() => {
-    // If we have a transcript, process it before stopping
-    if (transcript.trim()) {
-      console.log('Manual stop with transcript:', transcript);
-      onTranscript(transcript.trim());
-    }
-    stopListening();
-  }, [transcript, onTranscript, stopListening]);
 
   const startListening = useCallback(async () => {
     try {
       setError(null);
       setTranscript('');
 
-      // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request microphone permission and store the stream
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
       setHasPermission(true);
+      console.log('🎤 Microphone access granted');
 
       // Initialize speech recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -142,6 +147,29 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
       stopListening();
     };
   }, [isActive, startListening, stopListening, onError]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      stopListening();
+    };
+  }, [stopListening]);
+
+  // Stop listening when page becomes hidden (minimized/switched tabs)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isListening) {
+        console.log('🎤 Page hidden, stopping microphone');
+        stopListening();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isListening, stopListening]);
 
   if (!isActive) {
     return null;
@@ -246,23 +274,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
 
               {/* Controls */}
               {!isProcessing && (
-                <div className="flex gap-3 justify-center">
-                  {!isListening && (
-                    <button
-                      onClick={startListening}
-                      className="bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-green-300 hover:text-green-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
-                    >
-                      Start Listening
-                    </button>
-                  )}
-                  {isListening && (
-                    <button
-                      onClick={handleManualStop}
-                      className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
-                    >
-                      Stop
-                    </button>
-                  )}
+                <div className="flex justify-center">
                   <button
                     onClick={onClose}
                     className="bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"

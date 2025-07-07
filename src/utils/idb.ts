@@ -164,10 +164,55 @@ export const getDailyMacroTotals = async (days: number): Promise<Array<{ date: s
   return results.reverse(); // Oldest first for charts
 };
 
+// Data migration for timezone fix
+export const migrateTimezoneData = async (): Promise<void> => {
+  try {
+    const allKeys = await keys();
+    const entryKeys = allKeys.filter(key =>
+      typeof key === 'string' && key.startsWith('entry:')
+    );
+
+    let migratedCount = 0;
+
+    for (const key of entryKeys) {
+      const entry = await get(key);
+      if (entry && entry.dt) {
+        // Check if this entry has a UTC-based date that needs migration
+        const entryDate = new Date(entry.dt + 'T00:00:00Z'); // Parse as UTC
+        const localDate = formatLocalDate(entryDate);
+
+        // If the local date is different from stored date, migrate it
+        if (localDate !== entry.dt) {
+          const updatedEntry = { ...entry, dt: localDate };
+          await set(key, updatedEntry);
+          migratedCount++;
+        }
+      }
+    }
+
+    if (migratedCount > 0) {
+      console.log(`🔄 Migrated ${migratedCount} entries to local timezone`);
+      // Update the migration flag
+      localStorage.setItem('timezone-migrated', 'true');
+    }
+  } catch (error) {
+    console.error('Error migrating timezone data:', error);
+  }
+};
+
+// Check if migration is needed and run it
+export const checkAndMigrateTimezone = async (): Promise<void> => {
+  const migrated = localStorage.getItem('timezone-migrated');
+  if (!migrated) {
+    await migrateTimezoneData();
+  }
+};
+
 // Utility functions
 export const clearAllData = async (): Promise<void> => {
   await clear();
   localStorage.removeItem('lastDay');
+  localStorage.removeItem('timezone-migrated');
 };
 
 export const exportData = async (): Promise<Entry[]> => {
@@ -187,7 +232,8 @@ export const exportData = async (): Promise<Entry[]> => {
   return entries.sort((a, b) => a.ts - b.ts); // Chronological order
 };
 
-// Initialize daily reset check
-export const initializeIDB = (): void => {
+// Initialize daily reset check and timezone migration
+export const initializeIDB = async (): Promise<void> => {
   checkDailyReset();
+  await checkAndMigrateTimezone();
 };

@@ -40,7 +40,7 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        initializeIDB();
+        await initializeIDB();
       } catch (error) {
         console.error('Failed to initialize IDB:', error);
       } finally {
