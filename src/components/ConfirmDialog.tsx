@@ -32,20 +32,20 @@ export function ConfirmDialog({
       case 'danger':
         return {
           icon: <WarningIconComponent size="lg" className="text-red-400" />,
-          confirmButton: 'bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200',
-          iconBg: 'bg-red-500/20 border border-red-400/30'
+          confirmButton: 'bg-red-600/90 hover:bg-red-500 border border-red-500/50 hover:border-red-400 text-white hover:text-white',
+          iconBg: 'bg-red-500/30 border border-red-400/50'
         };
       case 'warning':
         return {
           icon: <WarningIconComponent size="lg" className="text-yellow-400" />,
-          confirmButton: 'bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30 hover:border-yellow-400/50 text-yellow-300 hover:text-yellow-200',
-          iconBg: 'bg-yellow-500/20 border border-yellow-400/30'
+          confirmButton: 'bg-yellow-600/90 hover:bg-yellow-500 border border-yellow-500/50 hover:border-yellow-400 text-white hover:text-white',
+          iconBg: 'bg-yellow-500/30 border border-yellow-400/50'
         };
       case 'info':
         return {
           icon: <WarningIconComponent size="lg" className="text-blue-400" />,
-          confirmButton: 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200',
-          iconBg: 'bg-blue-500/20 border border-blue-400/30'
+          confirmButton: 'bg-blue-600/90 hover:bg-blue-500 border border-blue-500/50 hover:border-blue-400 text-white hover:text-white',
+          iconBg: 'bg-blue-500/30 border border-blue-400/50'
         };
     }
   };
@@ -53,12 +53,12 @@ export function ConfirmDialog({
   const styles = getVariantStyles();
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div className="card-glass rounded-3xl shadow-2xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl shadow-2xl max-w-md w-full mx-4">
         {/* Header */}
         <div className="p-6 pb-4">
           <div className="flex items-center space-x-4">
-            <div className={`w-14 h-14 rounded-2xl ${styles.iconBg} flex items-center justify-center flex-shrink-0 backdrop-blur-sm`}>
+            <div className={`w-14 h-14 rounded-2xl ${styles.iconBg} flex items-center justify-center flex-shrink-0`}>
               {styles.icon}
             </div>
             <div className="flex-1">
@@ -69,22 +69,22 @@ export function ConfirmDialog({
 
         {/* Content */}
         <div className="px-6 pb-6">
-          <p className="text-white/80 leading-relaxed font-medium">{message}</p>
+          <p className="text-gray-200 leading-relaxed font-medium">{message}</p>
         </div>
 
         {/* Actions */}
-        <div className="px-6 py-6 border-t border-white/20 flex space-x-3 justify-end">
+        <div className="px-6 py-6 border-t border-gray-700/50 flex space-x-3 justify-end">
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="px-6 py-3 text-white/80 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold hover:scale-105 active:scale-95 backdrop-blur-sm"
+            className="px-6 py-3 text-gray-300 bg-gray-800/80 border border-gray-600/50 rounded-2xl hover:bg-gray-700/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold hover:scale-105 active:scale-95"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-6 py-3 rounded-2xl transition-all duration-200 flex items-center space-x-2 font-semibold hover:scale-105 active:scale-95 disabled:scale-100 backdrop-blur-sm ${styles.confirmButton}`}
+            className={`px-6 py-3 rounded-2xl transition-all duration-200 flex items-center space-x-2 font-semibold hover:scale-105 active:scale-95 disabled:scale-100 ${styles.confirmButton}`}
           >
             {isLoading ? (
               <>
