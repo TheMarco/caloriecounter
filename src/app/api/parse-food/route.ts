@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return fallbackParsing(text);
     }
 
-    const prompt = `You are a nutrition parser. Parse this food description and respond with JSON only:
+    const prompt = `You are a nutrition expert. Parse this food description and provide accurate nutritional information:
 
 "${text}"
 
@@ -32,15 +32,23 @@ Respond with this exact JSON structure:
   "food": "standardized food name",
   "quantity": number,
   "unit": "g|ml|cup|tbsp|tsp|piece|slice",
-  "kcal": estimated_calories_per_100g_or_unit,
+  "kcal": total_calories_for_this_serving,
   "notes": "any_additional_info"
 }
 
-Rules:
-- Guess typical portion if vague (e.g., "apple" = 150g, "banana" = 120g)
-- Use metric units when possible
-- Estimate calories based on common nutritional knowledge
-- Keep food names simple and standardized`;
+IMPORTANT RULES:
+- For compound foods (like "chili dog with cheese"), calculate the TOTAL calories for the complete item
+- Use realistic portion sizes (e.g., "chili dog" = 1 piece ≈ 200g, "apple" = 1 medium ≈ 150g)
+- The "kcal" field should be the TOTAL calories for the quantity specified, NOT per 100g
+- For complex dishes, consider ALL ingredients (bun, hot dog, chili, cheese, etc.)
+- Be generous with calorie estimates for restaurant/prepared foods
+- Examples:
+  * "chili dog with cheese" → quantity: 1, unit: "piece", kcal: 550 (total for whole item)
+  * "Big Mac" → quantity: 1, unit: "piece", kcal: 563 (total for whole burger)
+  * "slice of pepperoni pizza" → quantity: 1, unit: "slice", kcal: 298 (total for slice)
+  * "2 eggs" → quantity: 2, unit: "piece", kcal: 140 (total for both eggs)
+  * "100g chicken breast" → quantity: 100, unit: "g", kcal: 165 (total for 100g)
+  * "tablespoon of mayo" → quantity: 1, unit: "tbsp", kcal: 90 (total for 1 tbsp)`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
