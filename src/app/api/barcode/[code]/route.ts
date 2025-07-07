@@ -49,23 +49,37 @@ export async function GET(
 
     const prompt = `You are a nutrition expert. I scanned a barcode (${code}) for the product: "${productName}".
 
-Please provide accurate nutritional information for this product with a typical serving size.
+Analyze this product and provide nutritional information for a sensible serving size.
 
 Respond with ONLY a JSON object in this exact format:
 {
   "food": "Product name",
   "kcal": number (calories per serving),
-  "unit": "g" or "ml",
+  "unit": "ml" or "g",
   "serving_size": number (typical serving size)
 }
 
-For serving sizes, use realistic portions:
-- Condiments (mayo, ketchup): 1 tablespoon (15g)
-- Beverages: standard can/bottle size (330ml can, 250ml glass)
-- Snacks: single serving portion
-- Main foods: typical meal portion
+SYSTEMATIC APPROACH:
+1. Identify the product category (beverage, condiment, snack, etc.)
+2. Determine a realistic single serving size for that category
+3. Calculate calories based on typical calorie density for that product type
 
-Make sure the calories match the serving size (not per 100g).`;
+SERVING SIZE LOGIC:
+- Beverages: Use the actual container size if it's a single-serve container (bottle, can), otherwise use a standard glass/cup serving
+- Condiments/sauces: 1 tablespoon (15g)
+- Spreads (peanut butter, jam): 2 tablespoons (30g)
+- Snacks: Individual package or handful portion
+- Prepared foods: Realistic meal portion
+
+CALORIE DENSITY SANITY CHECK:
+- Beverages: 30-60 kcal per 100ml (beer ~40, soda ~42, juice ~45)
+- Oils/fats: 800-900 kcal per 100g
+- Nuts: 500-600 kcal per 100g
+- Bread: 250-300 kcal per 100g
+- Fruits: 40-80 kcal per 100g
+- Vegetables: 15-50 kcal per 100g
+
+CRITICAL: Your calorie calculation must make sense for the serving size. A 355ml beer should be ~140 calories, NOT 533 calories.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
