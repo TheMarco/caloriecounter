@@ -3,8 +3,16 @@ import { get, set, del, keys, clear } from 'idb-keyval';
 import { createId } from '@paralleldrive/cuid2';
 import type { Entry, MacroTotals } from '@/types';
 
+// Utility function to format date as YYYY-MM-DD in local timezone
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Key generators
-export const todayKey = (): string => new Date().toISOString().slice(0, 10);
+export const todayKey = (): string => formatLocalDate(new Date());
 
 export const entryKey = (id: string): string => `entry:${id}`;
 
@@ -131,7 +139,7 @@ export const getDailyTotals = async (days: number): Promise<Array<{ date: string
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = formatLocalDate(date);
 
     const total = await getTotalCaloriesForDate(dateStr);
     results.push({ date: dateStr, total });
@@ -147,7 +155,7 @@ export const getDailyMacroTotals = async (days: number): Promise<Array<{ date: s
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = formatLocalDate(date);
 
     const totals = await getMacroTotalsForDate(dateStr);
     results.push({ date: dateStr, totals });

@@ -48,3 +48,13 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Homepage files (hosted version only - not for open source)
+homepage.html
+server-homepage.js
+homepage-package.json
+DEPLOYMENT-HOMEPAGE.md
+
+# Authentication and landing page (hosted version only)
+src/app/landing/
+src/middleware.ts

@@ -39,14 +39,19 @@ export default function HistoryPage() {
   }, [selectedRange]);
 
   // Use local data for now (cloud data when auth is implemented)
-  const chartData = localData.map(item => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    calories: item.totals.calories,
-    fat: item.totals.fat,
-    carbs: item.totals.carbs,
-    protein: item.totals.protein,
-    fullDate: item.date,
-  }));
+  const chartData = localData.map(item => {
+    // Parse the date string as local date to avoid timezone issues
+    const [year, month, day] = item.date.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    return {
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      calories: item.totals.calories,
+      fat: item.totals.fat,
+      carbs: item.totals.carbs,
+      protein: item.totals.protein,
+      fullDate: item.date,
+    };
+  });
 
   const getCurrentValues = () => {
     const values = localData.map(item => item.totals[activeTab]);
@@ -248,7 +253,10 @@ export default function HistoryPage() {
                   <Tooltip
                     labelFormatter={(label, payload) => {
                       if (payload && payload[0]) {
-                        return new Date(payload[0].payload.fullDate).toLocaleDateString('en-US', {
+                        // Parse the date string as local date to avoid timezone issues
+                        const [year, month, day] = payload[0].payload.fullDate.split('-').map(Number);
+                        const date = new Date(year, month - 1, day); // month is 0-indexed
+                        return date.toLocaleDateString('en-US', {
                           weekday: 'long',
                           month: 'long',
                           day: 'numeric'
