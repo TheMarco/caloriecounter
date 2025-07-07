@@ -39,44 +39,70 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
 
       console.log('✅ Camera API available');
 
-      // Initialize simple barcode reader
+      // Initialize optimized barcode reader
       if (!readerRef.current) {
-        // Simple configuration - no complex hints
         readerRef.current = new BrowserMultiFormatReader();
+
+        // Configure for better performance
+        const hints = new Map();
+        // Focus on common barcode formats for food products
+        hints.set(2, [8, 13, 14]); // CODE_128, EAN_13, EAN_8
+        hints.set(3, true); // TRY_HARDER for better accuracy
+        hints.set(4, true); // PURE_BARCODE
+
+        readerRef.current.hints = hints;
       }
 
       const reader = readerRef.current;
 
-      // Start scanning with simple approach
+      // Start scanning with optimized approach
       if (videoRef.current) {
         try {
-          // Simple camera selection - prefer back camera
+          // Enhanced camera selection - prefer back camera with higher resolution
           let selectedDeviceId: string | null = null;
+          let constraints = {
+            video: {
+              facingMode: 'environment', // Prefer back camera
+              width: { ideal: 1280, min: 640 },
+              height: { ideal: 720, min: 480 },
+              focusMode: 'continuous',
+              zoom: true
+            }
+          };
 
           try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            // Look for back camera
+            // Look for back camera with better heuristics
             const backCamera = videoDevices.find(device => {
               const label = device.label.toLowerCase();
-              return label.includes('back') || label.includes('rear') || label.includes('environment');
+              return label.includes('back') ||
+                     label.includes('rear') ||
+                     label.includes('environment') ||
+                     label.includes('camera 0') || // Often the main camera
+                     (!label.includes('front') && !label.includes('user'));
             });
 
             if (backCamera) {
               selectedDeviceId = backCamera.deviceId;
+              constraints.video = {
+                ...constraints.video,
+                deviceId: { exact: backCamera.deviceId }
+              };
             }
           } catch {
-            console.log('Using default camera');
+            console.log('Using default camera with environment facing mode');
           }
 
-          // Start decoding
+          // Start decoding with enhanced settings
           await reader.decodeFromVideoDevice(
             selectedDeviceId,
             videoRef.current,
             (result) => {
               if (result) {
                 const code = result.getText();
+                console.log('🎯 Barcode detected:', code);
                 onDetect(code);
                 stopScanning();
               }
@@ -201,18 +227,26 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
           muted
         />
 
-        {/* Single Clean Scanning Overlay */}
+        {/* Enhanced Scanning Overlay */}
         {isScanning && hasPermission && !error && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="relative w-80 h-48">
-              {/* Corner brackets */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
+              {/* Corner brackets with glow effect */}
+              <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-green-400 rounded-tl-lg shadow-lg shadow-green-400/50"></div>
+              <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-green-400 rounded-tr-lg shadow-lg shadow-green-400/50"></div>
+              <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-green-400 rounded-bl-lg shadow-lg shadow-green-400/50"></div>
+              <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-green-400 rounded-br-lg shadow-lg shadow-green-400/50"></div>
 
-              {/* Scanning line */}
-              <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white animate-pulse shadow-lg"></div>
+              {/* Animated scanning line */}
+              <div className="absolute top-1/2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse shadow-lg shadow-green-400/50"></div>
+
+              {/* Center focus dot */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+            </div>
+
+            {/* Instruction text */}
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-md px-4 py-2 rounded-full">
+              <p className="text-green-400 text-sm font-medium">Align barcode within frame</p>
             </div>
           </div>
         )}
@@ -221,10 +255,10 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
       {/* Instructions */}
       <div className="bg-black/20 backdrop-blur-xl border-t border-white/10 text-white p-6 text-center">
         <p className="text-white/80 font-medium">
-          {isScanning ? 'Point camera at barcode' : 'Starting camera...'}
+          {isScanning ? 'Scanning for barcode...' : 'Starting camera...'}
         </p>
         <p className="text-white/60 text-sm mt-1">
-          Hold steady and ensure good lighting
+          {isScanning ? 'Hold steady • Good lighting • Fill the frame' : 'Please wait while camera loads'}
         </p>
       </div>
     </div>

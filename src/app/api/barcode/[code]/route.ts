@@ -50,13 +50,17 @@ export async function GET(
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const prompt = `You are a nutrition expert. I scanned a barcode (${code}) for the product: "${productName}".
+    const prompt = `You are a nutrition expert. I scanned a barcode (${code}) for a product.
 
-Analyze this product and provide nutritional information for a sensible serving size.
+${productName !== 'Unknown Product' ? `The product appears to be: "${productName}"` : 'The product name could not be determined from the barcode database.'}
+
+Your task: Identify this product and provide accurate nutritional information for a realistic serving size.
+
+IMPORTANT: Use your knowledge of common products and their barcodes. If the provided product name seems incomplete or unclear, use the barcode number and your knowledge to identify the actual product.
 
 Respond with ONLY a JSON object in this exact format:
 {
-  "food": "Product name",
+  "food": "Complete product name (brand + product + flavor/variant)",
   "kcal": number (calories per serving),
   "fat": number (grams of fat per serving),
   "carbs": number (grams of carbohydrates per serving),
@@ -66,14 +70,27 @@ Respond with ONLY a JSON object in this exact format:
 }
 
 SYSTEMATIC APPROACH:
-1. Identify the product category (beverage, condiment, snack, etc.)
-2. Determine a realistic single serving size for that category
-3. Calculate calories based on typical calorie density for that product type
+1. Identify the product category and brand
+2. Use known nutritional profiles for common branded products
+3. Determine realistic serving size for that product type
+4. Calculate accurate macronutrients based on typical formulations
+
+SPECIFIC PRODUCT KNOWLEDGE:
+- Premier Protein shakes (11oz/325ml): ~160 calories, 30g protein, 1g fat, 4g carbs
+- Muscle Milk (14oz): ~230 calories, 25g protein, 9g fat, 12g carbs
+- Ensure/Boost nutritional drinks: ~220-250 calories, 9-13g protein
+- Protein bars: typically 180-300 calories, 15-30g protein
+- Greek yogurt cups: ~100-150 calories, 15-20g protein
+- Regular soda (12oz): ~140-150 calories, 0g protein, 35-40g carbs
+- Diet soda: ~0-5 calories
+- Energy drinks (8.4oz Red Bull): ~110 calories, 1g protein, 27g carbs
 
 SERVING SIZE LOGIC:
-- Beverages: Use the actual container size if it's a single-serve container (bottle, can), otherwise use a standard glass/cup serving
+- Protein shakes/drinks: Use full container size (typically 11-14oz)
+- Regular beverages: Use actual container size if single-serve (bottle, can)
 - Condiments/sauces: 1 tablespoon (15g)
 - Spreads (peanut butter, jam): 2 tablespoons (30g)
+- Protein bars: Whole bar (typically 40-60g)
 - Snacks: Individual package or handful portion
 - Prepared foods: Realistic meal portion
 
@@ -96,8 +113,17 @@ NEVER give results like 533 calories for 355ml beer - that's physically impossib
     console.log('🤖 Sending prompt to OpenAI:', prompt);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
+      model: "gpt-4o", // Use the full model like text input for better accuracy
+      messages: [
+        {
+          role: "system",
+          content: "You are a nutrition expert. Respond only with valid JSON for barcode product analysis."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
       temperature: 0.1,
       max_tokens: 200,
     });
@@ -111,26 +137,38 @@ NEVER give results like 533 calories for 355ml beer - that's physically impossib
 
     let nutritionData;
     try {
-      nutritionData = JSON.parse(responseText);
-    } catch {
+      // Clean the response text to remove markdown formatting (like text input flow)
+      let cleanedResponse = responseText;
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\s*/, '').replace(/\s*```$/, '');
+      }
+      if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      nutritionData = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI barcode response:', parseError);
+      console.error('Raw response:', responseText);
       throw new Error('Invalid response format from OpenAI');
     }
 
     console.log('Parsed nutrition data:', nutritionData);
 
-    // Validate the response structure
-    if (!nutritionData.food || !nutritionData.kcal || !nutritionData.fat || !nutritionData.carbs || !nutritionData.protein || !nutritionData.unit || !nutritionData.serving_size) {
+    // Validate the response structure (more flexible like text input)
+    if (!nutritionData.food || !nutritionData.unit || !nutritionData.serving_size) {
+      console.error('Missing required fields in OpenAI response:', nutritionData);
       throw new Error('Incomplete nutritional data from OpenAI');
     }
 
     const finalResult = {
       food: nutritionData.food,
-      kcal: Math.round(nutritionData.kcal),
-      fat: Math.round(nutritionData.fat * 10) / 10, // Round to 1 decimal place
-      carbs: Math.round(nutritionData.carbs * 10) / 10,
-      protein: Math.round(nutritionData.protein * 10) / 10,
+      kcal: nutritionData.kcal ? Math.round(Number(nutritionData.kcal)) : 0,
+      fat: nutritionData.fat ? Math.round(Number(nutritionData.fat) * 10) / 10 : 0, // Round to 1 decimal place
+      carbs: nutritionData.carbs ? Math.round(Number(nutritionData.carbs) * 10) / 10 : 0,
+      protein: nutritionData.protein ? Math.round(Number(nutritionData.protein) * 10) / 10 : 0,
       unit: nutritionData.unit,
-      serving_size: Math.round(nutritionData.serving_size),
+      serving_size: Math.round(Number(nutritionData.serving_size)),
     };
 
     console.log('📊 Final barcode result:', finalResult);
