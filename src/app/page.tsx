@@ -302,6 +302,7 @@ export default function Home() {
         onFoodParsed={textInput.handleFoodParsed}
         onError={textInput.handleTextError}
         onClose={textInput.stopTextInput}
+        units={settings.units}
       />
 
       {/* Barcode Food Confirmation Dialog */}

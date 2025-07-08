@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { parseFood } from '@/utils/api';
 import { addEntry } from '@/utils/idb';
+import { useSettings } from '@/hooks/useSettings';
 import type { ParseFoodResponse } from '@/types';
 
 export function useVoiceInput() {
+  const { settings } = useSettings();
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -30,8 +32,8 @@ export function useVoiceInput() {
 
       console.log('Processing transcript:', text);
 
-      // Parse the food using OpenAI
-      const response: ParseFoodResponse = await parseFood(text);
+      // Parse the food using OpenAI with user's units preference
+      const response: ParseFoodResponse = await parseFood(text, settings.units);
 
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Failed to parse food');

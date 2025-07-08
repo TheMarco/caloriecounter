@@ -9,9 +9,10 @@ interface TextInputProps {
   onError?: (error: string) => void;
   onClose: () => void;
   isActive: boolean;
+  units?: 'metric' | 'imperial';
 }
 
-export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInputProps) {
+export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'metric' }: TextInputProps) {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -67,7 +68,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive }: TextInpu
       setIsLoading(true);
       console.log('Manual parsing:', inputText.trim());
 
-      const response: ParseFoodResponse = await parseFood(inputText.trim());
+      const response: ParseFoodResponse = await parseFood(inputText.trim(), units);
 
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Failed to parse food');

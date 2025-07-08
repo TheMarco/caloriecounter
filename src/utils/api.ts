@@ -55,9 +55,9 @@ export const useBarcode = (code: string | null) => {
 
 
 // Direct API calls (not using SWR)
-export const parseFood = async (text: string): Promise<ParseFoodResponse> => {
+export const parseFood = async (text: string, units: 'metric' | 'imperial' = 'metric'): Promise<ParseFoodResponse> => {
   try {
-    return await postFetcher(API_ENDPOINTS.parseFood, { text });
+    return await postFetcher(API_ENDPOINTS.parseFood, { text, units });
   } catch (error) {
     return {
       success: false,

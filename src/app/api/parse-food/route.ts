@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text, units = 'metric' } = await request.json();
 
     if (!text || typeof text !== 'string' || text.trim().length < 2) {
       return NextResponse.json<ParseFoodResponse>({
@@ -20,18 +20,24 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.OPENAI_API_KEY) {
       // Fallback parsing without OpenAI
-      return fallbackParsing(text);
+      return fallbackParsing(text, units);
     }
+
+    const unitsInstruction = units === 'metric'
+      ? 'Use metric units when possible (grams, ml, liters). For liquids like shots, use ml (e.g., 44ml for a shot of tequila).'
+      : 'Use imperial units when appropriate (oz, lb, cups, tbsp, tsp). For liquids like shots, use oz (e.g., 1.5oz for a shot of tequila).';
 
     const prompt = `You are a nutrition expert. Parse this food description and provide accurate nutritional information:
 
 "${text}"
 
+IMPORTANT: The user prefers ${units} units. ${unitsInstruction}
+
 Respond with this exact JSON structure:
 {
   "food": "standardized food name",
   "quantity": number,
-  "unit": "g|ml|cup|tbsp|tsp|piece|slice",
+  "unit": "g|ml|cup|tbsp|tsp|piece|slice|oz|lb",
   "kcal": total_calories_for_this_serving,
   "fat": total_fat_grams_for_this_serving,
   "carbs": total_carbs_grams_for_this_serving,
@@ -45,13 +51,15 @@ IMPORTANT RULES:
 - The "kcal" field should be the TOTAL calories for the quantity specified, NOT per 100g
 - For complex dishes, consider ALL ingredients (bun, hot dog, chili, cheese, etc.)
 - Be generous with calorie estimates for restaurant/prepared foods
+- Use appropriate units based on user preference: ${units === 'metric' ? 'prefer grams for solids, ml for liquids' : 'use oz, lb, cups, tbsp, tsp as appropriate'}
 - Examples:
   * "chili dog with cheese" → quantity: 1, unit: "piece", kcal: 550 (total for whole item)
   * "Big Mac" → quantity: 1, unit: "piece", kcal: 563 (total for whole burger)
   * "slice of pepperoni pizza" → quantity: 1, unit: "slice", kcal: 298 (total for slice)
   * "2 eggs" → quantity: 2, unit: "piece", kcal: 140 (total for both eggs)
   * "100g chicken breast" → quantity: 100, unit: "g", kcal: 165 (total for 100g)
-  * "tablespoon of mayo" → quantity: 1, unit: "tbsp", kcal: 90 (total for 1 tbsp)`;
+  * "tablespoon of mayo" → quantity: 1, unit: "tbsp", kcal: 90 (total for 1 tbsp)
+  * "shot of tequila" → ${units === 'metric' ? 'quantity: 44, unit: "ml", kcal: 97' : 'quantity: 1.5, unit: "oz", kcal: 97'} (standard shot size)`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -122,7 +130,8 @@ IMPORTANT RULES:
 }
 
 // Fallback parsing without AI
-function fallbackParsing(text: string): NextResponse<ParseFoodResponse> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function fallbackParsing(text: string, units: 'metric' | 'imperial' = 'metric'): NextResponse<ParseFoodResponse> {
   const cleanText = text.toLowerCase().trim();
   
   // Simple pattern matching for common foods
