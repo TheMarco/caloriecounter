@@ -130,7 +130,7 @@ export default function HistoryPage() {
       {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-6 pb-24">
         {/* Date Range Selector */}
-        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
+        <div data-testid="date-range-selector" className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
           <div className="flex items-center space-x-4 mb-4">
             <div className="p-3 bg-blue-500/20 rounded-2xl">
               <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,6 +146,7 @@ export default function HistoryPage() {
             {(['7d', '30d', '90d'] as DateRange[]).map((range) => (
               <button
                 key={range}
+                data-testid={`range-${range}`}
                 onClick={() => setSelectedRange(range)}
                 className={`py-3 px-4 rounded-2xl text-sm font-medium transition-all duration-200 backdrop-blur-sm ${
                   selectedRange === range
@@ -199,7 +200,7 @@ export default function HistoryPage() {
         </div>
 
         {/* Chart */}
-        <div className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
+        <div data-testid="chart-container" className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
           {/* Macro Tabs at top of chart card */}
           <MacroTabs activeTab={activeTab} onTabChange={setActiveTab} />
 

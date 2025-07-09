@@ -209,7 +209,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-6 py-6 pb-24">
+      <main data-testid="main-content" className="max-w-md mx-auto px-6 py-6 pb-24">
         {/* Only show loading on initial load, not on refreshes */}
         {isLoading && (
           <div className="text-center py-8">
@@ -303,6 +303,7 @@ export default function Home() {
         onError={textInput.handleTextError}
         onClose={textInput.stopTextInput}
         units={settings.units}
+        error={textInput.error}
       />
 
       {/* Barcode Food Confirmation Dialog */}

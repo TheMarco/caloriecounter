@@ -43,15 +43,17 @@ export function useSettings() {
   // Save settings to localStorage
   const saveSettings = useCallback((newSettings: Partial<AppSettings>) => {
     try {
-      const updatedSettings = { ...settings, ...newSettings };
-      setSettings(updatedSettings);
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(updatedSettings));
+      setSettings(currentSettings => {
+        const updatedSettings = { ...currentSettings, ...newSettings };
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(updatedSettings));
+        return updatedSettings;
+      });
       return true;
     } catch (error) {
       console.error('Failed to save settings:', error);
       return false;
     }
-  }, [settings]);
+  }, []);
 
   // Update individual setting
   const updateSetting = useCallback(<K extends keyof AppSettings>(

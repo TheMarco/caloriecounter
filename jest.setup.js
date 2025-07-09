@@ -8,20 +8,27 @@ global.TextDecoder = TextDecoder
 // Mock structuredClone for Node.js environment
 global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj))
 
+// Set React environment
+process.env.NODE_ENV = 'test'
+
 // Mock React 19 compatibility
 Object.defineProperty(global, 'IS_REACT_ACT_ENVIRONMENT', {
   writable: true,
   value: true,
 })
 
-// Mock React DOM for compatibility
-Object.defineProperty(window, 'React', {
-  value: require('react'),
-  writable: true,
-})
-
-// Mock process.env for React
-process.env.NODE_ENV = 'test'
+// Mock console methods to avoid React warnings in tests
+const originalError = console.error
+console.error = (...args) => {
+  if (
+    typeof args[0] === 'string' &&
+    (args[0].includes('Warning: ReactDOM.render is no longer supported') ||
+     args[0].includes('Warning: React.createElement'))
+  ) {
+    return
+  }
+  originalError.call(console, ...args)
+}
 
 // Mock IndexedDB
 const FDBFactory = require('fake-indexeddb/lib/FDBFactory')

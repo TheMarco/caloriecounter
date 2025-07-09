@@ -78,7 +78,7 @@ export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange 
   const { current, target, percentage, remaining, isOverTarget } = getCurrentData();
 
   return (
-    <div className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
+    <div data-testid="totals-card" className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
       {/* Tabs at top of card */}
       <MacroTabs activeTab={activeTab} onTabChange={onTabChange} />
 
@@ -92,8 +92,8 @@ export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange 
 
       <div className="text-center">
         {/* Main Total */}
-        <div className="mb-6">
-          <div className={`text-5xl font-bold mb-3 ${getStatusColor()}`}>
+        <div data-testid="macro-display" className="mb-6">
+          <div data-testid="macro-total" className={`text-5xl font-bold mb-3 ${getStatusColor()}`}>
             {activeTab === 'calories' ? current.toLocaleString() : current.toFixed(1)}
           </div>
           <p className="text-lg text-white/80 font-medium">{getLabel()}</p>

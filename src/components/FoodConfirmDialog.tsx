@@ -147,7 +147,7 @@ export function FoodConfirmDialog({
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="card-glass rounded-3xl p-6 m-4 max-w-md w-full shadow-2xl">
+      <div data-testid="food-confirm-dialog" className="card-glass rounded-3xl p-6 m-4 max-w-md w-full shadow-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
@@ -180,6 +180,7 @@ export function FoodConfirmDialog({
                 Food
               </label>
               <input
+                data-testid="confirm-food-name-input"
                 type="text"
                 value={editedFood}
                 onChange={(e) => setEditedFood(e.target.value)}
@@ -194,6 +195,7 @@ export function FoodConfirmDialog({
                   Quantity
                 </label>
                 <input
+                  data-testid="confirm-quantity-input"
                   type="text"
                   inputMode="decimal"
                   value={editedQtyString}
@@ -270,12 +272,14 @@ export function FoodConfirmDialog({
             {/* Actions */}
             <div className="flex gap-3 pt-6">
               <button
+                data-testid="confirm-button"
                 onClick={handleConfirm}
                 className="flex-1 bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-green-300 hover:text-green-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
               >
                 Add to Log
               </button>
               <button
+                data-testid="cancel-button"
                 onClick={onCancel}
                 className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
               >

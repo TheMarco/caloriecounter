@@ -10,9 +10,10 @@ interface TextInputProps {
   onClose: () => void;
   isActive: boolean;
   units?: 'metric' | 'imperial';
+  error?: string | null;
 }
 
-export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'metric' }: TextInputProps) {
+export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'metric', error }: TextInputProps) {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -61,7 +62,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!inputText.trim()) return;
 
     try {
@@ -102,7 +103,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="card-glass rounded-3xl p-6 m-4 max-w-md w-full shadow-2xl">
+      <div data-testid="text-input-dialog" className="card-glass rounded-3xl p-6 m-4 max-w-md w-full shadow-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
@@ -114,6 +115,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
             <h2 className="text-xl font-semibold text-white">Add Food</h2>
           </div>
           <button
+            data-testid="text-close-button"
             onClick={onClose}
             className="text-white/60 hover:text-white text-xl font-bold p-2 rounded-xl hover:bg-white/10 transition-all"
           >
@@ -129,6 +131,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
             </label>
             <input
               ref={inputRef}
+              data-testid="text-input-field"
               type="text"
               value={inputText}
               onChange={(e) => handleInputChange(e.target.value)}
@@ -163,6 +166,18 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
             </div>
           )}
 
+          {/* Error message */}
+          {error && (
+            <div data-testid="error-message" className="bg-red-500/20 border border-red-400/30 text-red-300 p-4 rounded-2xl backdrop-blur-sm">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium">{error}</span>
+              </div>
+            </div>
+          )}
+
           {/* Instructions */}
           <div className="text-xs text-white/60 bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
             <p className="font-medium text-white/80 mb-2">Examples:</p>
@@ -178,6 +193,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
           <div className="flex gap-3 pt-6">
             <button
               type="submit"
+              data-testid="text-submit-button"
               disabled={!inputText.trim() || isLoading}
               className="flex-1 bg-purple-500/20 hover:bg-purple-500/30 disabled:bg-white/5 disabled:text-white/40 border border-purple-400/30 hover:border-purple-400/50 disabled:border-white/10 text-purple-300 hover:text-purple-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:scale-100"
             >

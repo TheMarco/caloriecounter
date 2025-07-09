@@ -134,7 +134,7 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
   }
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex flex-col">
+    <div data-testid="barcode-scanner" className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex flex-col">
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-xl border-b border-white/10 text-white p-6 flex justify-between items-center">
         <div className="flex items-center space-x-4">
@@ -149,6 +149,7 @@ export function BarcodeScanner({ onDetect, onError, onClose, isActive }: Barcode
           </div>
         </div>
         <button
+          data-testid="scanner-close-button"
           onClick={onClose}
           className="text-white/60 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all"
         >

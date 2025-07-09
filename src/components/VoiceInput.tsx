@@ -177,7 +177,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="card-glass rounded-3xl p-6 m-4 max-w-sm w-full shadow-2xl">
+      <div data-testid="voice-input-dialog" className="card-glass rounded-3xl p-6 m-4 max-w-sm w-full shadow-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
@@ -189,6 +189,7 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
             <h2 className="text-xl font-semibold text-white">Voice Input</h2>
           </div>
           <button
+            data-testid="voice-cancel-button"
             onClick={onClose}
             className="text-white/60 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all"
           >

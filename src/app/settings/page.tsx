@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSettings } from '@/hooks/useSettings';
-
 import {
   HomeIconComponent,
   ChartIconComponent,
@@ -20,6 +19,8 @@ export default function Settings() {
   const [showLicense, setShowLicense] = useState(false);
   const [licenseContent, setLicenseContent] = useState<string>('');
   const [mounted, setMounted] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // String representations for input fields to allow empty values
   const [dailyTargetString, setDailyTargetString] = useState('');
@@ -31,450 +32,488 @@ export default function Settings() {
     setMounted(true);
   }, []);
 
-  // Sync string values with settings
+  // Update string values when settings change
   useEffect(() => {
-    if (!isLoading) {
-      setDailyTargetString(settings.dailyTarget === 0 ? '' : settings.dailyTarget.toString());
-      setFatTargetString(settings.fatTarget === 0 ? '' : settings.fatTarget.toString());
-      setCarbsTargetString(settings.carbsTarget === 0 ? '' : settings.carbsTarget.toString());
-      setProteinTargetString(settings.proteinTarget === 0 ? '' : settings.proteinTarget.toString());
+    if (settings) {
+      setDailyTargetString(settings.dailyTarget.toString());
+      setFatTargetString(settings.fatTarget.toString());
+      setCarbsTargetString(settings.carbsTarget.toString());
+      setProteinTargetString(settings.proteinTarget.toString());
     }
-  }, [settings, isLoading]);
+  }, [settings]);
 
-  // Helper functions to handle input changes
-  const handleDailyTargetChange = (value: string) => {
-    setDailyTargetString(value);
-    const numValue = value === '' ? 0 : parseFloat(value) || 0;
-    updateSetting('dailyTarget', numValue);
-  };
-
-  const handleFatTargetChange = (value: string) => {
-    setFatTargetString(value);
-    const numValue = value === '' ? 0 : parseFloat(value) || 0;
-    updateSetting('fatTarget', numValue);
-  };
-
-  const handleCarbsTargetChange = (value: string) => {
-    setCarbsTargetString(value);
-    const numValue = value === '' ? 0 : parseFloat(value) || 0;
-    updateSetting('carbsTarget', numValue);
-  };
-
-  const handleProteinTargetChange = (value: string) => {
-    setProteinTargetString(value);
-    const numValue = value === '' ? 0 : parseFloat(value) || 0;
-    updateSetting('proteinTarget', numValue);
-  };
-
-  const handleResetToDefaults = () => {
-    if (confirm('Are you sure you want to reset all settings to their default values? This action cannot be undone.')) {
-      resetSettings();
+  const showMessage = (message: string, isError = false) => {
+    if (isError) {
+      setErrorMessage(message);
+      setSuccessMessage('');
+    } else {
+      setSuccessMessage(message);
+      setErrorMessage('');
     }
+    setTimeout(() => {
+      setSuccessMessage('');
+      setErrorMessage('');
+    }, 3000);
   };
 
-  const handleSave = async () => {
+  const validateInput = (value: string, min: number, max: number): number | null => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < min || num > max) {
+      return null;
+    }
+    return num;
+  };
+
+  const handleSaveSettings = async () => {
     setIsSaving(true);
+
     try {
-      // Settings are automatically saved when changed, so just show success
-      alert('Settings saved successfully!');
-    } catch {
-      alert('Failed to save settings. Please try again.');
+      // Validate all inputs
+      const dailyTarget = validateInput(dailyTargetString, 1000, 5000);
+      const fatTarget = validateInput(fatTargetString, 20, 200);
+      const carbsTarget = validateInput(carbsTargetString, 50, 500);
+      const proteinTarget = validateInput(proteinTargetString, 30, 300);
+
+      if (dailyTarget === null) {
+        showMessage('Daily calorie target must be between 1000 and 5000', true);
+        return;
+      }
+      if (fatTarget === null) {
+        showMessage('Fat target must be between 20g and 200g', true);
+        return;
+      }
+      if (carbsTarget === null) {
+        showMessage('Carbs target must be between 50g and 500g', true);
+        return;
+      }
+      if (proteinTarget === null) {
+        showMessage('Protein target must be between 30g and 300g', true);
+        return;
+      }
+
+      // Save all settings including units (which might have been changed separately)
+      const success = await Promise.all([
+        updateSetting('dailyTarget', dailyTarget),
+        updateSetting('fatTarget', fatTarget),
+        updateSetting('carbsTarget', carbsTarget),
+        updateSetting('proteinTarget', proteinTarget),
+        updateSetting('units', settings.units), // Include current units setting
+      ]);
+
+      if (success.every(Boolean)) {
+        showMessage('Settings saved successfully!');
+      } else {
+        showMessage('Failed to save some settings', true);
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showMessage('Failed to save settings', true);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Are you sure you want to reset all settings to default?')) {
+  const handleResetToDefaults = async () => {
+    if (window.confirm('Are you sure you want to reset all settings to defaults?')) {
       const success = resetSettings();
       if (success) {
-        alert('Settings reset to defaults successfully!');
+        showMessage('Settings reset to defaults');
       } else {
-        alert('Failed to reset settings. Please try again.');
+        showMessage('Failed to reset settings', true);
       }
     }
   };
 
-  const handleExportCSV = async () => {
+  const handleExportData = async () => {
+    setIsExporting(true);
     try {
-      setIsExporting(true);
       await exportNutritionData();
-      alert('Nutrition data exported successfully!');
+      showMessage('Data exported successfully!');
     } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export data. Please try again.');
+      console.error('Export error:', error);
+      showMessage('Failed to export data', true);
     } finally {
       setIsExporting(false);
     }
   };
 
-  const handleShowLicense = async () => {
+  const handleUnitsChange = async (newUnits: 'metric' | 'imperial') => {
+    const success = await updateSetting('units', newUnits);
+    if (!success) {
+      showMessage('Failed to save units preference', true);
+    }
+  };
+
+  const loadLicense = async () => {
     try {
       const response = await fetch('/LICENSE');
       if (response.ok) {
-        const content = await response.text();
-        setLicenseContent(content);
+        const text = await response.text();
+        setLicenseContent(text);
+        setShowLicense(true);
       } else {
-        setLicenseContent('License file not found.');
+        showMessage('License file not found', true);
       }
     } catch (error) {
       console.error('Failed to load license:', error);
-      setLicenseContent('Failed to load license file.');
-    }
-    setShowLicense(true);
-  };
-
-  const handleClearData = () => {
-    if (confirm('Are you sure you want to clear all your calorie data? This cannot be undone.')) {
-      // Clear IndexedDB data
-      if (typeof window !== 'undefined' && 'indexedDB' in window) {
-        indexedDB.deleteDatabase('keyval-store');
-        alert('All data cleared successfully!');
-      }
+      showMessage('Failed to load license', true);
     }
   };
 
-  // Prevent hydration mismatch
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen bg-black">
-        <div className="animate-pulse">
-          <header className="bg-black shadow-sm border-b border-gray-800">
-            <div className="max-w-md mx-auto px-6 py-4">
-              <h1 className="text-2xl font-bold text-center text-white">Settings</h1>
-            </div>
-          </header>
-          <main className="max-w-md mx-auto px-6 py-6">
-            <div className="bg-gray-900 rounded-2xl shadow-sm border border-gray-800 p-6 mb-6">
-              <div className="h-4 bg-gray-700 rounded w-1/3 mb-4"></div>
-              <div className="h-10 bg-gray-700 rounded"></div>
-            </div>
-          </main>
-        </div>
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-bg transition-theme">
+    <div className="min-h-screen gradient-bg text-white">
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 transition-theme">
-        <div className="max-w-md mx-auto px-6 py-6">
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-black/20 border-b border-white/10">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <h1 className="text-2xl font-bold text-white">Settings</h1>
-            <div className="w-10 h-10"></div> {/* Spacer for centering */}
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/"
+                data-testid="back-button"
+                className="p-2 text-white/60 hover:text-white transition-colors rounded-xl hover:bg-white/10"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <div className="p-2 bg-blue-500/20 rounded-xl border border-blue-400/30">
+                <SettingsIconComponent size="md" className="text-blue-400" />
+              </div>
+              <h1 className="text-2xl font-bold">Settings</h1>
+            </div>
           </div>
-          <p className="text-white/70 text-center mt-2 text-sm">Customize your experience</p>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-6 py-6 pb-24">
-
-        {isLoading && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50 mx-auto mb-4"></div>
-            <p className="text-white/70">Loading settings...</p>
+      <main className="container mx-auto px-4 py-6 pb-24">
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div data-testid="success-message" className="mb-6 p-4 bg-green-500/20 border border-green-400/30 rounded-2xl">
+            <div className="flex items-center space-x-2">
+              <CheckIconComponent size="sm" className="text-green-400" />
+              <span className="text-green-300">{successMessage}</span>
+            </div>
           </div>
         )}
 
-        {/* Daily Targets */}
-        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="p-3 bg-blue-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Daily Nutrition Targets</h2>
-              <p className="text-white/60 text-sm">Set your daily nutrition goals</p>
+        {errorMessage && (
+          <div data-testid="validation-error" className="mb-6 p-4 bg-red-500/20 border border-red-400/30 rounded-2xl">
+            <div className="flex items-center space-x-2">
+              <InfoIconComponent size="sm" className="text-red-400" />
+              <span className="text-red-300">{errorMessage}</span>
             </div>
           </div>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-white/80 mb-3">
-                Target Calories per Day
-              </label>
-              <input
-                type="number"
-                value={dailyTargetString}
-                onChange={(e) => handleDailyTargetChange(e.target.value)}
-                className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
-                min="1000"
-                max="5000"
-                step="50"
-                placeholder="2000"
-                disabled={isLoading}
-              />
-              <p className="text-sm text-white/50 mt-3 font-medium">
-                Recommended: 1,800-2,400 calories for most adults
-              </p>
-            </div>
+        )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-white/80 mb-3">
-                  Fat Target (grams)
-                </label>
-                <input
-                  type="number"
-                  value={fatTargetString}
-                  onChange={(e) => handleFatTargetChange(e.target.value)}
-                  className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
-                  min="20"
-                  max="200"
-                  step="5"
-                  placeholder="65"
-                  disabled={isLoading}
-                />
-                <p className="text-sm text-white/50 mt-2 font-medium">
-                  Recommended: 44-78g
-                </p>
+        {/* Daily Goals Section */}
+        <section data-testid="daily-goals-section" className="mb-8">
+          <div className="card-glass rounded-3xl p-6">
+            <h2 className="text-xl font-semibold mb-6 flex items-center space-x-3">
+              <div className="p-2 bg-green-500/20 rounded-xl border border-green-400/30">
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
               </div>
+              <span>Daily Goals</span>
+            </h2>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Daily Calorie Target */}
               <div>
-                <label className="block text-sm font-semibold text-white/80 mb-3">
-                  Carbs Target (grams)
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Daily Calorie Target
                 </label>
-                <input
-                  type="number"
-                  value={carbsTargetString}
-                  onChange={(e) => handleCarbsTargetChange(e.target.value)}
-                  className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
-                  min="50"
-                  max="500"
-                  step="10"
-                  placeholder="250"
-                  disabled={isLoading}
-                />
-                <p className="text-sm text-white/50 mt-2 font-medium">
-                  Recommended: 225-325g
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-white/80 mb-3">
-                  Protein Target (grams)
-                </label>
-                <input
-                  type="number"
-                  value={proteinTargetString}
-                  onChange={(e) => handleProteinTargetChange(e.target.value)}
-                  className="w-full px-4 py-4 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white/10 text-white placeholder-white/50 transition-all font-medium text-lg backdrop-blur-sm"
-                  min="30"
-                  max="300"
-                  step="5"
-                  placeholder="100"
-                  disabled={isLoading}
-                />
-                <p className="text-sm text-white/50 mt-2 font-medium">
-                  Recommended: 46-56g
-                </p>
-              </div>
-            </div>
-
-            {/* Reset to Defaults Button */}
-            <div className="pt-4 border-t border-white/20">
-              <button
-                onClick={handleResetToDefaults}
-                disabled={isLoading}
-                className="w-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <span>Reset to Defaults</span>
+                <div className="relative">
+                  <input
+                    data-testid="daily-target-input"
+                    type="number"
+                    value={dailyTargetString}
+                    onChange={(e) => setDailyTargetString(e.target.value)}
+                    className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
+                    placeholder="2000"
+                    min="1000"
+                    max="5000"
+                  />
+                  <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 text-sm">
+                    kcal
+                  </span>
                 </div>
-              </button>
-              <p className="text-sm text-white/50 mt-2 text-center">
-                This will reset all nutrition targets to their recommended default values
-              </p>
+                <p className="text-xs text-white/60 mt-1">Range: 1000-5000 calories</p>
+              </div>
+
+              {/* Fat Target */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Daily Fat Target
+                </label>
+                <div className="relative">
+                  <input
+                    data-testid="fat-target-input"
+                    type="number"
+                    value={fatTargetString}
+                    onChange={(e) => setFatTargetString(e.target.value)}
+                    className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
+                    placeholder="65"
+                    min="20"
+                    max="200"
+                  />
+                  <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 text-sm">
+                    g
+                  </span>
+                </div>
+                <p className="text-xs text-white/60 mt-1">Range: 20-200 grams</p>
+              </div>
+
+              {/* Carbs Target */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Daily Carbs Target
+                </label>
+                <div className="relative">
+                  <input
+                    data-testid="carbs-target-input"
+                    type="number"
+                    value={carbsTargetString}
+                    onChange={(e) => setCarbsTargetString(e.target.value)}
+                    className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
+                    placeholder="250"
+                    min="50"
+                    max="500"
+                  />
+                  <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 text-sm">
+                    g
+                  </span>
+                </div>
+                <p className="text-xs text-white/60 mt-1">Range: 50-500 grams</p>
+              </div>
+
+              {/* Protein Target */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Daily Protein Target
+                </label>
+                <div className="relative">
+                  <input
+                    data-testid="protein-target-input"
+                    type="number"
+                    value={proteinTargetString}
+                    onChange={(e) => setProteinTargetString(e.target.value)}
+                    className="w-full px-4 py-3 border border-white/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white bg-white/10 placeholder-white/50 backdrop-blur-sm transition-all"
+                    placeholder="100"
+                    min="30"
+                    max="300"
+                  />
+                  <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 text-sm">
+                    g
+                  </span>
+                </div>
+                <p className="text-xs text-white/60 mt-1">Range: 30-300 grams</p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Preferences */}
-        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="p-3 bg-green-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+        {/* Preferences Section */}
+        <section data-testid="preferences-section" className="mb-8">
+          <div className="card-glass rounded-3xl p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-3 bg-green-500/20 rounded-2xl border border-green-400/30">
+                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Preferences</h2>
+                <p className="text-white/60">Customize your app experience</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Preferences</h2>
-              <p className="text-white/60 text-sm">Customize your app experience</p>
-            </div>
-          </div>
-          <div className="space-y-6">
 
-            {/* Units */}
-            <div>
-              <label className="block text-sm font-semibold text-white/80 mb-4">
-                Measurement Units
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className={`flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 backdrop-blur-sm ${
+            {/* Measurement Units */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Measurement Units</h3>
+              <div data-testid="units-select" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Metric Card */}
+                <label className={`relative p-6 rounded-3xl border-2 transition-all duration-200 cursor-pointer ${
                   settings.units === 'metric'
-                    ? 'border-blue-400 bg-blue-500/20 text-blue-300'
-                    : 'border-white/20 hover:border-white/30 text-white hover:bg-white/10'
+                    ? 'border-blue-400 bg-blue-500/20 shadow-lg shadow-blue-500/20'
+                    : 'border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10'
                 }`}>
                   <input
                     type="radio"
+                    name="units"
                     value="metric"
                     checked={settings.units === 'metric'}
-                    onChange={(e) => updateSetting('units', e.target.value as 'metric')}
+                    onChange={(e) => handleUnitsChange(e.target.value as 'metric' | 'imperial')}
                     className="sr-only"
-                    disabled={isLoading}
                   />
-                  <div className="text-center w-full">
-                    <div className="font-semibold">Metric</div>
-                    <div className="text-xs mt-1 opacity-75">g, kg, ml, l</div>
+                  <div className="flex flex-col items-center text-center">
+                    <h4 className="text-xl font-bold text-white mb-2">Metric</h4>
+                    <p className="text-white/70">g, kg, ml, l</p>
                   </div>
+                  {settings.units === 'metric' && (
+                    <div className="absolute top-4 right-4">
+                      <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+                        <CheckIconComponent size="xs" className="text-white" />
+                      </div>
+                    </div>
+                  )}
                 </label>
-                <label className={`flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 backdrop-blur-sm ${
+
+                {/* Imperial Card */}
+                <label className={`relative p-6 rounded-3xl border-2 transition-all duration-200 cursor-pointer ${
                   settings.units === 'imperial'
-                    ? 'border-blue-400 bg-blue-500/20 text-blue-300'
-                    : 'border-white/20 hover:border-white/30 text-white hover:bg-white/10'
+                    ? 'border-blue-400 bg-blue-500/20 shadow-lg shadow-blue-500/20'
+                    : 'border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10'
                 }`}>
                   <input
                     type="radio"
+                    name="units"
                     value="imperial"
                     checked={settings.units === 'imperial'}
-                    onChange={(e) => updateSetting('units', e.target.value as 'imperial')}
+                    onChange={(e) => handleUnitsChange(e.target.value as 'metric' | 'imperial')}
                     className="sr-only"
-                    disabled={isLoading}
                   />
-                  <div className="text-center w-full">
-                    <div className="font-semibold">Imperial</div>
-                    <div className="text-xs mt-1 opacity-75">oz, lb, fl oz, cups</div>
+                  <div className="flex flex-col items-center text-center">
+                    <h4 className="text-xl font-bold text-white mb-2">Imperial</h4>
+                    <p className="text-white/70">oz, lb, fl oz, cups</p>
                   </div>
+                  {settings.units === 'imperial' && (
+                    <div className="absolute top-4 right-4">
+                      <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+                        <CheckIconComponent size="xs" className="text-white" />
+                      </div>
+                    </div>
+                  )}
                 </label>
               </div>
             </div>
-
-
-
-
           </div>
-        </div>
+        </section>
 
-        {/* Data Management */}
-        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="p-3 bg-red-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Data Management</h2>
-              <p className="text-white/60 text-sm">Manage your stored data</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <button
-              onClick={handleClearData}
-              className="w-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 px-6 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 backdrop-blur-sm"
-            >
-              Clear All Data
-            </button>
-            <p className="text-sm text-white/60 font-medium">
-              This will permanently delete all your calorie entries and cannot be undone.
-            </p>
-          </div>
-        </div>
+        {/* Action Buttons */}
+        <section className="mb-8">
+          <div className="card-glass rounded-3xl p-6">
+            <h2 className="text-xl font-semibold mb-6 flex items-center space-x-3">
+              <div className="p-2 bg-orange-500/20 rounded-xl border border-orange-400/30">
+                <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+              </div>
+              <span>Actions</span>
+            </h2>
 
-        {/* About Section */}
-        <div className="card-glass card-glass-hover rounded-3xl p-6 mb-8 transition-all duration-300 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="p-3 bg-purple-500/20 rounded-2xl">
-              <InfoIconComponent size="lg" className="text-purple-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">About</h2>
-              <p className="text-white/60 text-sm">App information and licensing</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="text-center space-y-2">
-              <p className="text-sm text-white/80">
-                Copyright © 2025 by Marco van Hylckama Vlieg
-              </p>
-              <a
-                href="https://ai-created.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors underline"
-              >
-                https://ai-created.com/
-              </a>
-            </div>
-
-            <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Save Settings */}
               <button
-                onClick={handleShowLicense}
-                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 text-purple-300 text-sm font-medium rounded-lg transition-all duration-200"
+                data-testid="save-settings-button"
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+                className="flex items-center justify-center space-x-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                License
+                {isSaving ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-300"></div>
+                ) : (
+                  <CheckIconComponent size="sm" />
+                )}
+                <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
+              </button>
+
+              {/* Export Data */}
+              <button
+                data-testid="export-data-button"
+                onClick={handleExportData}
+                disabled={isExporting}
+                className="flex items-center justify-center space-x-2 bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-green-300 hover:text-green-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {isExporting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-300"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                <span>{isExporting ? 'Exporting...' : 'Export Data'}</span>
+              </button>
+
+              {/* Reset to Defaults */}
+              <button
+                data-testid="reset-to-defaults-button"
+                onClick={handleResetToDefaults}
+                className="flex items-center justify-center space-x-2 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Reset to Defaults</span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Action Buttons */}
-        <div className="space-y-4">
-          <button
-            onClick={handleSave}
-            disabled={isSaving || isLoading}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-3 hover:scale-105 active:scale-95 disabled:scale-100"
-          >
-            {isSaving ? (
-              <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-            ) : (
-              <CheckIconComponent size="sm" className="text-white" />
-            )}
-            <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
-          </button>
+        {/* About Section */}
+        <section className="mb-8">
+          <div className="card-glass rounded-3xl p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-3 bg-purple-500/20 rounded-2xl border border-purple-400/30">
+                <InfoIconComponent size="md" className="text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">About</h2>
+                <p className="text-white/60">App information and licensing</p>
+              </div>
+            </div>
 
-          <button
-            onClick={handleExportCSV}
-            disabled={isExporting}
-            className="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 disabled:hover:scale-100 mb-4"
-          >
-            {isExporting ? 'Exporting...' : 'Download Data as CSV'}
-          </button>
+            <div className="text-center space-y-6">
+              <div>
+                <p className="text-white/80 text-lg">
+                  Copyright © 2025 by Marco van Hylckama Vlieg
+                </p>
+              </div>
 
-          <button
-            onClick={handleReset}
-            className="w-full bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            Reset to Defaults
-          </button>
-        </div>
+              <div>
+                <a
+                  href="https://ai-created.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline text-lg"
+                >
+                  https://ai-created.com/
+                </a>
+              </div>
 
-        {/* Extra padding below reset button */}
-        <div className="pb-8"></div>
+              <div>
+                <button
+                  data-testid="license-button"
+                  onClick={loadLicense}
+                  className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 hover:border-purple-400/50 text-purple-300 hover:text-purple-200 py-3 px-8 rounded-3xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95"
+                >
+                  License
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-theme">
-        <div className="max-w-md mx-auto px-6">
-          <div className="flex justify-around py-4">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md bg-black/20 border-t border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-around py-2">
             <Link href="/" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
                 <HomeIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
               </div>
-              <div className="text-xs font-medium">Today</div>
+              <div className="text-xs font-medium">Home</div>
             </Link>
             <Link href="/history" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
@@ -482,9 +521,9 @@ export default function Settings() {
               </div>
               <div className="text-xs font-medium">History</div>
             </Link>
-            <button className="flex flex-col items-center py-2 px-4 text-blue-400">
+            <button className="flex flex-col items-center py-2 px-4 text-white transition-all duration-200">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" solid className="text-blue-400" />
+                <SettingsIconComponent size="lg" className="text-white transition-colors" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </button>
@@ -492,25 +531,24 @@ export default function Settings() {
         </div>
       </nav>
 
-      {/* License Overlay */}
+      {/* License Dialog */}
       {showLicense && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div data-testid="license-dialog" className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="card-glass rounded-3xl p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">License</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">License</h3>
               <button
+                data-testid="close-license-button"
                 onClick={() => setShowLicense(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200"
+                className="p-2 text-white/60 hover:text-white transition-colors rounded-xl hover:bg-white/10"
               >
-                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="overflow-y-auto max-h-[60vh] bg-black/20 rounded-xl p-4 border border-white/10">
-              <pre className="text-sm text-white/80 whitespace-pre-wrap font-mono leading-relaxed">
-                {licenseContent || 'Loading license...'}
-              </pre>
+            <div className="overflow-y-auto max-h-[60vh] text-sm text-white/80 whitespace-pre-wrap font-mono">
+              {licenseContent}
             </div>
           </div>
         </div>

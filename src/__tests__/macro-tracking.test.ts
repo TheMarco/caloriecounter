@@ -1,4 +1,4 @@
-import { getMacroTotalsForDate, addEntry, clearAllData } from '@/utils/idb';
+import { getMacroTotalsForDate, addEntry, clearAllData, todayKey } from '@/utils/idb';
 
 // Mock IndexedDB
 import 'fake-indexeddb/auto';
@@ -28,7 +28,7 @@ describe('Macro Tracking', () => {
 
     await addEntry(testEntry);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey(); // Use the same function that addEntry uses
     const totals = await getMacroTotalsForDate(today);
 
     expect(totals.calories).toBe(200);
@@ -63,7 +63,7 @@ describe('Macro Tracking', () => {
     await addEntry(entry1);
     await addEntry(entry2);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey(); // Use the same function that addEntry uses
     const totals = await getMacroTotalsForDate(today);
 
     expect(totals.calories).toBe(350);
@@ -84,7 +84,7 @@ describe('Macro Tracking', () => {
     // Add entry without macro data (simulating old entries)
     await addEntry(entryWithMissingMacros as Parameters<typeof addEntry>[0]);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey(); // Use the same function that addEntry uses
     const totals = await getMacroTotalsForDate(today);
 
     expect(totals.calories).toBe(200);

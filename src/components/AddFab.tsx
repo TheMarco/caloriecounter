@@ -5,8 +5,9 @@ import { BarcodeIconComponent, MicrophoneIconComponent, PencilIconComponent } fr
 
 export function AddFab({ onScan, onVoice, onText }: AddFabProps) {
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6">
+    <div data-testid="add-fab" className="grid grid-cols-3 gap-4 mb-6">
       <button
+        data-testid="scan-button"
         onClick={onScan}
         className="card-glass card-glass-hover rounded-3xl p-6 text-center transition-all duration-300 shadow-2xl active:scale-95"
       >
@@ -17,6 +18,7 @@ export function AddFab({ onScan, onVoice, onText }: AddFabProps) {
       </button>
 
       <button
+        data-testid="voice-button"
         onClick={onVoice}
         className="card-glass card-glass-hover rounded-3xl p-6 text-center transition-all duration-300 shadow-2xl active:scale-95"
       >
@@ -27,6 +29,7 @@ export function AddFab({ onScan, onVoice, onText }: AddFabProps) {
       </button>
 
       <button
+        data-testid="text-button"
         onClick={onText}
         className="card-glass card-glass-hover rounded-3xl p-6 text-center transition-all duration-300 shadow-2xl active:scale-95"
       >

@@ -87,7 +87,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
 
   if (entries.length === 0) {
     return (
-      <div className="card-glass card-glass-hover rounded-3xl mb-8 transition-all duration-300 shadow-2xl">
+      <div data-testid="entry-list" className="card-glass card-glass-hover rounded-3xl mb-8 transition-all duration-300 shadow-2xl">
         <div className="p-6 border-b border-white/20">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-orange-500/20 rounded-2xl">
@@ -113,7 +113,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
   }
 
   return (
-    <div className="card-glass card-glass-hover rounded-3xl mb-8 transition-all duration-300 shadow-2xl">
+    <div data-testid="entry-list" className="card-glass card-glass-hover rounded-3xl mb-8 transition-all duration-300 shadow-2xl">
       <div className="p-6 border-b border-white/20">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-orange-500/20 rounded-2xl">
@@ -131,6 +131,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
         {entries.map((entry) => (
           <div
             key={entry.id}
+            data-testid="entry-item"
             className="p-6 hover:bg-white/5 transition-all duration-200"
           >
             {/* Header Row - Food name and actions */}
@@ -145,7 +146,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start space-x-2 mb-1">
                     <h4 className="font-semibold text-white text-lg leading-tight break-words">
-                      {entry.food}
+                      {entry.food || 'Unknown food'}
                     </h4>
                     {entry.confidence && entry.confidence < 0.8 && (
                       <span className="text-xs bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 px-2 py-1 rounded-lg font-medium backdrop-blur-sm flex-shrink-0 mt-0.5">
@@ -160,6 +161,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
               <div className="flex items-center space-x-2 ml-3 flex-shrink-0">
                 {onEdit && (
                   <button
+                    data-testid="edit-button"
                     onClick={() => onEdit(entry)}
                     className="w-9 h-9 rounded-full text-white/60 hover:text-blue-400 transition-colors hover:bg-white/10 backdrop-blur-sm flex items-center justify-center"
                     title="Edit entry"
@@ -171,6 +173,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
                 )}
 
                 <button
+                  data-testid="delete-button"
                   onClick={() => handleDeleteClick(entry)}
                   className="w-9 h-9 rounded-full text-white/60 hover:text-red-400 transition-colors hover:bg-white/10 backdrop-blur-sm flex items-center justify-center"
                   title="Delete entry"
@@ -184,7 +187,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
             <div className="flex items-center justify-between pl-13">
               <div className="flex items-center space-x-3 text-sm text-white/70 font-medium">
                 <span className="bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm">
-                  {entry.qty} {entry.unit}
+                  {entry.qty || 0} {entry.unit || 'g'}
                 </span>
                 <span className="text-white/50">
                   {formatTime(entry.ts)}
@@ -195,7 +198,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
               <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/30 px-4 py-2 rounded-xl backdrop-blur-sm">
                 <div className="text-right">
                   <div className="font-bold text-xl text-white leading-none">
-                    {entry.kcal}
+                    {entry.kcal || 0}
                   </div>
                   <div className="text-xs text-orange-300 font-medium">
                     calories

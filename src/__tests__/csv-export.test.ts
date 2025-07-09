@@ -1,5 +1,5 @@
 import { generateCSVData } from '@/utils/csvExport';
-import { addEntry, clearAllData } from '@/utils/idb';
+import { addEntry, clearAllData, todayKey } from '@/utils/idb';
 
 // Mock IndexedDB
 import 'fake-indexeddb/auto';
@@ -40,7 +40,7 @@ describe('CSV Export', () => {
     expect(lines[0]).toBe('date,calories,carbs,fat,protein');
     
     const dataRow = lines[1];
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey(); // Use the same function that addEntry uses
     expect(dataRow).toBe(`${today},200,20.3,10.5,15.7`);
   });
 
@@ -83,7 +83,7 @@ describe('CSV Export', () => {
     expect(lines.length).toBe(2); // Header + 1 data row (totals for the day)
     
     const dataRow = lines[1];
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey(); // Use the same function that addEntry uses
     expect(dataRow).toBe(`${today},250,25.2,12.5,20.3`);
   });
 });

@@ -60,17 +60,18 @@ const MACRO_TABS = [
 
 export function MacroTabs({ activeTab, onTabChange }: MacroTabsProps) {
   return (
-    <div className="flex bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <div data-testid="macro-tabs" className="flex bg-black/20 backdrop-blur-sm border-b border-white/10">
       {MACRO_TABS.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
           <button
             key={tab.key}
+            data-testid={`tab-${tab.key}`}
             onClick={() => onTabChange(tab.key)}
             className={`
               flex-1 flex items-center justify-center space-x-2 px-3 py-4 font-semibold text-sm transition-all duration-200 relative
               ${isActive
-                ? `${tab.color} bg-black/30`
+                ? `${tab.color} bg-black/30 active selected`
                 : 'text-white/60 hover:text-white/80 hover:bg-white/5'
               }
             `}

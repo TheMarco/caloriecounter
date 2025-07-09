@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="23.259058">
+<testsuite name="settings.spec.ts" timestamp="2025-07-09T05:16:25.972Z" hostname="Mobile Chrome" tests="1" failures="0" skipped="0" time="21.134" errors="0">
+<testcase name="Settings Page Functionality › should change units preference from metric to imperial" classname="settings.spec.ts" time="21.134">
+</testcase>
+</testsuite>
+<testsuite name="settings.spec.ts" timestamp="2025-07-09T05:16:25.972Z" hostname="Mobile Safari" tests="1" failures="0" skipped="0" time="21.187" errors="0">
+<testcase name="Settings Page Functionality › should change units preference from metric to imperial" classname="settings.spec.ts" time="21.187">
+</testcase>
+</testsuite>
+</testsuites>

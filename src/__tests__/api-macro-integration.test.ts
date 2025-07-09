@@ -34,7 +34,7 @@ describe('API Macro Integration', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text: 'one apple' }),
+      body: JSON.stringify({ text: 'one apple', units: 'metric' }),
     });
 
     expect(result.success).toBe(true);

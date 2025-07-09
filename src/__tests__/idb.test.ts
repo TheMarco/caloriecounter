@@ -151,7 +151,10 @@ describe('IndexedDB utilities', () => {
   describe('todayKey', () => {
     it('should return today\'s date in YYYY-MM-DD format', () => {
       const today = new Date();
-      const expected = today.toISOString().slice(0, 10);
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const expected = `${year}-${month}-${day}`;
       const result = todayKey();
 
       expect(result).toBe(expected);
