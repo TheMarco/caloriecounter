@@ -147,6 +147,11 @@ const withPWA = require('next-pwa')({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  skipTrailingSlashRedirect: true,
+  // Exclude problematic routes from static generation
+  async generateBuildId() {
+    return 'build-' + Date.now();
+  },
 };
 
 export default withPWA(nextConfig);

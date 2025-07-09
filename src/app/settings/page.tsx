@@ -363,7 +363,7 @@ export default function Settings() {
                   {settings.units === 'metric' && (
                     <div className="absolute top-4 right-4">
                       <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
-                        <CheckIconComponent size="xs" className="text-white" />
+                        <CheckIconComponent size="sm" className="text-white" />
                       </div>
                     </div>
                   )}
@@ -390,7 +390,7 @@ export default function Settings() {
                   {settings.units === 'imperial' && (
                     <div className="absolute top-4 right-4">
                       <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
-                        <CheckIconComponent size="xs" className="text-white" />
+                        <CheckIconComponent size="sm" className="text-white" />
                       </div>
                     </div>
                   )}
