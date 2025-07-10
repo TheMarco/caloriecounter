@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- img
+- paragraph: Add to home screen for the best experience
+- paragraph: Tap Share then Add to Home Screen
+- button "Dismiss":
+  - img
+- text: You're offline - data will sync when reconnected
+- banner:
+  - img "Calorie Counter"
+  - heading "Calorie Counter" [level=1]
+  - paragraph: Track your daily nutrition
+- main:
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - paragraph: Wednesday, July 9
+  - text: "0"
+  - paragraph: calories consumed
+  - paragraph: 2,000 calories remaining
+  - paragraph: 0% of daily target
+  - text: 0% of target 2,000 daily goal -2,000 vs target
+  - button "Scan":
+    - img
+    - text: Scan
+  - button "Voice"
+  - button "Type"
+  - img
+  - heading "Today's Entries" [level=3]
+  - paragraph: Your daily meal log
+  - text: 🍽️
+  - paragraph: No entries yet today
+  - paragraph: Add your first meal using the buttons above!
+- navigation:
+  - button "Today"
+  - link "History":
+    - /url: /history
+  - link "Settings":
+    - /url: /settings
+- img
+- heading "Voice Input" [level=2]
+- button
+- paragraph: Preparing microphone...
+- paragraph: "Say something like: \"One grilled boneless chicken thigh\""
+- button "Cancel"
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

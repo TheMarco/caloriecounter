@@ -8,6 +8,7 @@ import { TextInput } from '@/components/TextInput';
 import { FoodConfirmDialog } from '@/components/FoodConfirmDialog';
 import { EditEntryDialog } from '@/components/EditEntryDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { LoginForm } from '@/components/LoginForm';
 import { AddFab } from '@/components/AddFab';
 import { TabbedTotalCard } from '@/components/TabbedTotalCard';
 import { EntryList } from '@/components/EntryList';
@@ -26,6 +27,7 @@ import {
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<MacroType>('calories');
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
@@ -40,7 +42,16 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await initializeIDB();
+        // Check authentication
+        const authCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('calorie-auth='));
+        const isAuth = authCookie?.split('=')[1] === 'authenticated';
+        setIsAuthenticated(isAuth);
+
+        if (isAuth) {
+          await initializeIDB();
+        }
       } catch (error) {
         console.error('Failed to initialize IDB:', error);
       } finally {
@@ -178,12 +189,36 @@ export default function Home() {
     setDeleteConfirmEntry(null);
   };
 
-  if (isLoading || todayEntries.isLoading) {
+  const handleLoginSuccess = async () => {
+    setIsAuthenticated(true);
+    try {
+      await initializeIDB();
+    } catch (error) {
+      console.error('Failed to initialize IDB after login:', error);
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/70">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginForm onSuccess={handleLoginSuccess} />;
+  }
+
+  if (todayEntries.isLoading) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/70">Loading...</p>
         </div>
       </div>
     );

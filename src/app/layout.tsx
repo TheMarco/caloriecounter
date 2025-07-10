@@ -71,12 +71,32 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                // Set document element styles immediately
                 document.documentElement.style.backgroundColor = '#000000';
                 document.documentElement.style.color = '#ffffff';
-                document.body.style.backgroundColor = '#000000';
-                document.body.style.color = '#ffffff';
                 document.documentElement.classList.add('dark');
-                document.body.classList.add('dark');
+
+                // Function to set body styles
+                function setBodyStyles() {
+                  if (document.body) {
+                    document.body.style.backgroundColor = '#000000';
+                    document.body.style.color = '#ffffff';
+                    document.body.classList.add('dark');
+                  }
+                }
+
+                // Try to set body styles immediately if body exists
+                setBodyStyles();
+
+                // If body doesn't exist yet, wait for it
+                if (!document.body) {
+                  if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', setBodyStyles);
+                  } else {
+                    // DOM is already loaded, body should exist
+                    setTimeout(setBodyStyles, 0);
+                  }
+                }
               })();
             `,
           }}

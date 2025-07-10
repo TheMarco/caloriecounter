@@ -1,0 +1,59 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - img "Calorie Counter"
+  - heading "Calorie Counter" [level=1]
+  - paragraph: Track your daily nutrition
+- main:
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - paragraph: Wednesday, July 9
+  - text: "0"
+  - paragraph: calories consumed
+  - paragraph: 2,000 calories remaining
+  - paragraph: 0% of daily target
+  - text: 0% of target 2,000 daily goal -2,000 vs target
+  - button "Scan":
+    - img
+    - text: Scan
+  - button "Voice"
+  - button "Type"
+  - img
+  - heading "Today's Entries" [level=3]
+  - paragraph: Your daily meal log
+  - text: 🍽️
+  - paragraph: No entries yet today
+  - paragraph: Add your first meal using the buttons above!
+- navigation:
+  - button "Today"
+  - link "History":
+    - /url: /history
+  - link "Settings":
+    - /url: /settings
+- img
+- heading "Scan Barcode" [level=2]
+- paragraph: Point camera at product barcode
+- button
+- img
+- paragraph: Camera access is required to scan barcodes.
+- button "Grant Camera Access"
+- img
+- paragraph: Failed to start camera
+- button "Try Again"
+- button "Cancel"
+- paragraph: Scanning for barcode...
+- paragraph: Hold steady • Good lighting • Fill the frame
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+- button "Open issues overlay": 4 Issue
+- button "Collapse issues badge":
+  - img
+```

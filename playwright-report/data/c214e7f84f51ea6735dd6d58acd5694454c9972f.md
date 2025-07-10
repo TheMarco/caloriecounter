@@ -1,0 +1,56 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - img "Calorie Counter"
+  - heading "Calorie Counter" [level=1]
+  - paragraph: Track your daily nutrition
+- main:
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - paragraph: Wednesday, July 9
+  - text: "0"
+  - paragraph: calories consumed
+  - paragraph: 2,000 calories remaining
+  - paragraph: 0% of daily target
+  - text: 0% of target 2,000 daily goal -2,000 vs target
+  - button "Scan":
+    - img
+    - text: Scan
+  - button "Voice"
+  - button "Type"
+  - img
+  - heading "Today's Entries" [level=3]
+  - paragraph: Your daily meal log
+  - text: 🍽️
+  - paragraph: No entries yet today
+  - paragraph: Add your first meal using the buttons above!
+- navigation:
+  - button "Today"
+  - link "History":
+    - /url: /history
+  - link "Settings":
+    - /url: /settings
+- img
+- heading "Add Food" [level=2]
+- button "✕"
+- text: What did you eat?
+- textbox "e.g., 2 slices of bread, 1 apple, 100g chicken breast"
+- paragraph: "Examples:"
+- list:
+  - listitem: "\"2 slices of whole wheat bread\""
+  - listitem: "\"1 medium apple\""
+  - listitem: "\"100g grilled chicken breast\""
+  - listitem: "\"1 cup of cooked rice\""
+- button "Parse Food" [disabled]
+- button "Cancel"
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

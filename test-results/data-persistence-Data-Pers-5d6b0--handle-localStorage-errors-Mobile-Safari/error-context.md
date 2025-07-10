@@ -1,0 +1,69 @@
+# Page snapshot
+
+```yaml
+- img
+- paragraph: Add to home screen for the best experience
+- paragraph: Tap Share then Add to Home Screen
+- button "Dismiss":
+  - img
+- banner:
+  - link:
+    - /url: /
+    - img
+  - heading "Settings" [level=1]
+- main:
+  - heading "Daily Goals" [level=2]:
+    - img
+    - text: Daily Goals
+  - text: Daily Calorie Target
+  - spinbutton: "2200"
+  - text: kcal
+  - paragraph: "Range: 1000-5000 calories"
+  - text: Daily Fat Target
+  - spinbutton: "65"
+  - text: g
+  - paragraph: "Range: 20-200 grams"
+  - text: Daily Carbs Target
+  - spinbutton: "250"
+  - text: g
+  - paragraph: "Range: 50-500 grams"
+  - text: Daily Protein Target
+  - spinbutton: "100"
+  - text: g
+  - paragraph: "Range: 30-300 grams"
+  - img
+  - heading "Preferences" [level=2]
+  - paragraph: Customize your app experience
+  - heading "Measurement Units" [level=3]
+  - radio "Metric g, kg, ml, l" [checked]
+  - heading "Metric" [level=4]
+  - paragraph: g, kg, ml, l
+  - radio "Imperial oz, lb, fl oz, cups"
+  - heading "Imperial" [level=4]
+  - paragraph: oz, lb, fl oz, cups
+  - heading "Actions" [level=2]:
+    - img
+    - text: Actions
+  - button "Save Settings"
+  - button "Export Data":
+    - img
+    - text: Export Data
+  - button "Reset to Defaults":
+    - img
+    - text: Reset to Defaults
+  - heading "About" [level=2]
+  - paragraph: App information and licensing
+  - paragraph: Copyright © 2025 by Marco van Hylckama Vlieg
+  - link "https://ai-created.com/":
+    - /url: https://ai-created.com/
+  - button "License"
+- navigation:
+  - link "Home":
+    - /url: /
+  - link "History":
+    - /url: /history
+  - button "Settings"
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

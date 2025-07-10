@@ -1,0 +1,48 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - img "Calorie Counter"
+  - heading "Calorie Counter" [level=1]
+  - paragraph: Track your daily nutrition
+- main:
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - paragraph: Wednesday, July 9
+  - text: "95"
+  - paragraph: calories consumed
+  - paragraph: 1,905 calories remaining
+  - paragraph: 5% of daily target
+  - text: 5% of target 2,000 daily goal -1,905 vs target
+  - button "Scan":
+    - img
+    - text: Scan
+  - button "Voice"
+  - button "Type"
+  - img
+  - heading "Today's Entries" [level=3]
+  - paragraph: 1 item logged
+  - heading "Apple" [level=4]
+  - button "Edit entry":
+    - img
+  - button "Delete entry"
+  - text: 1 piece 2:02 AM 95 calories
+- navigation:
+  - button "Today"
+  - link "History":
+    - /url: /history
+  - link "Settings":
+    - /url: /settings
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+- button "Open issues overlay": 2 Issue
+- button "Collapse issues badge":
+  - img
+```
