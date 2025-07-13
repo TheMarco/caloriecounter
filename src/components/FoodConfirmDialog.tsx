@@ -50,7 +50,10 @@ export function FoodConfirmDialog({
       case 'tsp': grams = fromQty * 5; break; // 1 tsp ≈ 5g
       case 'oz': grams = fromQty * 28.35; break; // 1 oz ≈ 28.35g
       case 'lb': grams = fromQty * 453.6; break; // 1 lb ≈ 453.6g
-      case 'piece': case 'slice': case 'serving': grams = fromQty * 50; break; // Estimate
+      case 'piece': case 'slice': grams = fromQty * 50; break; // Estimate for individual items
+      case 'bowl': grams = fromQty * 250; break; // 1 bowl ≈ 250g (typical serving bowl)
+      case 'plate': grams = fromQty * 300; break; // 1 plate ≈ 300g (typical dinner plate portion)
+      case 'serving': grams = fromQty * 150; break; // 1 serving ≈ 150g (general estimate)
       default: grams = fromQty; // 'g' or unknown
     }
 
@@ -62,7 +65,10 @@ export function FoodConfirmDialog({
       case 'tsp': return grams / 5;
       case 'oz': return grams / 28.35;
       case 'lb': return grams / 453.6;
-      case 'piece': case 'slice': case 'serving': return grams / 50;
+      case 'piece': case 'slice': return grams / 50;
+      case 'bowl': return grams / 250;
+      case 'plate': return grams / 300;
+      case 'serving': return grams / 150;
       default: return grams; // 'g' or unknown
     }
   };
@@ -227,6 +233,8 @@ export function FoodConfirmDialog({
                   <option value="tsp" className="bg-gray-800 text-white">tsp</option>
                   <option value="piece" className="bg-gray-800 text-white">piece</option>
                   <option value="slice" className="bg-gray-800 text-white">slice</option>
+                  <option value="bowl" className="bg-gray-800 text-white">bowl</option>
+                  <option value="plate" className="bg-gray-800 text-white">plate</option>
                   <option value="serving" className="bg-gray-800 text-white">serving</option>
                   <option value="oz" className="bg-gray-800 text-white">oz</option>
                   <option value="lb" className="bg-gray-800 text-white">lb</option>

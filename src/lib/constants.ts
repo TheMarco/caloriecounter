@@ -33,6 +33,8 @@ export const FOOD_UNITS = [
   'tsp',
   'piece',
   'slice',
+  'bowl',
+  'plate',
   'serving',
   'oz',
   'lb',
