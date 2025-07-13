@@ -54,6 +54,10 @@ export const INPUT_METHODS = {
     label: 'Text',
     description: 'Type food name',
   },
+  photo: {
+    label: 'Photo',
+    description: 'Take a photo of food',
+  },
 } as const;
 
 // API configuration

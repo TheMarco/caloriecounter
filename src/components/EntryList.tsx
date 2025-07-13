@@ -6,7 +6,8 @@ import {
   MicrophoneIconComponent,
   PencilIconComponent,
   DeleteIconComponent,
-  BarcodeIconComponent
+  BarcodeIconComponent,
+  CameraIconComponent
 } from '@/components/icons';
 
 
@@ -44,6 +45,8 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
         return <MicrophoneIconComponent size="sm" className="text-green-400" />;
       case 'text':
         return <PencilIconComponent size="sm" className="text-purple-400" />;
+      case 'photo':
+        return <CameraIconComponent size="sm" className="text-orange-400" />;
       default:
         return <PencilIconComponent size="sm" className="text-purple-400" />;
     }

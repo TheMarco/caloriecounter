@@ -11,7 +11,7 @@ export type Entry = {
   fat: number;       // grams of fat
   carbs: number;     // grams of carbohydrates
   protein: number;   // grams of protein
-  method: 'barcode' | 'voice' | 'text';
+  method: 'barcode' | 'voice' | 'text' | 'photo';
   confidence?: number;
 };
 
@@ -71,6 +71,7 @@ export type AddFabProps = {
   onScan: () => void;
   onVoice: () => void;
   onText: () => void;
+  onPhoto: () => void;
 };
 
 export type EntryListProps = {
@@ -117,4 +118,4 @@ export type MethodType = Entry['method'];
 export const UNITS = ['g', 'ml', 'cup', 'tbsp', 'tsp', 'piece', 'slice'] as const;
 export type Unit = typeof UNITS[number];
 
-export const METHODS = ['barcode', 'voice', 'text'] as const;
+export const METHODS = ['barcode', 'voice', 'text', 'photo'] as const;

@@ -5,6 +5,7 @@ import { initializeIDB } from '@/utils/idb';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { VoiceInput } from '@/components/VoiceInput';
 import { TextInput } from '@/components/TextInput';
+import { PhotoCapture } from '@/components/PhotoCapture';
 import { FoodConfirmDialog } from '@/components/FoodConfirmDialog';
 import { EditEntryDialog } from '@/components/EditEntryDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -15,6 +16,7 @@ import { EntryList } from '@/components/EntryList';
 import { useBarcode } from '@/hooks/useBarcode';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useTextInput } from '@/hooks/useTextInput';
+import { usePhoto } from '@/hooks/usePhoto';
 import { useSettings } from '@/hooks/useSettings';
 import { useTodayEntries } from '@/hooks/useTodayEntries';
 import { updateEntry } from '@/utils/idb';
@@ -36,6 +38,7 @@ export default function Home() {
   const barcode = useBarcode();
   const voice = useVoiceInput();
   const textInput = useTextInput();
+  const photo = usePhoto();
   const todayEntries = useTodayEntries();
   const { settings } = useSettings();
 
@@ -66,12 +69,13 @@ export default function Home() {
   useEffect(() => {
     if (!barcode.isScanning && !barcode.isLoading && !barcode.isProcessing && !barcode.showConfirmDialog &&
         !voice.isProcessing && !voice.showConfirmDialog &&
-        !textInput.isProcessing && !textInput.showConfirmDialog) {
+        !textInput.isProcessing && !textInput.showConfirmDialog &&
+        !photo.isCapturing && !photo.isProcessing && !photo.showConfirmDialog) {
       console.log('🔄 Main page: Triggering entries refresh');
       todayEntries.refreshEntries();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog]);
+  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, photo.isCapturing, photo.isProcessing, photo.showConfirmDialog]);
 
   const handleScan = () => {
     barcode.startScanning();
@@ -83,6 +87,10 @@ export default function Home() {
 
   const handleText = () => {
     textInput.startTextInput();
+  };
+
+  const handlePhoto = () => {
+    photo.startCapture();
   };
 
 
@@ -122,6 +130,26 @@ export default function Home() {
       // Entries will be refreshed by the useEffect above
     } catch (error) {
       console.error('Failed to save text entry:', error);
+    }
+  };
+
+  const handlePhotoCapture = async (imageData: string) => {
+    try {
+      console.log('📸 Main page: Photo captured');
+      await photo.handlePhotoCapture(imageData, settings.units);
+      console.log('✅ Main page: Photo processing completed');
+      // Entries will be refreshed by the useEffect above
+    } catch (error) {
+      console.error('❌ Main page: Failed to process photo:', error);
+    }
+  };
+
+  const handlePhotoConfirm = async (data: { food: string; qty: number; unit: string; kcal: number }) => {
+    try {
+      await photo.handleConfirmFood(data);
+      // Entries will be refreshed by the useEffect above
+    } catch (error) {
+      console.error('Failed to save photo entry:', error);
     }
   };
 
@@ -274,6 +302,7 @@ export default function Home() {
               onScan={handleScan}
               onVoice={handleVoice}
               onText={handleText}
+              onPhoto={handlePhoto}
             />
 
             {/* Today's Entries */}
@@ -341,6 +370,14 @@ export default function Home() {
         error={textInput.error}
       />
 
+      {/* Photo Capture */}
+      <PhotoCapture
+        isActive={photo.isCapturing}
+        onCapture={handlePhotoCapture}
+        onError={photo.handleCaptureError}
+        onClose={photo.stopCapture}
+      />
+
       {/* Barcode Food Confirmation Dialog */}
       <FoodConfirmDialog
         isOpen={barcode.showConfirmDialog}
@@ -366,6 +403,15 @@ export default function Home() {
         isLoading={textInput.isProcessing}
         onConfirm={handleTextConfirm}
         onCancel={textInput.handleCancelConfirm}
+      />
+
+      {/* Photo Food Confirmation Dialog */}
+      <FoodConfirmDialog
+        isOpen={photo.showConfirmDialog}
+        foodData={photo.parsedFood}
+        isLoading={photo.isProcessing}
+        onConfirm={handlePhotoConfirm}
+        onCancel={photo.handleCancelConfirm}
       />
 
       {/* Edit Entry Dialog */}
