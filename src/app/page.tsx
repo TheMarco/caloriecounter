@@ -133,14 +133,19 @@ export default function Home() {
     }
   };
 
-  const handlePhotoCapture = async (imageData: string) => {
+  const handlePhotoCapture = async (imageData: string, details?: { plateSize: string; servingType: string; additionalDetails: string }) => {
     try {
-      console.log('📸 Main page: Photo captured');
-      await photo.handlePhotoCapture(imageData, settings.units);
+      console.log('📸 Main page: Photo captured, size:', imageData.length);
+      console.log('📸 Main page: Using units:', settings.units);
+      console.log('📸 Main page: Additional details:', details);
+      await photo.handlePhotoCapture(imageData, settings.units, details);
       console.log('✅ Main page: Photo processing completed');
       // Entries will be refreshed by the useEffect above
     } catch (error) {
       console.error('❌ Main page: Failed to process photo:', error);
+      console.error('❌ Error details:', error);
+      // Show error to user
+      alert(`Photo processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -151,6 +156,21 @@ export default function Home() {
     } catch (error) {
       console.error('Failed to save photo entry:', error);
     }
+  };
+
+  const handlePhotoClearError = () => {
+    // Clear the error and restart capture
+    photo.handleCancelConfirm(); // This should clear the error state
+    photo.startCapture();
+  };
+
+  const handlePhotoEditDetails = () => {
+    // Close the confirmation dialog and restart photo capture
+    photo.handleCancelConfirm();
+    // Start photo capture again so user can retake and add details
+    setTimeout(() => {
+      photo.startCapture();
+    }, 100); // Small delay to ensure state is cleared
   };
 
   const handleEditEntry = (entry: Entry) => {
@@ -376,6 +396,9 @@ export default function Home() {
         onCapture={handlePhotoCapture}
         onError={photo.handleCaptureError}
         onClose={photo.stopCapture}
+        isProcessing={photo.isProcessing}
+        processingError={photo.error}
+        onClearError={handlePhotoClearError}
       />
 
       {/* Barcode Food Confirmation Dialog */}
@@ -385,6 +408,7 @@ export default function Home() {
         isLoading={barcode.isProcessing}
         onConfirm={handleBarcodeConfirm}
         onCancel={barcode.handleCancelConfirm}
+        method="barcode"
       />
 
       {/* Voice Food Confirmation Dialog */}
@@ -394,6 +418,7 @@ export default function Home() {
         isLoading={voice.isProcessing}
         onConfirm={handleVoiceConfirm}
         onCancel={voice.handleCancelConfirm}
+        method="voice"
       />
 
       {/* Text Food Confirmation Dialog */}
@@ -403,6 +428,7 @@ export default function Home() {
         isLoading={textInput.isProcessing}
         onConfirm={handleTextConfirm}
         onCancel={textInput.handleCancelConfirm}
+        method="text"
       />
 
       {/* Photo Food Confirmation Dialog */}
@@ -412,6 +438,8 @@ export default function Home() {
         isLoading={photo.isProcessing}
         onConfirm={handlePhotoConfirm}
         onCancel={photo.handleCancelConfirm}
+        method="photo"
+        onEditDetails={handlePhotoEditDetails}
       />
 
       {/* Edit Entry Dialog */}

@@ -506,14 +506,14 @@ export default function Settings() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md bg-black/20 border-t border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-around py-2">
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-theme">
+        <div className="max-w-md mx-auto px-6">
+          <div className="flex justify-around py-4">
             <Link href="/" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
                 <HomeIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
               </div>
-              <div className="text-xs font-medium">Home</div>
+              <div className="text-xs font-medium">Today</div>
             </Link>
             <Link href="/history" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
               <div className="mb-1">
@@ -521,9 +521,9 @@ export default function Settings() {
               </div>
               <div className="text-xs font-medium">History</div>
             </Link>
-            <button className="flex flex-col items-center py-2 px-4 text-white transition-all duration-200">
+            <button className="flex flex-col items-center py-2 px-4 text-blue-400">
               <div className="mb-1">
-                <SettingsIconComponent size="lg" className="text-white transition-colors" />
+                <SettingsIconComponent size="lg" solid className="text-blue-400" />
               </div>
               <div className="text-xs font-medium">Settings</div>
             </button>

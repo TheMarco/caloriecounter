@@ -151,11 +151,6 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
                     <h4 className="font-semibold text-white text-lg leading-tight break-words">
                       {entry.food || 'Unknown food'}
                     </h4>
-                    {entry.confidence && entry.confidence < 0.8 && (
-                      <span className="text-xs bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 px-2 py-1 rounded-lg font-medium backdrop-blur-sm flex-shrink-0 mt-0.5">
-                        Low confidence
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getDailyMacroTotals } from '@/utils/idb';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MacroTabs } from '@/components/MacroTabs';
+import { useSettings } from '@/hooks/useSettings';
 import type { DateRange, MacroType, MacroTotals } from '@/types';
 import {
   HomeIconComponent,
@@ -17,6 +18,7 @@ export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState<MacroType>('calories');
   const [localData, setLocalData] = useState<Array<{ date: string; totals: MacroTotals }>>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
+  const { settings } = useSettings();
   
   // Only using local IndexedDB data
 
@@ -105,6 +107,41 @@ export default function HistoryPage() {
       default:
         return '#3b82f6';
     }
+  };
+
+  const getTargetValue = () => {
+    switch (activeTab) {
+      case 'calories':
+        return settings.dailyTarget;
+      case 'fat':
+        return settings.fatTarget;
+      case 'carbs':
+        return settings.carbsTarget;
+      case 'protein':
+        return settings.proteinTarget;
+      default:
+        return 0;
+    }
+  };
+
+  const getTargetLineColor = () => {
+    const baseColor = getColor();
+    // Convert hex to rgba with opacity
+    const hex = baseColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.9)`;
+  };
+
+  const getTargetLineGlowColor = () => {
+    const baseColor = getColor();
+    // Convert hex to rgba with lower opacity for glow
+    const hex = baseColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.25)`;
   };
 
   const isLoading = isLoadingLocal;
@@ -250,6 +287,12 @@ export default function HistoryPage() {
                     tick={{ fontSize: 12 }}
                     stroke="currentColor"
                     className="text-gray-600 dark:text-gray-400"
+                    domain={[0, (dataMax: number) => {
+                      const targetValue = getTargetValue();
+                      const maxValue = Math.max(dataMax, targetValue);
+                      // Add 10% padding above the highest value (either data or target)
+                      return Math.ceil(maxValue * 1.1);
+                    }]}
                   />
                   <Tooltip
                     labelFormatter={(label, payload) => {
@@ -286,6 +329,33 @@ export default function HistoryPage() {
                     dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
                     activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
                   />
+                  {/* Target line glow effect */}
+                  <ReferenceLine
+                    y={getTargetValue()}
+                    stroke={getTargetLineGlowColor()}
+                    strokeDasharray="6 3"
+                    strokeWidth={5}
+                  />
+                  {/* Main target line */}
+                  <ReferenceLine
+                    y={getTargetValue()}
+                    stroke={getTargetLineColor()}
+                    strokeDasharray="6 3"
+                    strokeWidth={2.5}
+                    label={{
+                      value: `Target: ${activeTab === 'calories' ? getTargetValue().toLocaleString() : getTargetValue().toFixed(0)} ${getUnit()}`,
+                      position: 'top',
+                      offset: 8,
+                      style: {
+                        fill: 'rgba(255, 255, 255, 0.95)',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }
+                    }}
+                  />
+
                 </LineChart>
               </ResponsiveContainer>
             </div>

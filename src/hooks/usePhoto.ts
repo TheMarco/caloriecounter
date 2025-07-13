@@ -2,20 +2,28 @@ import { useState } from 'react';
 import { addEntry } from '@/utils/idb';
 
 // API function to parse photo
-async function parsePhoto(imageData: string, units: 'metric' | 'imperial' = 'metric') {
+async function parsePhoto(imageData: string, units: 'metric' | 'imperial' = 'metric', details?: { plateSize: string; servingType: string; additionalDetails: string }) {
+  console.log('📡 parsePhoto called with image size:', imageData.length, 'units:', units, 'details:', details);
+
   const response = await fetch('/api/parse-photo', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ imageData, units }),
+    body: JSON.stringify({ imageData, units, details }),
   });
 
+  console.log('📡 API response status:', response.status);
+
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const errorText = await response.text();
+    console.error('📡 API error response:', errorText);
+    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('📡 API response data:', result);
+  return result;
 }
 
 export function usePhoto() {
@@ -44,24 +52,40 @@ export function usePhoto() {
     setIsCapturing(false);
   };
 
-  const handlePhotoCapture = async (imageData: string, units: 'metric' | 'imperial' = 'metric') => {
+  const handlePhotoCapture = async (imageData: string, units: 'metric' | 'imperial' = 'metric', details?: { plateSize: string; servingType: string; additionalDetails: string }) => {
     try {
-      console.log('📸 Starting photo processing');
+      console.log('📸 Starting photo processing, image size:', imageData.length);
+      console.log('📸 Image data preview:', imageData.substring(0, 100) + '...');
+
+      // Check image size (5MB limit for better API performance)
+      if (imageData.length > 5 * 1024 * 1024) {
+        throw new Error('Image too large. Please try taking a smaller photo.');
+      }
+
       setIsProcessing(true);
       setError(null);
 
       // Stop capturing and show processing state
       stopCapture();
 
-      console.log('📡 Analyzing photo with OpenAI Vision');
+      console.log('📡 Analyzing photo with OpenAI Vision, units:', units);
 
       // Parse the photo using OpenAI Vision API
-      const response = await parsePhoto(imageData, units);
+      const response = await parsePhoto(imageData, units, details);
       console.log('📡 Photo API response:', response);
 
       if (!response.success || !response.data) {
         console.error('❌ Photo analysis failed:', response.error);
-        throw new Error(response.error || 'Failed to analyze photo');
+
+        // Check if it's a food recognition error and provide user-friendly message
+        const errorMsg = response.error || 'Failed to analyze photo';
+        if (errorMsg.includes('Cannot clearly identify food') ||
+            errorMsg.includes('No food visible') ||
+            errorMsg.includes('not food')) {
+          throw new Error('We couldn\'t identify any food in this photo. Please try taking a clearer picture of your meal, or make sure the food is well-lit and clearly visible.');
+        }
+
+        throw new Error(errorMsg);
       }
 
       const { food, quantity, unit, kcal, fat, carbs, protein, notes } = response.data;
@@ -114,7 +138,7 @@ export function usePhoto() {
         carbs: data.carbs || 0,
         protein: data.protein || 0,
         method: 'photo',
-        confidence: 0.7, // Medium confidence since AI vision can be less precise
+        confidence: 0.9, // High confidence - photo analysis is working well
       });
 
       console.log('Entry created:', entry);
@@ -138,6 +162,7 @@ export function usePhoto() {
   const handleCancelConfirm = () => {
     setShowConfirmDialog(false);
     setParsedFood(null);
+    setError(null); // Clear any errors
   };
 
   const handleCaptureError = (error: string) => {

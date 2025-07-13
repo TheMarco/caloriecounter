@@ -9,14 +9,18 @@ interface FoodConfirmDialogProps {
   isLoading: boolean;
   onConfirm: (data: { food: string; qty: number; unit: string; kcal: number; fat?: number; carbs?: number; protein?: number }) => void;
   onCancel: () => void;
+  method?: 'barcode' | 'voice' | 'text' | 'photo';
+  onEditDetails?: () => void;
 }
 
-export function FoodConfirmDialog({ 
-  isOpen, 
-  foodData, 
-  isLoading, 
-  onConfirm, 
-  onCancel 
+export function FoodConfirmDialog({
+  isOpen,
+  foodData,
+  isLoading,
+  onConfirm,
+  onCancel,
+  method,
+  onEditDetails
 }: FoodConfirmDialogProps) {
   const [editedFood, setEditedFood] = useState('');
   const [editedQty, setEditedQty] = useState(0);
@@ -180,6 +184,31 @@ export function FoodConfirmDialog({
           </div>
         ) : foodData ? (
           <div className="space-y-4">
+            {/* Photo Analysis Warning */}
+            {method === 'photo' && (
+              <div className="bg-orange-500/10 border border-orange-400/30 rounded-2xl p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-sm font-medium text-orange-400">AI visual best estimate</h4>
+                  </div>
+                  {onEditDetails && (
+                    <button
+                      onClick={onEditDetails}
+                      className="px-3 py-1.5 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-400/40 text-orange-300 text-xs rounded-lg transition-colors"
+                    >
+                      Add / Edit Details
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Food Name */}
             <div>
               <label className="block text-sm font-medium text-white/80 mb-2">
