@@ -6,7 +6,7 @@ import { addEntry } from '@/utils/idb';
 import { useSettings } from '@/hooks/useSettings';
 import type { ParseFoodResponse } from '@/types';
 
-export function useVoiceInput() {
+export function useVoiceInput(date?: string) {
   const { settings } = useSettings();
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,7 +71,7 @@ export function useVoiceInput() {
         protein: data.protein || 0,
         method: 'voice',
         confidence: 0.9, // High confidence since user confirmed
-      });
+      }, date);
 
       console.log('Entry created:', entry);
 

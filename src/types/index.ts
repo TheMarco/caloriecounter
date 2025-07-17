@@ -107,6 +107,7 @@ export type TabbedTotalCardProps = {
   totals: MacroTotals;
   targets: MacroTargets;
   date: string;
+  calorieOffset?: number;
 };
 
 // Utility types

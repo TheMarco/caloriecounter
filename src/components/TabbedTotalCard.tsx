@@ -8,9 +8,12 @@ interface TabbedTotalCardWithTabProps extends TabbedTotalCardProps {
   onTabChange: (tab: MacroType) => void;
 }
 
-export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange }: TabbedTotalCardWithTabProps) {
+export function TabbedTotalCard({ totals, targets, date, calorieOffset = 0, activeTab, onTabChange }: TabbedTotalCardWithTabProps) {
 
   const formatDate = (dateStr: string) => {
+    if (!dateStr) {
+      return 'Today';
+    }
     // Parse the date string as local date to avoid timezone issues
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(year, month - 1, day); // month is 0-indexed
@@ -22,13 +25,15 @@ export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange 
   };
 
   const getCurrentData = () => {
-    const current = totals[activeTab];
+    const rawCurrent = totals[activeTab];
+    // For calories, show net amount (consumed - offset), for other macros show raw amount
+    const current = activeTab === 'calories' ? Math.max(0, rawCurrent - calorieOffset) : rawCurrent;
     const target = targets[activeTab];
     const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
     const remaining = Math.max(target - current, 0);
     const isOverTarget = current > target;
 
-    return { current, target, percentage, remaining, isOverTarget };
+    return { current, rawCurrent, target, percentage, remaining, isOverTarget };
   };
 
   const getStatusColor = () => {
@@ -75,7 +80,7 @@ export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange 
     }
   };
 
-  const { current, target, percentage, remaining, isOverTarget } = getCurrentData();
+  const { current, rawCurrent, target, percentage, remaining, isOverTarget } = getCurrentData();
 
   return (
     <div data-testid="totals-card" className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
@@ -96,7 +101,16 @@ export function TabbedTotalCard({ totals, targets, date, activeTab, onTabChange 
           <div data-testid="macro-total" className={`text-5xl font-bold mb-3 ${getStatusColor()}`}>
             {activeTab === 'calories' ? current.toLocaleString() : current.toFixed(1)}
           </div>
-          <p className="text-lg text-white/80 font-medium">{getLabel()}</p>
+          {activeTab === 'calories' && calorieOffset > 0 ? (
+            <div className="mb-2">
+              <p className="text-sm text-white/60">
+                {rawCurrent.toLocaleString()} - {calorieOffset.toLocaleString()} = {current.toLocaleString()}
+              </p>
+            </div>
+          ) : null}
+          <p className="text-lg text-white/80 font-medium">
+            {activeTab === 'calories' && calorieOffset > 0 ? 'net calories consumed' : getLabel()}
+          </p>
         </div>
 
         {/* Progress Bar */}

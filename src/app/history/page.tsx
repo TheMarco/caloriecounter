@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getDailyMacroTotals } from '@/utils/idb';
+import { useRouter } from 'next/navigation';
+import { getDailyMacroTotalsWithOffset } from '@/utils/idb';
+import { Calendar } from '@/components/Calendar';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MacroTabs } from '@/components/MacroTabs';
 import { useSettings } from '@/hooks/useSettings';
@@ -14,9 +16,10 @@ import {
 } from '@/components/icons';
 
 export default function HistoryPage() {
+  const router = useRouter();
   const [selectedRange, setSelectedRange] = useState<DateRange>('7d');
   const [activeTab, setActiveTab] = useState<MacroType>('calories');
-  const [localData, setLocalData] = useState<Array<{ date: string; totals: MacroTotals }>>([]);
+  const [localData, setLocalData] = useState<Array<{ date: string; totals: MacroTotals; offset: number }>>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const { settings } = useSettings();
   
@@ -28,7 +31,7 @@ export default function HistoryPage() {
       try {
         setIsLoadingLocal(true);
         const days = selectedRange === '7d' ? 7 : selectedRange === '30d' ? 30 : 90;
-        const data = await getDailyMacroTotals(days);
+        const data = await getDailyMacroTotalsWithOffset(days);
         setLocalData(data);
       } catch (error) {
         console.error('Failed to load local data:', error);
@@ -45,12 +48,15 @@ export default function HistoryPage() {
     // Parse the date string as local date to avoid timezone issues
     const [year, month, day] = item.date.split('-').map(Number);
     const date = new Date(year, month - 1, day); // month is 0-indexed
+    const netCalories = Math.max(0, item.totals.calories - item.offset);
     return {
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      calories: item.totals.calories,
+      calories: item.totals.calories, // Raw calories
+      netCalories: netCalories, // Net calories (consumed - offset)
       fat: item.totals.fat,
       carbs: item.totals.carbs,
       protein: item.totals.protein,
+      offset: item.offset,
       fullDate: item.date,
     };
   });
@@ -145,6 +151,10 @@ export default function HistoryPage() {
   };
 
   const isLoading = isLoadingLocal;
+
+  const handleDateSelect = (date: string) => {
+    router.push(`/?date=${date}`);
+  };
 
   return (
     <div className="min-h-screen gradient-bg transition-theme">
@@ -308,10 +318,17 @@ export default function HistoryPage() {
                       }
                       return label;
                     }}
-                    formatter={(value: number) => [
-                      `${activeTab === 'calories' ? value.toLocaleString() : value.toFixed(1)} ${getUnit()}`,
-                      getLabel()
-                    ]}
+                    formatter={(value: number, name: string) => {
+                      if (activeTab === 'calories') {
+                        // For calories tab, show different labels for raw vs net
+                        const label = name === 'Raw Intake' ? 'Raw calories consumed' :
+                                     name === 'Net Intake' ? 'Net calories (after offset)' :
+                                     getLabel();
+                        return [`${value.toLocaleString()} ${getUnit()}`, label];
+                      } else {
+                        return [`${value.toFixed(1)} ${getUnit()}`, getLabel()];
+                      }
+                    }}
                     contentStyle={{
                       backgroundColor: 'var(--card-background)',
                       border: '1px solid var(--card-border)',
@@ -321,14 +338,39 @@ export default function HistoryPage() {
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
                     }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey={activeTab}
-                    stroke={getColor()}
-                    strokeWidth={3}
-                    dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
-                    activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
-                  />
+                  {activeTab === 'calories' ? (
+                    <>
+                      {/* Raw calories line */}
+                      <Line
+                        type="monotone"
+                        dataKey="calories"
+                        stroke={getColor()}
+                        strokeWidth={3}
+                        dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
+                        activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
+                        name="Raw Intake"
+                      />
+                      {/* Net calories line */}
+                      <Line
+                        type="monotone"
+                        dataKey="netCalories"
+                        stroke="#ef4444" // Red color for net calories
+                        strokeWidth={3}
+                        dot={{ fill: '#ef4444', strokeWidth: 2, r: 5 }}
+                        activeDot={{ r: 7, stroke: '#ef4444', strokeWidth: 3, fill: '#ffffff' }}
+                        name="Net Intake"
+                      />
+                    </>
+                  ) : (
+                    <Line
+                      type="monotone"
+                      dataKey={activeTab}
+                      stroke={getColor()}
+                      strokeWidth={3}
+                      dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
+                      activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
+                    />
+                  )}
                   {/* Target line glow effect */}
                   <ReferenceLine
                     y={getTargetValue()}
@@ -363,6 +405,10 @@ export default function HistoryPage() {
           </div>
         </div>
 
+        {/* Calendar */}
+        <div className="mb-6">
+          <Calendar onDateSelect={handleDateSelect} />
+        </div>
 
       </main>
 

@@ -9,6 +9,7 @@ import {
   BarcodeIconComponent,
   CameraIconComponent
 } from '@/components/icons';
+import { AddFoodDropdown } from '@/components/AddFoodDropdown';
 
 
 interface EntryListProps {
@@ -17,9 +18,29 @@ interface EntryListProps {
   onEdit?: (entry: Entry) => void;
   isLoading?: boolean;
   onDeleteConfirm?: (entry: Entry) => void;
+  title?: string;
+  subtitle?: string;
+  showAddFood?: boolean;
+  onScan?: () => void;
+  onVoice?: () => void;
+  onText?: () => void;
+  onPhoto?: () => void;
 }
 
-export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfirm }: EntryListProps) {
+export function EntryList({
+  entries,
+  onDelete,
+  onEdit,
+  isLoading,
+  onDeleteConfirm,
+  title = "Today's Entries",
+  subtitle = "Your daily meal log",
+  showAddFood = false,
+  onScan,
+  onVoice,
+  onText,
+  onPhoto
+}: EntryListProps) {
   const handleDeleteClick = (entry: Entry) => {
     if (onDeleteConfirm) {
       onDeleteConfirm(entry);
@@ -63,8 +84,8 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">Today&apos;s Entries</h3>
-              <p className="text-white/60 text-sm">Loading your meals...</p>
+              <h3 className="text-xl font-semibold text-white">{title}</h3>
+              <p className="text-white/60 text-sm">Loading...</p>
             </div>
           </div>
         </div>
@@ -99,18 +120,30 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white">Today&apos;s Entries</h3>
-              <p className="text-white/60 text-sm">Your daily meal log</p>
+              <h3 className="text-xl font-semibold text-white">{title}</h3>
+              <p className="text-white/60 text-sm">{subtitle}</p>
             </div>
           </div>
         </div>
         <div className="p-8 text-center">
           <div className="text-5xl mb-4">🍽️</div>
-          <p className="text-white/80 mb-2 font-medium">No entries yet today</p>
+          <p className="text-white/80 mb-2 font-medium">No entries yet</p>
           <p className="text-sm text-white/60">
-            Add your first meal using the buttons above!
+            {showAddFood ? 'Add your first meal using the dropdown below!' : 'Add your first meal using the buttons above!'}
           </p>
         </div>
+
+        {/* Add Food Dropdown for Historical Days */}
+        {showAddFood && onScan && onVoice && onText && onPhoto && (
+          <div className="p-6 border-t border-white/10">
+            <AddFoodDropdown
+              onScan={onScan}
+              onVoice={onVoice}
+              onText={onText}
+              onPhoto={onPhoto}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -125,7 +158,7 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
             </svg>
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">Today&apos;s Entries</h3>
+            <h3 className="text-xl font-semibold text-white">{title}</h3>
             <p className="text-white/60 text-sm">{entries.length} item{entries.length !== 1 ? 's' : ''} logged</p>
           </div>
         </div>
@@ -208,7 +241,17 @@ export function EntryList({ entries, onDelete, onEdit, isLoading, onDeleteConfir
         ))}
       </div>
 
-
+      {/* Add Food Dropdown for Historical Days */}
+      {showAddFood && onScan && onVoice && onText && onPhoto && (
+        <div className="p-6 border-t border-white/10">
+          <AddFoodDropdown
+            onScan={onScan}
+            onVoice={onVoice}
+            onText={onText}
+            onPhoto={onPhoto}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { addEntry } from '@/utils/idb';
 import type { ParseFoodResponse } from '@/types';
 
-export function useTextInput() {
+export function useTextInput(date?: string) {
   const [isActive, setIsActive] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [parsedFood, setParsedFood] = useState<ParseFoodResponse['data'] | null>(null);
@@ -43,7 +43,7 @@ export function useTextInput() {
         protein: data.protein || 0,
         method: 'text',
         confidence: 0.8, // Good confidence since user confirmed
-      });
+      }, date);
 
       console.log('Entry created:', entry);
 

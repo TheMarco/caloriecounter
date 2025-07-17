@@ -5,7 +5,7 @@ import { lookupBarcode } from '@/utils/api';
 import { addEntry } from '@/utils/idb';
 import type { BarcodeResponse } from '@/types';
 
-export function useBarcode() {
+export function useBarcode(date?: string) {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export function useBarcode() {
       };
       console.log('💾 Creating entry with confirmed data:', entryData);
 
-      const entry = await addEntry(entryData);
+      const entry = await addEntry(entryData, date);
       console.log('✅ Entry created successfully:', entry);
 
       // Close dialog

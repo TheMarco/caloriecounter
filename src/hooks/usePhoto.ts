@@ -26,7 +26,7 @@ async function parsePhoto(imageData: string, units: 'metric' | 'imperial' = 'met
   return result;
 }
 
-export function usePhoto() {
+export function usePhoto(date?: string) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +139,7 @@ export function usePhoto() {
         protein: data.protein || 0,
         method: 'photo',
         confidence: 0.9, // High confidence - photo analysis is working well
-      });
+      }, date);
 
       console.log('Entry created:', entry);
 

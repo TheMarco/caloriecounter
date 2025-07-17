@@ -18,6 +18,8 @@ export const entryKey = (id: string): string => `entry:${id}`;
 
 export const dateKey = (date: string): string => `date:${date}`;
 
+export const offsetKey = (date: string): string => `offset:${date}`;
+
 // Daily reset logic
 export const checkDailyReset = (): void => {
   const today = todayKey();
@@ -30,14 +32,14 @@ export const checkDailyReset = (): void => {
 };
 
 // Entry management
-export const addEntry = async (entryData: Omit<Entry, 'id' | 'ts' | 'dt'>): Promise<Entry> => {
+export const addEntry = async (entryData: Omit<Entry, 'id' | 'ts' | 'dt'>, date?: string): Promise<Entry> => {
   const entry: Entry = {
     ...entryData,
     id: createId(),
     ts: Date.now(),
-    dt: todayKey(),
+    dt: date || todayKey(),
   };
-  
+
   await set(entryKey(entry.id), entry);
   return entry;
 };
@@ -62,6 +64,24 @@ export const deleteEntry = async (id: string): Promise<boolean> => {
   } catch {
     return false;
   }
+};
+
+// Calorie offset management
+export const getCalorieOffset = async (date: string): Promise<number> => {
+  const offset = await get(offsetKey(date));
+  return offset || 0; // Default to 0 if not set
+};
+
+export const getTodayCalorieOffset = async (): Promise<number> => {
+  return await getCalorieOffset(todayKey());
+};
+
+export const setCalorieOffset = async (date: string, offset: number): Promise<void> => {
+  await set(offsetKey(date), offset);
+};
+
+export const setTodayCalorieOffset = async (offset: number): Promise<void> => {
+  await setCalorieOffset(todayKey(), offset);
 };
 
 // Query functions
@@ -159,6 +179,26 @@ export const getDailyMacroTotals = async (days: number): Promise<Array<{ date: s
 
     const totals = await getMacroTotalsForDate(dateStr);
     results.push({ date: dateStr, totals });
+  }
+
+  return results.reverse(); // Oldest first for charts
+};
+
+export const getDailyMacroTotalsWithOffset = async (days: number): Promise<Array<{ date: string; totals: MacroTotals; offset: number }>> => {
+  const results: Array<{ date: string; totals: MacroTotals; offset: number }> = [];
+  const today = new Date();
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = formatLocalDate(date);
+
+    const [totals, offset] = await Promise.all([
+      getMacroTotalsForDate(dateStr),
+      getCalorieOffset(dateStr)
+    ]);
+
+    results.push({ date: dateStr, totals, offset });
   }
 
   return results.reverse(); // Oldest first for charts

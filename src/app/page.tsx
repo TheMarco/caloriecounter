@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { initializeIDB } from '@/utils/idb';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { initializeIDB, setTodayCalorieOffset, setCalorieOffset, getTodayCalorieOffset, getCalorieOffset } from '@/utils/idb';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { VoiceInput } from '@/components/VoiceInput';
 import { TextInput } from '@/components/TextInput';
@@ -10,8 +11,10 @@ import { FoodConfirmDialog } from '@/components/FoodConfirmDialog';
 import { EditEntryDialog } from '@/components/EditEntryDialog';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { LoginForm } from '@/components/LoginForm';
-import { AddFab } from '@/components/AddFab';
+
 import { TabbedTotalCard } from '@/components/TabbedTotalCard';
+import { CalorieOffset } from '@/components/CalorieOffset';
+import { CalorieOffsetDialog } from '@/components/CalorieOffsetDialog';
 import { EntryList } from '@/components/EntryList';
 import { useBarcode } from '@/hooks/useBarcode';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -19,15 +22,25 @@ import { useTextInput } from '@/hooks/useTextInput';
 import { usePhoto } from '@/hooks/usePhoto';
 import { useSettings } from '@/hooks/useSettings';
 import { useTodayEntries } from '@/hooks/useTodayEntries';
+import { useDayEntries } from '@/hooks/useDayEntries';
 import { updateEntry } from '@/utils/idb';
 import type { Entry, MacroType } from '@/types';
 import {
   HomeIconComponent,
   ChartIconComponent,
-  SettingsIconComponent
+  SettingsIconComponent,
+  BarcodeIconComponent,
+  MicrophoneIconComponent,
+  PencilIconComponent,
+  CameraIconComponent
 } from '@/components/icons';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const selectedDate = searchParams.get('date');
+  const isHistoricalView = !!selectedDate;
+
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<MacroType>('calories');
@@ -35,12 +48,19 @@ export default function Home() {
   const [isEditLoading, setIsEditLoading] = useState(false);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<Entry | null>(null);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
-  const barcode = useBarcode();
-  const voice = useVoiceInput();
-  const textInput = useTextInput();
-  const photo = usePhoto();
+  const [calorieOffset, setLocalCalorieOffset] = useState<number>(0);
+  const [showOffsetDialog, setShowOffsetDialog] = useState(false);
+  const [isOffsetLoading, setIsOffsetLoading] = useState(false);
+  const barcode = useBarcode(isHistoricalView ? selectedDate || undefined : undefined);
+  const voice = useVoiceInput(isHistoricalView ? selectedDate || undefined : undefined);
+  const textInput = useTextInput(isHistoricalView ? selectedDate || undefined : undefined);
+  const photo = usePhoto(isHistoricalView ? selectedDate || undefined : undefined);
   const todayEntries = useTodayEntries();
+  const dayEntries = useDayEntries(selectedDate || '');
   const { settings } = useSettings();
+
+  // Use appropriate data source based on view mode
+  const currentEntries = isHistoricalView ? dayEntries : todayEntries;
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,6 +85,37 @@ export default function Home() {
     loadData();
   }, []);
 
+  // Load calorie offset on mount and when view changes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const loadCalorieOffset = async () => {
+      try {
+        let offset: number;
+        if (isHistoricalView && selectedDate) {
+          offset = await getCalorieOffset(selectedDate);
+        } else {
+          offset = await getTodayCalorieOffset();
+        }
+        setLocalCalorieOffset(offset);
+      } catch (error) {
+        console.error('Failed to load calorie offset:', error);
+        setLocalCalorieOffset(0);
+      }
+    };
+
+    loadCalorieOffset();
+  }, [isAuthenticated, isHistoricalView, selectedDate]);
+
+  // Sync calorie offset with current view
+  useEffect(() => {
+    if (isHistoricalView) {
+      setLocalCalorieOffset(dayEntries.calorieOffset);
+    } else {
+      // For today view, we'll get it from the component
+    }
+  }, [isHistoricalView, dayEntries.calorieOffset]);
+
   // Refresh entries when any input method completes
   useEffect(() => {
     if (!barcode.isScanning && !barcode.isLoading && !barcode.isProcessing && !barcode.showConfirmDialog &&
@@ -72,10 +123,14 @@ export default function Home() {
         !textInput.isProcessing && !textInput.showConfirmDialog &&
         !photo.isCapturing && !photo.isProcessing && !photo.showConfirmDialog) {
       console.log('🔄 Main page: Triggering entries refresh');
-      todayEntries.refreshEntries();
+      if (isHistoricalView) {
+        currentEntries.refreshData();
+      } else {
+        todayEntries.refreshEntries();
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, photo.isCapturing, photo.isProcessing, photo.showConfirmDialog]);
+  }, [barcode.isScanning, barcode.isLoading, barcode.isProcessing, barcode.showConfirmDialog, voice.isProcessing, voice.showConfirmDialog, textInput.isProcessing, textInput.showConfirmDialog, photo.isCapturing, photo.isProcessing, photo.showConfirmDialog, isHistoricalView]);
 
   const handleScan = () => {
     barcode.startScanning();
@@ -202,7 +257,11 @@ export default function Home() {
       });
       setEditingEntry(null);
       // Refresh entries to show the updated data
-      todayEntries.refreshEntries();
+      if (isHistoricalView) {
+        await currentEntries.refreshData();
+      } else {
+        todayEntries.refreshEntries();
+      }
     } catch (error) {
       console.error('Failed to update entry:', error);
     } finally {
@@ -223,8 +282,12 @@ export default function Home() {
 
     try {
       setIsDeleteLoading(true);
-      await todayEntries.deleteEntry(deleteConfirmEntry.id);
-      // Entries will be refreshed by the useEffect
+      if (isHistoricalView) {
+        await currentEntries.deleteEntry(deleteConfirmEntry.id);
+      } else {
+        await todayEntries.deleteEntry(deleteConfirmEntry.id);
+      }
+      // Entries will be refreshed by the delete function
     } catch (error) {
       console.error('Failed to delete entry:', error);
     } finally {
@@ -246,6 +309,63 @@ export default function Home() {
     }
   };
 
+  const handleOffsetChange = (offset: number) => {
+    setLocalCalorieOffset(offset);
+  };
+
+  const handleOffsetEditClick = () => {
+    setShowOffsetDialog(true);
+  };
+
+  const handleOffsetSave = async (offset: number) => {
+    try {
+      setIsOffsetLoading(true);
+
+      if (isHistoricalView && selectedDate) {
+        await setCalorieOffset(selectedDate, offset);
+        await currentEntries.refreshData();
+        setLocalCalorieOffset(offset);
+      } else {
+        await setTodayCalorieOffset(offset);
+        await todayEntries.refreshEntries();
+        setLocalCalorieOffset(offset);
+      }
+
+      setShowOffsetDialog(false);
+    } catch (error) {
+      console.error('Failed to save calorie offset:', error);
+    } finally {
+      setIsOffsetLoading(false);
+    }
+  };
+
+  const handleOffsetCancel = () => {
+    setShowOffsetDialog(false);
+  };
+
+  // Helper function to format date for entry list title
+  const getEntryListTitle = () => {
+    if (isHistoricalView && selectedDate) {
+      const date = new Date(selectedDate);
+      const formattedDate = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      return formattedDate;
+    }
+    return "Today's Entries";
+  };
+
+  // Helper function to get subtitle for entry list
+  const getEntryListSubtitle = () => {
+    if (isHistoricalView) {
+      return "food logged today";
+    }
+    return "Your daily meal log";
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
@@ -261,7 +381,7 @@ export default function Home() {
     return <LoginForm onSuccess={handleLoginSuccess} />;
   }
 
-  if (todayEntries.isLoading) {
+  if (currentEntries.isLoading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
         <div className="text-center">
@@ -277,17 +397,73 @@ export default function Home() {
       {/* Header */}
       <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 transition-theme">
         <div className="max-w-md mx-auto px-6 py-6">
-          <div className="flex items-center justify-center space-x-4">
-            <img
-              src="/icons/icon-192.png"
-              alt="Calorie Counter"
-              className="w-16 h-16"
-            />
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-white">Calorie Counter</h1>
-              <p className="text-white/70 text-sm">Track your daily nutrition</p>
+          {isHistoricalView ? (
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => router.push('/history')}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+              >
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="text-center">
+                <h1 className="text-lg font-bold text-white">{currentEntries.formattedDate}</h1>
+                <p className="text-white/60 text-sm">Edit entries for this day</p>
+              </div>
+              <div className="w-10 h-10"></div> {/* Spacer for centering */}
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-3">
+            <button
+              data-testid="header-scan-button"
+              onClick={handleScan}
+              className="flex flex-col items-center justify-center p-4 rounded-3xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 text-blue-300 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95"
+              title="Scan barcode"
+            >
+              <div className="mb-2">
+                <BarcodeIconComponent size="lg" />
+              </div>
+              <span className="text-xs font-medium text-blue-200">Scan</span>
+            </button>
+
+            <button
+              data-testid="header-voice-button"
+              onClick={handleVoice}
+              className="flex flex-col items-center justify-center p-4 rounded-3xl bg-green-500/20 hover:bg-green-500/30 border border-green-400/40 text-green-300 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/20 active:scale-95"
+              title="Voice input"
+            >
+              <div className="mb-2">
+                <MicrophoneIconComponent size="lg" />
+              </div>
+              <span className="text-xs font-medium text-green-200">Voice</span>
+            </button>
+
+            <button
+              data-testid="header-text-button"
+              onClick={handleText}
+              className="flex flex-col items-center justify-center p-4 rounded-3xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-300 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95"
+              title="Type food"
+            >
+              <div className="mb-2">
+                <PencilIconComponent size="lg" />
+              </div>
+              <span className="text-xs font-medium text-purple-200">Type</span>
+            </button>
+
+            <button
+              data-testid="header-photo-button"
+              onClick={handlePhoto}
+              className="flex flex-col items-center justify-center p-4 rounded-3xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-400/40 text-orange-300 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/20 active:scale-95"
+              title="Take photo"
+            >
+              <div className="mb-2">
+                <CameraIconComponent size="lg" />
+              </div>
+              <span className="text-xs font-medium text-orange-200">Photo</span>
+            </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -303,35 +479,42 @@ export default function Home() {
 
         {!isLoading && (
           <>
-            {/* Today's Total Card */}
+            {/* Day's Total Card */}
             <TabbedTotalCard
-              totals={todayEntries.macroTotals}
+              totals={currentEntries.macroTotals}
               targets={{
                 calories: settings.dailyTarget,
                 fat: settings.fatTarget,
                 carbs: settings.carbsTarget,
                 protein: settings.proteinTarget,
               }}
-              date={todayEntries.todayDate}
+              date={currentEntries.date || (isHistoricalView ? selectedDate : undefined)}
+              calorieOffset={isHistoricalView ? currentEntries.calorieOffset : calorieOffset}
               activeTab={activeTab}
               onTabChange={setActiveTab}
             />
 
-            {/* Quick Add Buttons */}
-            <AddFab
-              onScan={handleScan}
-              onVoice={handleVoice}
-              onText={handleText}
-              onPhoto={handlePhoto}
+            {/* Calorie Offset */}
+            <CalorieOffset
+              onOffsetChange={handleOffsetChange}
+              onEditClick={handleOffsetEditClick}
+              currentOffset={isHistoricalView ? currentEntries.calorieOffset : calorieOffset}
             />
 
-            {/* Today's Entries */}
+            {/* Day's Entries */}
             <EntryList
-              entries={todayEntries.entries}
-              onDelete={todayEntries.deleteEntry}
+              entries={currentEntries.entries}
+              onDelete={currentEntries.deleteEntry}
               onEdit={handleEditEntry}
-              isLoading={todayEntries.isRefreshing}
+              isLoading={currentEntries.isRefreshing}
               onDeleteConfirm={handleDeleteConfirm}
+              title={getEntryListTitle()}
+              subtitle={getEntryListSubtitle()}
+              showAddFood={isHistoricalView}
+              onScan={isHistoricalView ? handleScan : undefined}
+              onVoice={isHistoricalView ? handleVoice : undefined}
+              onText={isHistoricalView ? handleText : undefined}
+              onPhoto={isHistoricalView ? handlePhoto : undefined}
             />
           </>
         )}
@@ -341,24 +524,51 @@ export default function Home() {
       <nav className="fixed bottom-0 left-0 right-0 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-theme">
         <div className="max-w-md mx-auto px-6">
           <div className="flex justify-around py-4">
-            <button className="flex flex-col items-center py-2 px-4 text-blue-400">
-              <div className="mb-1">
-                <HomeIconComponent size="lg" solid className="text-blue-400" />
-              </div>
-              <div className="text-xs font-medium">Today</div>
-            </button>
-            <a href="/history" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
-              <div className="mb-1">
-                <ChartIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
-              </div>
-              <div className="text-xs font-medium">History</div>
-            </a>
-            <a href="/settings" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
-              <div className="mb-1">
-                <SettingsIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
-              </div>
-              <div className="text-xs font-medium">Settings</div>
-            </a>
+            {isHistoricalView ? (
+              // Historical view - highlight History tab
+              <>
+                <a href="/" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
+                  <div className="mb-1">
+                    <HomeIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-xs font-medium">Today</div>
+                </a>
+                <button className="flex flex-col items-center py-2 px-4 text-blue-400">
+                  <div className="mb-1">
+                    <ChartIconComponent size="lg" solid className="text-blue-400" />
+                  </div>
+                  <div className="text-xs font-medium">History</div>
+                </button>
+                <a href="/settings" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
+                  <div className="mb-1">
+                    <SettingsIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-xs font-medium">Settings</div>
+                </a>
+              </>
+            ) : (
+              // Today view - highlight Today tab
+              <>
+                <button className="flex flex-col items-center py-2 px-4 text-blue-400">
+                  <div className="mb-1">
+                    <HomeIconComponent size="lg" solid className="text-blue-400" />
+                  </div>
+                  <div className="text-xs font-medium">Today</div>
+                </button>
+                <a href="/history" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
+                  <div className="mb-1">
+                    <ChartIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-xs font-medium">History</div>
+                </a>
+                <a href="/settings" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
+                  <div className="mb-1">
+                    <SettingsIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-xs font-medium">Settings</div>
+                </a>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -449,6 +659,15 @@ export default function Home() {
         isLoading={isEditLoading}
         onSave={handleSaveEdit}
         onCancel={handleCancelEdit}
+      />
+
+      {/* Calorie Offset Dialog */}
+      <CalorieOffsetDialog
+        isOpen={showOffsetDialog}
+        currentOffset={isHistoricalView ? currentEntries.calorieOffset : calorieOffset}
+        isLoading={isOffsetLoading}
+        onSave={handleOffsetSave}
+        onCancel={handleOffsetCancel}
       />
 
       {/* Delete Confirmation Dialog */}
