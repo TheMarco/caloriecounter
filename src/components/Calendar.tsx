@@ -106,7 +106,9 @@ export function Calendar({ onDateSelect, selectedDate }: CalendarProps) {
     } else {
       // Only allow past dates (not future dates)
       const today = new Date();
-      const clickedDate = new Date(day.date);
+      // Parse date as local date to avoid timezone issues
+      const [year, month, dayNum] = day.date.split('-').map(Number);
+      const clickedDate = new Date(year, month - 1, dayNum); // month is 0-indexed
       if (clickedDate < today) {
         onDateSelect(day.date);
       }

@@ -413,6 +413,44 @@ export class TestHelpers {
   }
 
   /**
+   * Add a test entry directly to the database for testing
+   */
+  async addTestEntry(entry: {
+    food: string;
+    qty: number;
+    unit: string;
+    kcal: number;
+    fat?: number;
+    carbs?: number;
+    protein?: number;
+    method: 'text' | 'voice' | 'barcode' | 'photo';
+  }) {
+    // Add entry using the text input flow to ensure it's properly stored
+    await this.closeAllDialogs();
+
+    // Click the text input button
+    await this.page.locator('[data-testid="text-button"]').click();
+
+    // Fill in the food name
+    await this.page.fill('[data-testid="text-input-field"]', entry.food);
+    await this.page.click('[data-testid="text-submit-button"]');
+
+    // Wait for confirmation dialog
+    await this.waitForDialog('[data-testid="food-confirm-dialog"]');
+
+    // Edit the entry details if needed
+    if (entry.qty !== 1) {
+      await this.page.fill('[data-testid="quantity-input"]', entry.qty.toString());
+    }
+
+    // Confirm the entry
+    await this.page.locator('[data-testid="confirm-button"]').click({ force: true });
+
+    // Wait for dialog to close and entry to be added
+    await this.page.waitForTimeout(500);
+  }
+
+  /**
    * Check console for errors
    */
   async checkConsoleErrors(): Promise<string[]> {

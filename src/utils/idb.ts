@@ -87,10 +87,10 @@ export const setTodayCalorieOffset = async (offset: number): Promise<void> => {
 // Query functions
 export const getEntriesByDate = async (date: string): Promise<Entry[]> => {
   const allKeys = await keys();
-  const entryKeys = allKeys.filter(key => 
+  const entryKeys = allKeys.filter(key =>
     typeof key === 'string' && key.startsWith('entry:')
   );
-  
+
   const entries: Entry[] = [];
   for (const key of entryKeys) {
     const entry = await get(key);
@@ -98,7 +98,7 @@ export const getEntriesByDate = async (date: string): Promise<Entry[]> => {
       entries.push(entry);
     }
   }
-  
+
   return entries.sort((a, b) => b.ts - a.ts); // Most recent first
 };
 

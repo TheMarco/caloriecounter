@@ -9,7 +9,7 @@ interface CalorieOffsetProps {
   currentOffset?: number; // Allow parent to update the displayed offset
 }
 
-export function CalorieOffset({ onOffsetChange, onEditClick, currentOffset }: CalorieOffsetProps) {
+export function CalorieOffset({ onEditClick, currentOffset }: CalorieOffsetProps) {
   const [offset, setOffset] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 

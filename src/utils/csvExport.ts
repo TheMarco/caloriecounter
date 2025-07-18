@@ -56,7 +56,10 @@ export function downloadCSV(csvData: string, filename: string = 'nutrition-data.
 export async function exportNutritionData(): Promise<void> {
   try {
     const csvData = await generateCSVData();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = (() => {
+      const date = new Date();
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    })();
     const filename = `nutrition-data-${today}.csv`;
     downloadCSV(csvData, filename);
   } catch (error) {

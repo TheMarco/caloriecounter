@@ -23,8 +23,6 @@ export default function HistoryPage() {
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const { settings } = useSettings();
   
-  // Only using local IndexedDB data
-
   // Load local data from IndexedDB
   useEffect(() => {
     const loadLocalData = async () => {
@@ -43,16 +41,14 @@ export default function HistoryPage() {
     loadLocalData();
   }, [selectedRange]);
 
-  // Use local data for now (cloud data when auth is implemented)
   const chartData = localData.map(item => {
-    // Parse the date string as local date to avoid timezone issues
     const [year, month, day] = item.date.split('-').map(Number);
-    const date = new Date(year, month - 1, day); // month is 0-indexed
+    const date = new Date(year, month - 1, day);
     const netCalories = Math.max(0, item.totals.calories - item.offset);
     return {
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      calories: item.totals.calories, // Raw calories
-      netCalories: netCalories, // Net calories (consumed - offset)
+      calories: item.totals.calories,
+      netCalories: netCalories,
       fat: item.totals.fat,
       carbs: item.totals.carbs,
       protein: item.totals.protein,
@@ -74,65 +70,46 @@ export default function HistoryPage() {
 
   const getUnit = () => {
     switch (activeTab) {
-      case 'calories':
-        return 'calories';
+      case 'calories': return 'calories';
       case 'fat':
       case 'carbs':
-      case 'protein':
-        return 'grams';
-      default:
-        return '';
+      case 'protein': return 'grams';
+      default: return '';
     }
   };
 
   const getLabel = () => {
     switch (activeTab) {
-      case 'calories':
-        return 'Calories';
-      case 'fat':
-        return 'Fat';
-      case 'carbs':
-        return 'Carbs';
-      case 'protein':
-        return 'Protein';
-      default:
-        return '';
+      case 'calories': return 'Calories';
+      case 'fat': return 'Fat';
+      case 'carbs': return 'Carbs';
+      case 'protein': return 'Protein';
+      default: return '';
     }
   };
 
   const getColor = () => {
     switch (activeTab) {
-      case 'calories':
-        return '#3b82f6'; // blue
-      case 'fat':
-        return '#10b981'; // green
-      case 'carbs':
-        return '#f59e0b'; // orange
-      case 'protein':
-        return '#8b5cf6'; // purple
-      default:
-        return '#3b82f6';
+      case 'calories': return '#3b82f6';
+      case 'fat': return '#10b981';
+      case 'carbs': return '#f59e0b';
+      case 'protein': return '#8b5cf6';
+      default: return '#3b82f6';
     }
   };
 
   const getTargetValue = () => {
     switch (activeTab) {
-      case 'calories':
-        return settings.dailyTarget;
-      case 'fat':
-        return settings.fatTarget;
-      case 'carbs':
-        return settings.carbsTarget;
-      case 'protein':
-        return settings.proteinTarget;
-      default:
-        return 0;
+      case 'calories': return settings.dailyTarget;
+      case 'fat': return settings.fatTarget;
+      case 'carbs': return settings.carbsTarget;
+      case 'protein': return settings.proteinTarget;
+      default: return 0;
     }
   };
 
   const getTargetLineColor = () => {
     const baseColor = getColor();
-    // Convert hex to rgba with opacity
     const hex = baseColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
@@ -142,7 +119,6 @@ export default function HistoryPage() {
 
   const getTargetLineGlowColor = () => {
     const baseColor = getColor();
-    // Convert hex to rgba with lower opacity for glow
     const hex = baseColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
@@ -151,14 +127,12 @@ export default function HistoryPage() {
   };
 
   const isLoading = isLoadingLocal;
-
   const handleDateSelect = (date: string) => {
     router.push(`/?date=${date}`);
   };
 
   return (
     <div className="min-h-screen gradient-bg transition-theme">
-      {/* Header */}
       <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 transition-theme">
         <div className="max-w-md mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
@@ -168,87 +142,14 @@ export default function HistoryPage() {
               </svg>
             </Link>
             <h1 className="text-2xl font-bold text-white">History</h1>
-            <div className="w-10 h-10"></div> {/* Spacer for centering */}
+            <div className="w-10 h-10"></div>
           </div>
           <p className="text-white/70 text-center mt-2 text-sm">Your calorie tracking history</p>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-6 pb-24">
-        {/* Date Range Selector */}
-        <div data-testid="date-range-selector" className="card-glass card-glass-hover rounded-3xl p-6 mb-6 transition-all duration-300 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="p-3 bg-blue-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Time Period</h2>
-              <p className="text-white/60 text-sm">Select date range to view</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {(['7d', '30d', '90d'] as DateRange[]).map((range) => (
-              <button
-                key={range}
-                data-testid={`range-${range}`}
-                onClick={() => setSelectedRange(range)}
-                className={`py-3 px-4 rounded-2xl text-sm font-medium transition-all duration-200 backdrop-blur-sm ${
-                  selectedRange === range
-                    ? 'bg-blue-500/30 border border-blue-400/50 text-blue-300 shadow-lg'
-                    : 'bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 hover:scale-105'
-                }`}
-              >
-                {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">
-                {isLoading ? '...' : activeTab === 'calories' ? currentAverage.toLocaleString() : currentAverage.toFixed(1)}
-              </div>
-              <div className="text-sm text-white/60 mt-1">Daily Average</div>
-            </div>
-          </div>
-
-          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">
-                {isLoading ? '...' : activeTab === 'calories' ? currentMax.toLocaleString() : currentMax.toFixed(1)}
-              </div>
-              <div className="text-sm text-white/60 mt-1">Highest Day</div>
-            </div>
-          </div>
-
-          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">
-                {isLoading ? '...' : activeTab === 'calories' ? currentTotal.toLocaleString() : currentTotal.toFixed(1)}
-              </div>
-              <div className="text-sm text-white/60 mt-1">Total {getLabel()}</div>
-            </div>
-          </div>
-
-          <div className="card-glass card-glass-hover rounded-3xl p-5 transition-all duration-300 shadow-2xl">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-400">
-                {isLoading ? '...' : daysWithData}
-              </div>
-              <div className="text-sm text-white/60 mt-1">Active Days</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart */}
         <div data-testid="chart-container" className="card-glass card-glass-hover rounded-3xl mb-6 transition-all duration-300 shadow-2xl overflow-hidden">
-          {/* Macro Tabs at top of chart card */}
           <MacroTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
           <div className="p-6">
@@ -264,127 +165,73 @@ export default function HistoryPage() {
               </div>
             </div>
 
-          {isLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50"></div>
-            </div>
-          ) : chartData.length === 0 ? (
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="mb-4 flex justify-center">
-                  <ChartIconComponent size="xl" className="text-white/40" />
-                </div>
-                <p className="text-white/80 font-medium">No data available</p>
-                <p className="text-sm text-white/60 mt-1">Start logging your meals to see trends!</p>
+            {isLoading ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50"></div>
               </div>
-            </div>
-          ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="currentColor"
-                    className="text-gray-200 dark:text-gray-700"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 12 }}
-                    stroke="currentColor"
-                    className="text-gray-600 dark:text-gray-400"
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    stroke="currentColor"
-                    className="text-gray-600 dark:text-gray-400"
-                    domain={[0, (dataMax: number) => {
+            ) : chartData.length === 0 ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="mb-4 flex justify-center">
+                    <ChartIconComponent size="xl" className="text-white/40" />
+                  </div>
+                  <p className="text-white/80 font-medium">No data available</p>
+                  <p className="text-sm text-white/60 mt-1">Start logging your meals to see trends!</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-gray-700" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="currentColor" className="text-gray-600 dark:text-gray-400" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="currentColor" className="text-gray-600 dark:text-gray-400" domain={[0, (dataMax: number) => {
                       const targetValue = getTargetValue();
                       const maxValue = Math.max(dataMax, targetValue);
-                      // Add 10% padding above the highest value (either data or target)
                       return Math.ceil(maxValue * 1.1);
-                    }]}
-                  />
-                  <Tooltip
-                    labelFormatter={(label, payload) => {
-                      if (payload && payload[0]) {
-                        // Parse the date string as local date to avoid timezone issues
-                        const [year, month, day] = payload[0].payload.fullDate.split('-').map(Number);
-                        const date = new Date(year, month - 1, day); // month is 0-indexed
-                        return date.toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric'
-                        });
-                      }
-                      return label;
-                    }}
-                    formatter={(value: number, name: string) => {
-                      if (activeTab === 'calories') {
-                        // For calories tab, show different labels for raw vs net
-                        const label = name === 'Raw Intake' ? 'Raw calories consumed' :
-                                     name === 'Net Intake' ? 'Net calories (after offset)' :
-                                     getLabel();
-                        return [`${value.toLocaleString()} ${getUnit()}`, label];
-                      } else {
-                        return [`${value.toFixed(1)} ${getUnit()}`, getLabel()];
-                      }
-                    }}
-                    contentStyle={{
-                      backgroundColor: 'var(--card-background)',
-                      border: '1px solid var(--card-border)',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      color: 'var(--foreground)',
-                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  {activeTab === 'calories' ? (
-                    <>
-                      {/* Raw calories line */}
-                      <Line
-                        type="monotone"
-                        dataKey="calories"
-                        stroke={getColor()}
-                        strokeWidth={3}
-                        dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
-                        activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
-                        name="Raw Intake"
-                      />
-                      {/* Net calories line */}
-                      <Line
-                        type="monotone"
-                        dataKey="netCalories"
-                        stroke="#ef4444" // Red color for net calories
-                        strokeWidth={3}
-                        dot={{ fill: '#ef4444', strokeWidth: 2, r: 5 }}
-                        activeDot={{ r: 7, stroke: '#ef4444', strokeWidth: 3, fill: '#ffffff' }}
-                        name="Net Intake"
-                      />
-                    </>
-                  ) : (
-                    <Line
-                      type="monotone"
-                      dataKey={activeTab}
-                      stroke={getColor()}
-                      strokeWidth={3}
-                      dot={{ fill: getColor(), strokeWidth: 2, r: 5 }}
-                      activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }}
+                    }]} />
+                    <Tooltip
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload[0]) {
+                          const [year, month, day] = payload[0].payload.fullDate.split('-').map(Number);
+                          const date = new Date(year, month - 1, day);
+                          return date.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric'
+                          });
+                        }
+                        return label;
+                      }}
+                      formatter={(value: number, name: string) => {
+                        if (activeTab === 'calories') {
+                          const label = name === 'Raw Intake' ? 'Raw calories consumed' :
+                                       name === 'Net Intake' ? 'Net calories (after offset)' :
+                                       getLabel();
+                          return [`${value.toLocaleString()} ${getUnit()}`, label];
+                        } else {
+                          return [`${value.toFixed(1)} ${getUnit()}`, getLabel()];
+                        }
+                      }}
+                      contentStyle={{
+                        backgroundColor: 'var(--card-background)',
+                        border: '1px solid var(--card-border)',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        color: 'var(--foreground)',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+                      }}
                     />
-                  )}
-                  {/* Target line glow effect */}
-                  <ReferenceLine
-                    y={getTargetValue()}
-                    stroke={getTargetLineGlowColor()}
-                    strokeDasharray="6 3"
-                    strokeWidth={5}
-                  />
-                  {/* Main target line */}
-                  <ReferenceLine
-                    y={getTargetValue()}
-                    stroke={getTargetLineColor()}
-                    strokeDasharray="6 3"
-                    strokeWidth={2.5}
-                    label={{
+                    {activeTab === 'calories' ? (
+                      <>
+                        <Line type="monotone" dataKey="calories" stroke={getColor()} strokeWidth={3} dot={{ fill: getColor(), strokeWidth: 2, r: 5 }} activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }} name="Raw Intake" />
+                        <Line type="monotone" dataKey="netCalories" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', strokeWidth: 2, r: 5 }} activeDot={{ r: 7, stroke: '#ef4444', strokeWidth: 3, fill: '#ffffff' }} name="Net Intake" />
+                      </>
+                    ) : (
+                      <Line type="monotone" dataKey={activeTab} stroke={getColor()} strokeWidth={3} dot={{ fill: getColor(), strokeWidth: 2, r: 5 }} activeDot={{ r: 7, stroke: getColor(), strokeWidth: 3, fill: '#ffffff' }} />
+                    )}
+                    <ReferenceLine y={getTargetValue()} stroke={getTargetLineGlowColor()} strokeDasharray="6 3" strokeWidth={5} />
+                    <ReferenceLine y={getTargetValue()} stroke={getTargetLineColor()} strokeDasharray="6 3" strokeWidth={2.5} label={{
                       value: `Target: ${activeTab === 'calories' ? getTargetValue().toLocaleString() : getTargetValue().toFixed(0)} ${getUnit()}`,
                       position: 'top',
                       offset: 8,
@@ -395,24 +242,60 @@ export default function HistoryPage() {
                         textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                       }
-                    }}
-                  />
+                    }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
 
-                </LineChart>
-              </ResponsiveContainer>
+            {/* Legend - always present to maintain consistent card height */}
+            <div className="mt-4 flex justify-center h-6">
+              {activeTab === 'calories' && chartData.length > 0 ? (
+                <div className="flex items-center space-x-6 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-0.5 bg-blue-500 rounded"></div>
+                    <span className="text-white/80">Raw calorie intake</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-0.5 bg-red-500 rounded"></div>
+                    <span className="text-white/80">Net calorie intake</span>
+                  </div>
+                </div>
+              ) : (
+                <div></div>
+              )}
             </div>
-          )}
+          </div>
+
+          <div className="px-6 pb-6">
+            <div className="border-t border-white/10 pt-4">
+              <div data-testid="date-range-selector" className="flex justify-center">
+                <div className="flex bg-white/5 rounded-2xl p-1 backdrop-blur-sm border border-white/10">
+                  {(['7d', '30d', '90d'] as DateRange[]).map((range) => (
+                    <button
+                      key={range}
+                      data-testid={`range-${range}`}
+                      onClick={() => setSelectedRange(range)}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                        selectedRange === range
+                          ? 'bg-blue-500/40 text-blue-300 shadow-lg'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      {range === '7d' ? '7 days' : range === '30d' ? '30 days' : '90 days'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Calendar */}
         <div className="mb-6">
           <Calendar onDateSelect={handleDateSelect} />
         </div>
-
       </main>
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-theme">
         <div className="max-w-md mx-auto px-6">
           <div className="flex justify-around py-4">

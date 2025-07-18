@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { initializeIDB, setTodayCalorieOffset, setCalorieOffset, getTodayCalorieOffset, getCalorieOffset } from '@/utils/idb';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { VoiceInput } from '@/components/VoiceInput';
@@ -35,10 +36,23 @@ import {
   CameraIconComponent
 } from '@/components/icons';
 
-export default function Home() {
+// Helper function to normalize date strings to ensure consistency
+function normalizeDateString(dateStr: string): string {
+  // Parse the date string as local date components to avoid timezone issues
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day); // month is 0-indexed
+
+  // Format back to YYYY-MM-DD in local timezone
+  return date.getFullYear() + '-' +
+         String(date.getMonth() + 1).padStart(2, '0') + '-' +
+         String(date.getDate()).padStart(2, '0');
+}
+
+function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedDate = searchParams.get('date');
+  const rawSelectedDate = searchParams.get('date');
+  const selectedDate = rawSelectedDate ? normalizeDateString(rawSelectedDate) : null;
   const isHistoricalView = !!selectedDate;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +138,7 @@ export default function Home() {
         !photo.isCapturing && !photo.isProcessing && !photo.showConfirmDialog) {
       console.log('🔄 Main page: Triggering entries refresh');
       if (isHistoricalView) {
-        currentEntries.refreshData();
+        dayEntries.refreshData();
       } else {
         todayEntries.refreshEntries();
       }
@@ -258,7 +272,7 @@ export default function Home() {
       setEditingEntry(null);
       // Refresh entries to show the updated data
       if (isHistoricalView) {
-        await currentEntries.refreshData();
+        await dayEntries.refreshData();
       } else {
         todayEntries.refreshEntries();
       }
@@ -283,7 +297,7 @@ export default function Home() {
     try {
       setIsDeleteLoading(true);
       if (isHistoricalView) {
-        await currentEntries.deleteEntry(deleteConfirmEntry.id);
+        await dayEntries.deleteEntry(deleteConfirmEntry.id);
       } else {
         await todayEntries.deleteEntry(deleteConfirmEntry.id);
       }
@@ -323,7 +337,7 @@ export default function Home() {
 
       if (isHistoricalView && selectedDate) {
         await setCalorieOffset(selectedDate, offset);
-        await currentEntries.refreshData();
+        await dayEntries.refreshData();
         setLocalCalorieOffset(offset);
       } else {
         await setTodayCalorieOffset(offset);
@@ -346,14 +360,15 @@ export default function Home() {
   // Helper function to format date for entry list title
   const getEntryListTitle = () => {
     if (isHistoricalView && selectedDate) {
-      const date = new Date(selectedDate);
-      const formattedDate = date.toLocaleDateString('en-US', {
+      // Parse the date string as local date to avoid timezone issues
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // month is 0-indexed
+      return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
-      return formattedDate;
     }
     return "Today's Entries";
   };
@@ -361,7 +376,7 @@ export default function Home() {
   // Helper function to get subtitle for entry list
   const getEntryListSubtitle = () => {
     if (isHistoricalView) {
-      return "food logged today";
+      return "food logged this day";
     }
     return "Your daily meal log";
   };
@@ -408,7 +423,7 @@ export default function Home() {
                 </svg>
               </button>
               <div className="text-center">
-                <h1 className="text-lg font-bold text-white">{currentEntries.formattedDate}</h1>
+                <h1 className="text-lg font-bold text-white">{isHistoricalView ? dayEntries.formattedDate : 'Today'}</h1>
                 <p className="text-white/60 text-sm">Edit entries for this day</p>
               </div>
               <div className="w-10 h-10"></div> {/* Spacer for centering */}
@@ -488,8 +503,11 @@ export default function Home() {
                 carbs: settings.carbsTarget,
                 protein: settings.proteinTarget,
               }}
-              date={currentEntries.date || (isHistoricalView ? selectedDate : undefined)}
-              calorieOffset={isHistoricalView ? currentEntries.calorieOffset : calorieOffset}
+              date={isHistoricalView ? dayEntries.date : (() => {
+                const today = new Date();
+                return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+              })()}
+              calorieOffset={isHistoricalView ? dayEntries.calorieOffset : calorieOffset}
               activeTab={activeTab}
               onTabChange={setActiveTab}
             />
@@ -498,7 +516,7 @@ export default function Home() {
             <CalorieOffset
               onOffsetChange={handleOffsetChange}
               onEditClick={handleOffsetEditClick}
-              currentOffset={isHistoricalView ? currentEntries.calorieOffset : calorieOffset}
+              currentOffset={isHistoricalView ? dayEntries.calorieOffset : calorieOffset}
             />
 
             {/* Day's Entries */}
@@ -527,12 +545,12 @@ export default function Home() {
             {isHistoricalView ? (
               // Historical view - highlight History tab
               <>
-                <a href="/" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
+                <Link href="/" className="flex flex-col items-center py-2 px-4 text-white/60 hover:text-white transition-all duration-200 hover:scale-105">
                   <div className="mb-1">
                     <HomeIconComponent size="lg" className="text-white/60 hover:text-white transition-colors" />
                   </div>
                   <div className="text-xs font-medium">Today</div>
-                </a>
+                </Link>
                 <button className="flex flex-col items-center py-2 px-4 text-blue-400">
                   <div className="mb-1">
                     <ChartIconComponent size="lg" solid className="text-blue-400" />
@@ -664,7 +682,7 @@ export default function Home() {
       {/* Calorie Offset Dialog */}
       <CalorieOffsetDialog
         isOpen={showOffsetDialog}
-        currentOffset={isHistoricalView ? currentEntries.calorieOffset : calorieOffset}
+        currentOffset={isHistoricalView ? dayEntries.calorieOffset : calorieOffset}
         isLoading={isOffsetLoading}
         onSave={handleOffsetSave}
         onCancel={handleOffsetCancel}
@@ -687,5 +705,20 @@ export default function Home() {
         variant="danger"
       />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/70">Loading...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
