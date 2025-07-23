@@ -57,16 +57,7 @@ export default function HistoryPage() {
     };
   });
 
-  const getCurrentValues = () => {
-    const values = localData.map(item => item.totals[activeTab]);
-    const total = values.reduce((sum, value) => sum + value, 0);
-    const average = localData.length > 0 ? Math.round(total / localData.length) : 0;
-    const max = Math.max(...values, 0);
-    const daysWithData = values.filter(value => value > 0).length;
-    return { total, average, max, daysWithData };
-  };
-
-  const { total: currentTotal, average: currentAverage, max: currentMax, daysWithData } = getCurrentValues();
+  // Removed getCurrentValues function since we removed the statistics cards
 
   const getUnit = () => {
     switch (activeTab) {

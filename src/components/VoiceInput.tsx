@@ -18,8 +18,16 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   const stopListening = useCallback(() => {
+    // Clear any pending timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     // Stop speech recognition
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -36,12 +44,14 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
     }
 
     setIsListening(false);
+    startTimeRef.current = null;
   }, []);
 
   const startListening = useCallback(async () => {
     try {
       setError(null);
       setTranscript('');
+      startTimeRef.current = Date.now();
 
       // Request microphone permission and store the stream
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -49,15 +59,37 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
       setHasPermission(true);
       console.log('🎤 Microphone access granted');
 
-      // Initialize speech recognition
+      // Check if speech recognition is available
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        throw new Error('Speech recognition not supported in this browser');
+      }
+
+      // Initialize speech recognition
       const recognition = new SpeechRecognition();
 
       recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
+      // Set up timeout to detect if speech recognition gets stuck
+      timeoutRef.current = setTimeout(() => {
+        const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+        console.error('🎤 Speech recognition timeout after', elapsed, 'ms');
+
+        const errorMessage = 'Voice recognition timed out. This may be due to browser limitations on your device. Please try text input instead.';
+        setError(errorMessage);
+        onError?.(errorMessage);
+        stopListening();
+      }, 8000); // 8 second timeout
+
       recognition.onstart = () => {
+        // Clear timeout since recognition actually started
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+
         setIsListening(true);
         console.log('Voice recognition started');
       };
@@ -85,6 +117,12 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
       };
 
       recognition.onerror = (event) => {
+        // Clear timeout on error
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+
         console.error('Speech recognition error:', event.error);
         let errorMessage = 'Speech recognition failed';
 
@@ -102,8 +140,11 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
           case 'network':
             errorMessage = 'Network error. Please check your connection.';
             break;
+          case 'service-not-allowed':
+            errorMessage = 'Speech recognition service not available. Please try text input instead.';
+            break;
           default:
-            errorMessage = `Speech recognition error: ${event.error}`;
+            errorMessage = `Speech recognition error: ${event.error}. Try text input instead.`;
         }
 
         setError(errorMessage);
@@ -112,6 +153,12 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
       };
 
       recognition.onend = () => {
+        // Clear timeout on end
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+
         setIsListening(false);
         console.log('Voice recognition ended');
       };
@@ -121,8 +168,27 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
 
     } catch (err) {
       console.error('Microphone access error:', err);
+
+      // Clear any pending timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
       setHasPermission(false);
-      const errorMessage = 'Microphone access denied. Please allow microphone access.';
+
+      // Provide more helpful error messages based on the platform
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
+      let errorMessage = 'Microphone access denied. Please allow microphone access.';
+
+      if (isAndroid && isPWA) {
+        errorMessage = 'Voice input may not work reliably in PWA mode on Android. Try using the app in your browser instead, or use text input.';
+      } else if (isAndroid) {
+        errorMessage = 'Voice input has limited support on Android browsers. Please try text input instead.';
+      }
+
       setError(errorMessage);
       onError?.(errorMessage);
     }
@@ -260,6 +326,15 @@ export function VoiceInput({ onTranscript, onError, onClose, isActive, isProcess
                   ? 'Listening... Speak now!'
                   : 'Preparing microphone...'}
               </p>
+
+              {/* Android PWA Warning */}
+              {!isListening && !isProcessing && /Android/i.test(navigator.userAgent) && window.matchMedia('(display-mode: standalone)').matches && (
+                <div className="bg-yellow-500/20 border border-yellow-400/30 p-3 rounded-2xl mb-4 backdrop-blur-sm">
+                  <p className="text-xs text-yellow-300">
+                    Voice input may not work reliably in PWA mode on Android. If it gets stuck, try text input instead.
+                  </p>
+                </div>
+              )}
 
               {/* Transcript */}
               {transcript && (

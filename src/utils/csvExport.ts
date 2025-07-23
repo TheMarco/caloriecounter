@@ -1,22 +1,23 @@
-import { getDailyMacroTotals } from './idb';
+import { getDailyMacroTotalsWithOffset } from './idb';
 
 export async function generateCSVData(days: number = 365): Promise<string> {
   try {
-    // Get all daily totals for the specified number of days
-    const dailyTotals = await getDailyMacroTotals(days);
+    // Get all daily totals with offset data for the specified number of days
+    const dailyTotals = await getDailyMacroTotalsWithOffset(days);
     
-    // Filter out days with no data (all zeros)
-    const dataWithEntries = dailyTotals.filter(day => 
-      day.totals.calories > 0 || day.totals.fat > 0 || day.totals.carbs > 0 || day.totals.protein > 0
+    // Filter out days with no data (all zeros and no workout)
+    const dataWithEntries = dailyTotals.filter(day =>
+      day.totals.calories > 0 || day.totals.fat > 0 || day.totals.carbs > 0 || day.totals.protein > 0 || day.offset > 0
     );
-    
-    // Create CSV header
-    const header = 'date,calories,carbs,fat,protein';
-    
+
+    // Create CSV header with workout and net calorie columns
+    const header = 'date,calories_consumed,calories_burned,net_calories,carbs,fat,protein';
+
     // Create CSV rows
     const rows = dataWithEntries.map(day => {
-      const { date, totals } = day;
-      return `${date},${totals.calories},${totals.carbs.toFixed(1)},${totals.fat.toFixed(1)},${totals.protein.toFixed(1)}`;
+      const { date, totals, offset } = day;
+      const netCalories = Math.max(0, totals.calories - offset);
+      return `${date},${totals.calories},${offset},${netCalories},${totals.carbs.toFixed(1)},${totals.fat.toFixed(1)},${totals.protein.toFixed(1)}`;
     });
     
     // Combine header and rows
@@ -27,7 +28,7 @@ export async function generateCSVData(days: number = 365): Promise<string> {
   }
 }
 
-export function downloadCSV(csvData: string, filename: string = 'nutrition-data.csv'): void {
+export function downloadCSV(csvData: string, filename: string = 'calorie-counter-data.csv'): void {
   try {
     // Create blob with CSV data
     const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
@@ -60,7 +61,7 @@ export async function exportNutritionData(): Promise<void> {
       const date = new Date();
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     })();
-    const filename = `nutrition-data-${today}.csv`;
+    const filename = `calorie-counter-data-${today}.csv`;
     downloadCSV(csvData, filename);
   } catch (error) {
     console.error('Error exporting nutrition data:', error);
