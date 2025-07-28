@@ -23,28 +23,104 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Common food suggestions with nutritional data
+  // Comprehensive USDA-based common foods database
   const commonFoods = useMemo(() => [
+    // Fruits
     { name: 'apple', qty: 1, unit: 'piece', kcal: 95, fat: 0.3, carbs: 25, protein: 0.5 },
     { name: 'banana', qty: 1, unit: 'piece', kcal: 105, fat: 0.4, carbs: 27, protein: 1.3 },
     { name: 'orange', qty: 1, unit: 'piece', kcal: 62, fat: 0.2, carbs: 15.4, protein: 1.2 },
-    { name: 'chicken breast', qty: 100, unit: 'g', kcal: 165, fat: 3.6, carbs: 0, protein: 31 },
-    { name: 'salmon', qty: 100, unit: 'g', kcal: 208, fat: 12.4, carbs: 0, protein: 22.1 },
-    { name: 'rice', qty: 100, unit: 'g', kcal: 130, fat: 0.3, carbs: 28, protein: 2.7 },
-    { name: 'pasta', qty: 100, unit: 'g', kcal: 131, fat: 1.1, carbs: 25, protein: 5 },
-    { name: 'bread', qty: 1, unit: 'slice', kcal: 80, fat: 1, carbs: 14, protein: 4 },
-    { name: 'egg', qty: 1, unit: 'piece', kcal: 70, fat: 5, carbs: 0.6, protein: 6 },
-    { name: 'milk', qty: 250, unit: 'ml', kcal: 150, fat: 8, carbs: 12, protein: 8 },
-    { name: 'yogurt', qty: 150, unit: 'g', kcal: 100, fat: 0.4, carbs: 6, protein: 17 },
-    { name: 'cheese', qty: 30, unit: 'g', kcal: 113, fat: 9, carbs: 1, protein: 7 },
+    { name: 'grapes', qty: 100, unit: 'g', kcal: 62, fat: 0.2, carbs: 16, protein: 0.6 },
+    { name: 'strawberries', qty: 100, unit: 'g', kcal: 32, fat: 0.3, carbs: 7.7, protein: 0.7 },
+    { name: 'blueberries', qty: 100, unit: 'g', kcal: 57, fat: 0.3, carbs: 14.5, protein: 0.7 },
+    { name: 'pineapple', qty: 100, unit: 'g', kcal: 50, fat: 0.1, carbs: 13.1, protein: 0.5 },
+    { name: 'mango', qty: 100, unit: 'g', kcal: 60, fat: 0.4, carbs: 15, protein: 0.8 },
+    { name: 'watermelon', qty: 100, unit: 'g', kcal: 30, fat: 0.2, carbs: 7.6, protein: 0.6 },
+    { name: 'avocado', qty: 0.5, unit: 'piece', kcal: 160, fat: 14.7, carbs: 8.5, protein: 2 },
+
+    // Vegetables
     { name: 'broccoli', qty: 100, unit: 'g', kcal: 34, fat: 0.4, carbs: 7, protein: 2.8 },
     { name: 'spinach', qty: 100, unit: 'g', kcal: 23, fat: 0.4, carbs: 3.6, protein: 2.9 },
+    { name: 'carrots', qty: 100, unit: 'g', kcal: 41, fat: 0.2, carbs: 9.6, protein: 0.9 },
+    { name: 'bell pepper', qty: 100, unit: 'g', kcal: 31, fat: 0.3, carbs: 7, protein: 1 },
+    { name: 'cucumber', qty: 100, unit: 'g', kcal: 16, fat: 0.1, carbs: 4, protein: 0.7 },
+    { name: 'tomato', qty: 1, unit: 'piece', kcal: 22, fat: 0.2, carbs: 4.8, protein: 1.1 },
+    { name: 'lettuce', qty: 100, unit: 'g', kcal: 15, fat: 0.2, carbs: 2.9, protein: 1.4 },
+    { name: 'onion', qty: 100, unit: 'g', kcal: 40, fat: 0.1, carbs: 9.3, protein: 1.1 },
+    { name: 'mushrooms', qty: 100, unit: 'g', kcal: 22, fat: 0.3, carbs: 3.3, protein: 3.1 },
+    { name: 'zucchini', qty: 100, unit: 'g', kcal: 17, fat: 0.3, carbs: 3.1, protein: 1.2 },
+
+    // Proteins
+    { name: 'chicken breast', qty: 100, unit: 'g', kcal: 165, fat: 3.6, carbs: 0, protein: 31 },
+    { name: 'chicken thigh', qty: 100, unit: 'g', kcal: 209, fat: 10.9, carbs: 0, protein: 26 },
+    { name: 'ground beef', qty: 100, unit: 'g', kcal: 250, fat: 20, carbs: 0, protein: 17 },
+    { name: 'salmon', qty: 100, unit: 'g', kcal: 208, fat: 12.4, carbs: 0, protein: 22.1 },
+    { name: 'tuna', qty: 100, unit: 'g', kcal: 144, fat: 4.9, carbs: 0, protein: 23 },
+    { name: 'shrimp', qty: 100, unit: 'g', kcal: 99, fat: 0.3, carbs: 0.2, protein: 24 },
+    { name: 'turkey breast', qty: 100, unit: 'g', kcal: 135, fat: 1, carbs: 0, protein: 30 },
+    { name: 'pork chop', qty: 100, unit: 'g', kcal: 231, fat: 14, carbs: 0, protein: 25 },
+    { name: 'egg', qty: 1, unit: 'piece', kcal: 70, fat: 5, carbs: 0.6, protein: 6 },
+    { name: 'tofu', qty: 100, unit: 'g', kcal: 76, fat: 4.8, carbs: 1.9, protein: 8 },
+
+    // Dairy
+    { name: 'milk', qty: 250, unit: 'ml', kcal: 150, fat: 8, carbs: 12, protein: 8 },
+    { name: 'greek yogurt', qty: 150, unit: 'g', kcal: 100, fat: 0.4, carbs: 6, protein: 17 },
+    { name: 'yogurt', qty: 150, unit: 'g', kcal: 150, fat: 8, carbs: 17, protein: 8 },
+    { name: 'cheddar cheese', qty: 30, unit: 'g', kcal: 113, fat: 9, carbs: 1, protein: 7 },
+    { name: 'mozzarella cheese', qty: 30, unit: 'g', kcal: 85, fat: 6.3, carbs: 0.6, protein: 6.3 },
+    { name: 'cottage cheese', qty: 100, unit: 'g', kcal: 98, fat: 4.3, carbs: 3.4, protein: 11 },
+    { name: 'cream cheese', qty: 30, unit: 'g', kcal: 99, fat: 9.9, carbs: 1.6, protein: 1.8 },
+    { name: 'butter', qty: 10, unit: 'g', kcal: 72, fat: 8.1, carbs: 0.1, protein: 0.1 },
+
+    // Grains & Starches
+    { name: 'white rice', qty: 100, unit: 'g', kcal: 130, fat: 0.3, carbs: 28, protein: 2.7 },
+    { name: 'brown rice', qty: 100, unit: 'g', kcal: 111, fat: 0.9, carbs: 23, protein: 2.6 },
+    { name: 'pasta', qty: 100, unit: 'g', kcal: 131, fat: 1.1, carbs: 25, protein: 5 },
+    { name: 'white bread', qty: 1, unit: 'slice', kcal: 80, fat: 1, carbs: 14, protein: 4 },
+    { name: 'whole wheat bread', qty: 1, unit: 'slice', kcal: 80, fat: 1.5, carbs: 14, protein: 4 },
+    { name: 'oatmeal', qty: 40, unit: 'g', kcal: 150, fat: 3, carbs: 27, protein: 5 },
+    { name: 'quinoa', qty: 100, unit: 'g', kcal: 120, fat: 1.9, carbs: 22, protein: 4.4 },
     { name: 'potato', qty: 150, unit: 'g', kcal: 116, fat: 0.1, carbs: 26, protein: 2 },
     { name: 'sweet potato', qty: 150, unit: 'g', kcal: 129, fat: 0.2, carbs: 30, protein: 2.3 },
-    { name: 'avocado', qty: 0.5, unit: 'piece', kcal: 160, fat: 14.7, carbs: 8.5, protein: 2 },
+    { name: 'bagel', qty: 1, unit: 'piece', kcal: 245, fat: 1.5, carbs: 48, protein: 10 },
+    { name: 'tortilla', qty: 1, unit: 'piece', kcal: 104, fat: 2.5, carbs: 18, protein: 3 },
+
+    // Nuts & Seeds
     { name: 'almonds', qty: 30, unit: 'g', kcal: 174, fat: 15, carbs: 6.1, protein: 6.4 },
-    { name: 'oatmeal', qty: 40, unit: 'g', kcal: 150, fat: 3, carbs: 27, protein: 5 },
-    { name: 'quinoa', qty: 100, unit: 'g', kcal: 120, fat: 1.9, carbs: 22, protein: 4.4 }
+    { name: 'walnuts', qty: 30, unit: 'g', kcal: 196, fat: 19.5, carbs: 4.1, protein: 4.6 },
+    { name: 'peanuts', qty: 30, unit: 'g', kcal: 161, fat: 13.9, carbs: 4.6, protein: 7.3 },
+    { name: 'cashews', qty: 30, unit: 'g', kcal: 157, fat: 12.4, carbs: 8.6, protein: 5.2 },
+    { name: 'peanut butter', qty: 32, unit: 'g', kcal: 188, fat: 16, carbs: 8, protein: 8 },
+    { name: 'sunflower seeds', qty: 30, unit: 'g', kcal: 164, fat: 14.1, carbs: 6.8, protein: 5.8 },
+
+    // Legumes
+    { name: 'black beans', qty: 100, unit: 'g', kcal: 132, fat: 0.5, carbs: 24, protein: 8.9 },
+    { name: 'chickpeas', qty: 100, unit: 'g', kcal: 164, fat: 2.6, carbs: 27, protein: 8.9 },
+    { name: 'lentils', qty: 100, unit: 'g', kcal: 116, fat: 0.4, carbs: 20, protein: 9 },
+    { name: 'kidney beans', qty: 100, unit: 'g', kcal: 127, fat: 0.5, carbs: 23, protein: 8.7 },
+
+    // Beverages & Others
+    { name: 'coffee', qty: 240, unit: 'ml', kcal: 2, fat: 0, carbs: 0, protein: 0.3 },
+    { name: 'tea', qty: 240, unit: 'ml', kcal: 2, fat: 0, carbs: 0.7, protein: 0 },
+    { name: 'orange juice', qty: 240, unit: 'ml', kcal: 112, fat: 0.5, carbs: 26, protein: 1.7 },
+    { name: 'apple juice', qty: 240, unit: 'ml', kcal: 114, fat: 0.3, carbs: 28, protein: 0.2 },
+    { name: 'olive oil', qty: 15, unit: 'ml', kcal: 119, fat: 13.5, carbs: 0, protein: 0 },
+    { name: 'coconut oil', qty: 15, unit: 'ml', kcal: 121, fat: 13.5, carbs: 0, protein: 0 },
+    { name: 'honey', qty: 21, unit: 'g', kcal: 64, fat: 0, carbs: 17.3, protein: 0.1 },
+    { name: 'sugar', qty: 12, unit: 'g', kcal: 49, fat: 0, carbs: 12.6, protein: 0 },
+
+    // Snacks & Processed
+    { name: 'dark chocolate', qty: 30, unit: 'g', kcal: 155, fat: 8.8, carbs: 17, protein: 2.3 },
+    { name: 'milk chocolate', qty: 30, unit: 'g', kcal: 151, fat: 8.7, carbs: 17.1, protein: 2.2 },
+    { name: 'granola bar', qty: 1, unit: 'piece', kcal: 118, fat: 4.9, carbs: 15.8, protein: 2.4 },
+    { name: 'crackers', qty: 5, unit: 'piece', kcal: 62, fat: 2.5, carbs: 9.1, protein: 1.1 },
+    { name: 'popcorn', qty: 30, unit: 'g', kcal: 106, fat: 1.2, carbs: 21.8, protein: 3.4 },
+    { name: 'pretzels', qty: 30, unit: 'g', kcal: 108, fat: 0.8, carbs: 22.5, protein: 2.8 },
+
+    // Fast Food Basics
+    { name: 'pizza slice', qty: 1, unit: 'slice', kcal: 285, fat: 10.4, carbs: 36, protein: 12.2 },
+    { name: 'hamburger', qty: 1, unit: 'piece', kcal: 540, fat: 31, carbs: 40, protein: 25 },
+    { name: 'french fries', qty: 100, unit: 'g', kcal: 365, fat: 17, carbs: 63, protein: 4 },
+    { name: 'chicken nuggets', qty: 4, unit: 'piece', kcal: 190, fat: 12, carbs: 11, protein: 12 },
   ], []);
 
   useEffect(() => {
@@ -61,8 +137,8 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
   useEffect(() => {
     const updateSuggestions = async () => {
       if (inputText.length >= 2) {
-        // Search previous entries first
-        const previousMatches = await searchPreviousFood(inputText, 5);
+        // Search previous entries first (increased limit to show more frequent foods)
+        const previousMatches = await searchPreviousFood(inputText, 10);
         setPreviousEntries(previousMatches);
 
         // Also get common food suggestions
@@ -204,7 +280,7 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
           {/* Previous Entries */}
           {showPreviousEntries && previousEntries.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-white/80 px-1">Previous Entries</h3>
+              <h3 className="text-sm font-medium text-white/80 px-1">Foods Entered Previously</h3>
               <div className="border border-white/20 rounded-2xl max-h-40 overflow-y-auto backdrop-blur-sm bg-white/5">
                 {previousEntries.map((entry) => (
                   <button

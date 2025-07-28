@@ -272,39 +272,63 @@ export const exportData = async (): Promise<Entry[]> => {
   return entries.sort((a, b) => a.ts - b.ts); // Chronological order
 };
 
-// Get all unique food entries for autocomplete
+// Get all unique food entries for autocomplete, sorted by frequency
 export const getAllUniqueFood = async (): Promise<Entry[]> => {
   const allKeys = await keys();
   const entryKeys = allKeys.filter(key =>
     typeof key === 'string' && key.startsWith('entry:')
   );
 
-  const entries: Entry[] = [];
-  const seenFoods = new Set<string>();
+  // Track frequency and most recent entry for each food
+  const foodMap = new Map<string, { entry: Entry; count: number; lastUsed: number }>();
 
   for (const key of entryKeys) {
     const entry = await get(key);
     if (entry) {
       // Use food name as the unique key (case-insensitive)
       const foodKey = entry.food.toLowerCase().trim();
-      if (!seenFoods.has(foodKey)) {
-        seenFoods.add(foodKey);
-        entries.push(entry);
+
+      if (foodMap.has(foodKey)) {
+        const existing = foodMap.get(foodKey)!;
+        // Increment count and update to most recent entry if this one is newer
+        foodMap.set(foodKey, {
+          entry: entry.ts > existing.entry.ts ? entry : existing.entry,
+          count: existing.count + 1,
+          lastUsed: Math.max(existing.lastUsed, entry.ts)
+        });
+      } else {
+        foodMap.set(foodKey, {
+          entry,
+          count: 1,
+          lastUsed: entry.ts
+        });
       }
     }
   }
 
-  // Sort by most recent timestamp to show recently used foods first
-  return entries.sort((a, b) => b.ts - a.ts);
+  // Convert to array and sort by frequency (most frequent first), then by recency
+  return Array.from(foodMap.values())
+    .sort((a, b) => {
+      // Primary sort: by frequency (descending)
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      // Secondary sort: by most recent usage (descending)
+      return b.lastUsed - a.lastUsed;
+    })
+    .map(item => item.entry);
 };
 
-// Search previous food entries by name
-export const searchPreviousFood = async (query: string, limit: number = 10): Promise<Entry[]> => {
+// Search previous food entries by name, prioritizing frequently eaten foods
+export const searchPreviousFood = async (query: string, limit: number = 15): Promise<Entry[]> => {
   if (!query || query.length < 2) return [];
 
+  // Get all unique foods already sorted by frequency
   const uniqueFood = await getAllUniqueFood();
   const queryLower = query.toLowerCase().trim();
 
+  // Filter matches - since uniqueFood is already sorted by frequency,
+  // the most frequently eaten foods will appear first
   return uniqueFood
     .filter(entry => entry.food.toLowerCase().includes(queryLower))
     .slice(0, limit);

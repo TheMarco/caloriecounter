@@ -19,7 +19,7 @@ describe('Previous Entries Functionality', () => {
   });
 
   describe('getAllUniqueFood', () => {
-    it('should return unique food entries sorted by most recent', async () => {
+    it('should return unique food entries sorted by frequency, then recency', async () => {
       // Add some test entries
       await addEntry({
         food: 'Apple',
@@ -46,7 +46,8 @@ describe('Previous Entries Functionality', () => {
         method: 'text',
       });
 
-      // Add duplicate apple (should be filtered out)
+      // Add duplicate apple (should increase frequency)
+      await new Promise(resolve => setTimeout(resolve, 10));
       await addEntry({
         food: 'Apple',
         qty: 2,
@@ -58,11 +59,24 @@ describe('Previous Entries Functionality', () => {
         method: 'voice',
       });
 
+      // Add another apple (frequency = 3)
+      await new Promise(resolve => setTimeout(resolve, 10));
+      await addEntry({
+        food: 'Apple',
+        qty: 1,
+        unit: 'piece',
+        kcal: 95,
+        fat: 0.3,
+        carbs: 25,
+        protein: 0.5,
+        method: 'text',
+      });
+
       const uniqueFood = await getAllUniqueFood();
 
       expect(uniqueFood).toHaveLength(2);
-      expect(uniqueFood[0].food).toBe('Apple'); // Most recent first
-      expect(uniqueFood[1].food).toBe('Banana');
+      expect(uniqueFood[0].food).toBe('Apple'); // Most frequent first (3 entries)
+      expect(uniqueFood[1].food).toBe('Banana'); // Less frequent (1 entry)
     });
 
     it('should handle case-insensitive duplicates', async () => {
@@ -129,10 +143,14 @@ describe('Previous Entries Functionality', () => {
       expect(results).toHaveLength(1);
     });
 
-    it('should return results sorted by most recent first', async () => {
+    it('should return results sorted by frequency first', async () => {
+      // Add more Apple entries to increase its frequency
+      await addEntry({ food: 'Apple', qty: 1, unit: 'piece', kcal: 95, fat: 0.3, carbs: 25, protein: 0.5, method: 'text' as const });
+      await addEntry({ food: 'Apple', qty: 1, unit: 'piece', kcal: 95, fat: 0.3, carbs: 25, protein: 0.5, method: 'text' as const });
+
       const results = await searchPreviousFood('apple');
-      expect(results[0].food).toBe('Green Apple'); // Added last
-      expect(results[1].food).toBe('Apple');
+      expect(results[0].food).toBe('Apple'); // Most frequent (3 total entries)
+      expect(results[1].food).toBe('Green Apple'); // Less frequent (1 entry)
     });
 
     it('should handle partial matches', async () => {
