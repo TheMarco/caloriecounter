@@ -257,10 +257,10 @@ export const clearAllData = async (): Promise<void> => {
 
 export const exportData = async (): Promise<Entry[]> => {
   const allKeys = await keys();
-  const entryKeys = allKeys.filter(key => 
+  const entryKeys = allKeys.filter(key =>
     typeof key === 'string' && key.startsWith('entry:')
   );
-  
+
   const entries: Entry[] = [];
   for (const key of entryKeys) {
     const entry = await get(key);
@@ -268,8 +268,183 @@ export const exportData = async (): Promise<Entry[]> => {
       entries.push(entry);
     }
   }
-  
+
   return entries.sort((a, b) => a.ts - b.ts); // Chronological order
+};
+
+// Get all unique food entries for autocomplete
+export const getAllUniqueFood = async (): Promise<Entry[]> => {
+  const allKeys = await keys();
+  const entryKeys = allKeys.filter(key =>
+    typeof key === 'string' && key.startsWith('entry:')
+  );
+
+  const entries: Entry[] = [];
+  const seenFoods = new Set<string>();
+
+  for (const key of entryKeys) {
+    const entry = await get(key);
+    if (entry) {
+      // Use food name as the unique key (case-insensitive)
+      const foodKey = entry.food.toLowerCase().trim();
+      if (!seenFoods.has(foodKey)) {
+        seenFoods.add(foodKey);
+        entries.push(entry);
+      }
+    }
+  }
+
+  // Sort by most recent timestamp to show recently used foods first
+  return entries.sort((a, b) => b.ts - a.ts);
+};
+
+// Search previous food entries by name
+export const searchPreviousFood = async (query: string, limit: number = 10): Promise<Entry[]> => {
+  if (!query || query.length < 2) return [];
+
+  const uniqueFood = await getAllUniqueFood();
+  const queryLower = query.toLowerCase().trim();
+
+  return uniqueFood
+    .filter(entry => entry.food.toLowerCase().includes(queryLower))
+    .slice(0, limit);
+};
+
+// Add sample data for testing previous entries feature (localhost only)
+export const addSampleData = async (): Promise<void> => {
+  // Only allow on localhost for development/testing
+  if (typeof window !== 'undefined' &&
+      !window.location.hostname.includes('localhost') &&
+      !window.location.hostname.includes('127.0.0.1')) {
+    console.warn('🚫 Sample data can only be added on localhost');
+    throw new Error('Sample data is only available in development mode');
+  }
+  const sampleEntries = [
+    {
+      food: 'Grilled Chicken Breast',
+      qty: 150,
+      unit: 'g',
+      kcal: 248,
+      fat: 5.4,
+      carbs: 0,
+      protein: 46.2,
+      method: 'text' as const,
+    },
+    {
+      food: 'Brown Rice',
+      qty: 100,
+      unit: 'g',
+      kcal: 111,
+      fat: 0.9,
+      carbs: 23,
+      protein: 2.6,
+      method: 'voice' as const,
+    },
+    {
+      food: 'Green Apple',
+      qty: 1,
+      unit: 'piece',
+      kcal: 95,
+      fat: 0.3,
+      carbs: 25,
+      protein: 0.5,
+      method: 'text' as const,
+    },
+    {
+      food: 'Banana',
+      qty: 1,
+      unit: 'piece',
+      kcal: 105,
+      fat: 0.4,
+      carbs: 27,
+      protein: 1.3,
+      method: 'barcode' as const,
+    },
+    {
+      food: 'Salmon Fillet',
+      qty: 120,
+      unit: 'g',
+      kcal: 208,
+      fat: 12.4,
+      carbs: 0,
+      protein: 22.1,
+      method: 'text' as const,
+    },
+    {
+      food: 'Greek Yogurt',
+      qty: 150,
+      unit: 'g',
+      kcal: 100,
+      fat: 0.4,
+      carbs: 6,
+      protein: 17,
+      method: 'voice' as const,
+    },
+    {
+      food: 'Whole Wheat Bread',
+      qty: 2,
+      unit: 'slice',
+      kcal: 160,
+      fat: 2.5,
+      carbs: 28,
+      protein: 8,
+      method: 'text' as const,
+    },
+    {
+      food: 'Avocado',
+      qty: 0.5,
+      unit: 'piece',
+      kcal: 160,
+      fat: 14.7,
+      carbs: 8.5,
+      protein: 2,
+      method: 'photo' as const,
+    },
+    {
+      food: 'Almonds',
+      qty: 30,
+      unit: 'g',
+      kcal: 174,
+      fat: 15,
+      carbs: 6.1,
+      protein: 6.4,
+      method: 'text' as const,
+    },
+    {
+      food: 'Sweet Potato',
+      qty: 150,
+      unit: 'g',
+      kcal: 129,
+      fat: 0.2,
+      carbs: 30,
+      protein: 2.3,
+      method: 'voice' as const,
+    }
+  ];
+
+  console.log('🍎 Adding sample food entries...');
+
+  // Add entries with different timestamps to simulate real usage over time
+  for (let i = 0; i < sampleEntries.length; i++) {
+    const entry = sampleEntries[i];
+    const daysAgo = Math.floor(i / 2); // Spread entries over several days
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    const dateString = formatLocalDate(date);
+
+    await addEntry(entry, dateString);
+
+    // Small delay to ensure different timestamps
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
+  console.log('✅ Sample data added! Try typing "chicken", "apple", or "bread" in text input.');
+};
+
+// Check if sample data exists
+export const hasSampleData = async (): Promise<boolean> => {
+  const uniqueFood = await getAllUniqueFood();
+  return uniqueFood.length > 0;
 };
 
 // Initialize daily reset check and timezone migration

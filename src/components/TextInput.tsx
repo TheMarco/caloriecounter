@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { parseFood } from '@/utils/api';
-import type { ParseFoodResponse } from '@/types';
+import { searchPreviousFood } from '@/utils/idb';
+import type { ParseFoodResponse, Entry } from '@/types';
 
 interface TextInputProps {
   onFoodParsed: (data: ParseFoodResponse['data']) => void;
@@ -16,15 +17,34 @@ interface TextInputProps {
 export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'metric', error }: TextInputProps) {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<typeof commonFoods>([]);
+  const [previousEntries, setPreviousEntries] = useState<Entry[]>([]);
+  const [showPreviousEntries, setShowPreviousEntries] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Common food suggestions
+  // Common food suggestions with nutritional data
   const commonFoods = useMemo(() => [
-    'apple', 'banana', 'orange', 'chicken breast', 'salmon', 'rice', 'pasta',
-    'bread', 'egg', 'milk', 'yogurt', 'cheese', 'broccoli', 'spinach',
-    'potato', 'sweet potato', 'avocado', 'almonds', 'oatmeal', 'quinoa'
+    { name: 'apple', qty: 1, unit: 'piece', kcal: 95, fat: 0.3, carbs: 25, protein: 0.5 },
+    { name: 'banana', qty: 1, unit: 'piece', kcal: 105, fat: 0.4, carbs: 27, protein: 1.3 },
+    { name: 'orange', qty: 1, unit: 'piece', kcal: 62, fat: 0.2, carbs: 15.4, protein: 1.2 },
+    { name: 'chicken breast', qty: 100, unit: 'g', kcal: 165, fat: 3.6, carbs: 0, protein: 31 },
+    { name: 'salmon', qty: 100, unit: 'g', kcal: 208, fat: 12.4, carbs: 0, protein: 22.1 },
+    { name: 'rice', qty: 100, unit: 'g', kcal: 130, fat: 0.3, carbs: 28, protein: 2.7 },
+    { name: 'pasta', qty: 100, unit: 'g', kcal: 131, fat: 1.1, carbs: 25, protein: 5 },
+    { name: 'bread', qty: 1, unit: 'slice', kcal: 80, fat: 1, carbs: 14, protein: 4 },
+    { name: 'egg', qty: 1, unit: 'piece', kcal: 70, fat: 5, carbs: 0.6, protein: 6 },
+    { name: 'milk', qty: 250, unit: 'ml', kcal: 150, fat: 8, carbs: 12, protein: 8 },
+    { name: 'yogurt', qty: 150, unit: 'g', kcal: 100, fat: 0.4, carbs: 6, protein: 17 },
+    { name: 'cheese', qty: 30, unit: 'g', kcal: 113, fat: 9, carbs: 1, protein: 7 },
+    { name: 'broccoli', qty: 100, unit: 'g', kcal: 34, fat: 0.4, carbs: 7, protein: 2.8 },
+    { name: 'spinach', qty: 100, unit: 'g', kcal: 23, fat: 0.4, carbs: 3.6, protein: 2.9 },
+    { name: 'potato', qty: 150, unit: 'g', kcal: 116, fat: 0.1, carbs: 26, protein: 2 },
+    { name: 'sweet potato', qty: 150, unit: 'g', kcal: 129, fat: 0.2, carbs: 30, protein: 2.3 },
+    { name: 'avocado', qty: 0.5, unit: 'piece', kcal: 160, fat: 14.7, carbs: 8.5, protein: 2 },
+    { name: 'almonds', qty: 30, unit: 'g', kcal: 174, fat: 15, carbs: 6.1, protein: 6.4 },
+    { name: 'oatmeal', qty: 40, unit: 'g', kcal: 150, fat: 3, carbs: 27, protein: 5 },
+    { name: 'quinoa', qty: 100, unit: 'g', kcal: 120, fat: 1.9, carbs: 22, protein: 4.4 }
   ], []);
 
   useEffect(() => {
@@ -32,19 +52,34 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
       // Reset input text when dialog opens
       setInputText('');
       setSuggestions([]);
+      setPreviousEntries([]);
+      setShowPreviousEntries(false);
       inputRef.current.focus();
     }
   }, [isActive]);
 
   useEffect(() => {
-    if (inputText.length >= 2) {
-      const filtered = commonFoods.filter(food =>
-        food.toLowerCase().includes(inputText.toLowerCase())
-      );
-      setSuggestions(filtered.slice(0, 5));
-    } else {
-      setSuggestions([]);
-    }
+    const updateSuggestions = async () => {
+      if (inputText.length >= 2) {
+        // Search previous entries first
+        const previousMatches = await searchPreviousFood(inputText, 5);
+        setPreviousEntries(previousMatches);
+
+        // Also get common food suggestions
+        const filtered = commonFoods.filter(food =>
+          food.name.toLowerCase().includes(inputText.toLowerCase())
+        );
+        setSuggestions(filtered.slice(0, 5));
+
+        setShowPreviousEntries(previousMatches.length > 0);
+      } else {
+        setSuggestions([]);
+        setPreviousEntries([]);
+        setShowPreviousEntries(false);
+      }
+    };
+
+    updateSuggestions();
   }, [inputText, commonFoods]);
 
   const handleInputChange = (value: string) => {
@@ -85,10 +120,34 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setInputText(suggestion);
-    setSuggestions([]);
-    // User can click "Parse Food" button to parse the suggestion
+  const handleSuggestionClick = (suggestion: typeof commonFoods[0]) => {
+    // Directly use the common food data without AI parsing
+    const data = {
+      food: suggestion.name,
+      quantity: suggestion.qty,
+      unit: suggestion.unit,
+      kcal: suggestion.kcal,
+      fat: suggestion.fat,
+      carbs: suggestion.carbs,
+      protein: suggestion.protein,
+    };
+
+    onFoodParsed(data);
+  };
+
+  const handlePreviousEntryClick = (entry: Entry) => {
+    // Directly use the previous entry data without AI parsing
+    const data = {
+      food: entry.food,
+      quantity: entry.qty,
+      unit: entry.unit,
+      kcal: entry.kcal,
+      fat: entry.fat,
+      carbs: entry.carbs,
+      protein: entry.protein,
+    };
+
+    onFoodParsed(data);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -142,19 +201,53 @@ export function TextInput({ onFoodParsed, onError, onClose, isActive, units = 'm
             />
           </div>
 
-          {/* Suggestions */}
+          {/* Previous Entries */}
+          {showPreviousEntries && previousEntries.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-white/80 px-1">Previous Entries</h3>
+              <div className="border border-white/20 rounded-2xl max-h-40 overflow-y-auto backdrop-blur-sm bg-white/5">
+                {previousEntries.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    onClick={() => handlePreviousEntryClick(entry)}
+                    className="w-full text-left px-4 py-3 hover:bg-white/10 text-sm text-white/80 hover:text-white border-b border-white/10 last:border-b-0 transition-all"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{entry.food}</span>
+                      <span className="text-xs text-white/60">{entry.kcal} kcal</span>
+                    </div>
+                    <div className="text-xs text-white/50 mt-1">
+                      {entry.qty} {entry.unit} • {entry.fat}g fat, {entry.carbs}g carbs, {entry.protein}g protein
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Common Food Suggestions */}
           {suggestions.length > 0 && (
-            <div className="border border-white/20 rounded-2xl max-h-32 overflow-y-auto backdrop-blur-sm bg-white/5">
-              {suggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  className="w-full text-left px-4 py-3 hover:bg-white/10 text-sm text-white/80 hover:text-white border-b border-white/10 last:border-b-0 transition-all"
-                >
-                  {suggestion}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-white/80 px-1">Common Foods</h3>
+              <div className="border border-white/20 rounded-2xl max-h-32 overflow-y-auto backdrop-blur-sm bg-white/5">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-4 py-3 hover:bg-white/10 text-sm text-white/80 hover:text-white border-b border-white/10 last:border-b-0 transition-all"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium capitalize">{suggestion.name}</span>
+                      <span className="text-xs text-white/60">{suggestion.kcal} kcal</span>
+                    </div>
+                    <div className="text-xs text-white/50 mt-1">
+                      {suggestion.qty} {suggestion.unit} • {suggestion.fat}g fat, {suggestion.carbs}g carbs, {suggestion.protein}g protein
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

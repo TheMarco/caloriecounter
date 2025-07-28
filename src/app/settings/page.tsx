@@ -11,6 +11,7 @@ import {
   InfoIconComponent
 } from '@/components/icons';
 import { exportNutritionData } from '@/utils/csvExport';
+import { addSampleData } from '@/utils/idb';
 
 export default function Settings() {
   const { settings, isLoading, updateSetting, resetSettings } = useSettings();
@@ -18,6 +19,7 @@ export default function Settings() {
   const [isExporting, setIsExporting] = useState(false);
   const [showLicense, setShowLicense] = useState(false);
   const [licenseContent, setLicenseContent] = useState<string>('');
+  const [isAddingSampleData, setIsAddingSampleData] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -136,6 +138,24 @@ export default function Settings() {
       setIsExporting(false);
     }
   };
+
+  const handleAddSampleData = async () => {
+    setIsAddingSampleData(true);
+    try {
+      await addSampleData();
+      showMessage('Sample data added! Try typing "chicken", "apple", or "bread" in text input.');
+    } catch (error) {
+      console.error('Sample data error:', error);
+      showMessage('Failed to add sample data', true);
+    } finally {
+      setIsAddingSampleData(false);
+    }
+  };
+
+  // Check if we're on localhost
+  const isLocalhost = typeof window !== 'undefined' &&
+    (window.location.hostname.includes('localhost') ||
+     window.location.hostname.includes('127.0.0.1'));
 
   const handleUnitsChange = async (newUnits: 'metric' | 'imperial') => {
     const success = await updateSetting('units', newUnits);
@@ -427,6 +447,25 @@ export default function Settings() {
                 )}
                 <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
               </button>
+
+              {/* Add Sample Data (localhost only) */}
+              {isLocalhost && (
+                <button
+                  data-testid="add-sample-data-button"
+                  onClick={handleAddSampleData}
+                  disabled={isAddingSampleData}
+                  className="flex items-center justify-center space-x-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-blue-300 hover:text-blue-200 py-3 px-4 rounded-2xl font-medium transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isAddingSampleData ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-300"></div>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  )}
+                  <span>{isAddingSampleData ? 'Adding...' : 'Add Sample Data'}</span>
+                </button>
+              )}
 
               {/* Export Data */}
               <button
