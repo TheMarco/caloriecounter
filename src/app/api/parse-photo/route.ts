@@ -158,35 +158,51 @@ Remember: Only proceed if you can clearly see and identify food. When in doubt, 
     }
 
     let completion;
-    try {
-      completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a nutrition expert. Analyze food photos carefully and respond only with valid JSON. If you cannot clearly identify food, return an error.',
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: prompt,
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageData,
-                  detail: 'high'
+    // Try multiple models in order of preference (GPT-5 mini first)
+    const models = ['gpt-5-mini', 'gpt-4o-mini', 'gpt-4o'];
+    let lastError: unknown;
+
+    for (const model of models) {
+      try {
+        console.log(`🤖 Attempting to use model: ${model}`);
+        completion = await openai.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a nutrition expert. Analyze food photos carefully and respond only with valid JSON. If you cannot clearly identify food, return an error.',
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: prompt,
                 },
-              },
-            ],
-          },
-        ],
-        max_tokens: 200,
-        temperature: 0.1,
-      });
-    } catch (openaiError: unknown) {
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: imageData,
+                    detail: 'high'
+                  },
+                },
+              ],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0.1,
+        });
+        console.log(`✅ Successfully used model: ${model}`);
+        break; // Success, exit loop
+      } catch (error) {
+        console.error(`❌ Model ${model} failed:`, error);
+        lastError = error;
+        // Continue to next model
+      }
+    }
+
+    if (!completion) {
+      const openaiError = lastError;
       console.error('🤖 OpenAI API error:', openaiError);
 
       let errorMessage = 'Unknown OpenAI error';

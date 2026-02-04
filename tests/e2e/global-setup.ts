@@ -8,14 +8,27 @@ async function globalSetup(config: FullConfig) {
   const page = await browser.newPage();
   
   try {
-    // Set auth cookie to bypass landing page
-    console.log('🔐 Setting authentication cookie...');
-    await page.context().addCookies([{
-      name: 'calorie-auth',
-      value: 'authenticated',
-      domain: 'localhost',
-      path: '/'
-    }]);
+    // Authenticate via the login API to get a valid signed cookie
+    console.log('🔐 Authenticating via login API...');
+    const baseUrl = config.webServer?.url || 'http://localhost:3000';
+
+    // Call the login API
+    const response = await page.request.post(`${baseUrl}/api/auth`, {
+      data: { password: process.env.AUTH_PASSWORD || 'sub2marco' },
+    });
+
+    if (!response.ok()) {
+      console.log('⚠️ Auth API not ready, retrying after delay...');
+      await page.waitForTimeout(2000);
+      const retryResponse = await page.request.post(`${baseUrl}/api/auth`, {
+        data: { password: process.env.AUTH_PASSWORD || 'sub2marco' },
+      });
+      if (!retryResponse.ok()) {
+        throw new Error(`Authentication failed: ${retryResponse.status()}`);
+      }
+    }
+
+    console.log('✅ Authentication successful');
 
     // Wait for the dev server to be ready
     console.log('⏳ Waiting for dev server to be ready...');

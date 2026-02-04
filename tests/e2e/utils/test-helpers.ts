@@ -315,15 +315,41 @@ export class TestHelpers {
   }
 
   /**
-   * Set authentication cookie to bypass landing page
+   * Authenticate via the login API to get a valid signed cookie
    */
   async setAuthCookie() {
-    await this.page.context().addCookies([{
-      name: 'calorie-auth',
-      value: 'authenticated',
-      domain: 'localhost',
-      path: '/'
-    }]);
+    // First navigate to a page so we can make API calls
+    await this.page.goto('/landing');
+
+    // Call the login API to get a signed auth cookie
+    const response = await this.page.request.post('/api/auth', {
+      data: { password: process.env.AUTH_PASSWORD || 'sub2marco' },
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Authentication failed: ${response.status()}`);
+    }
+
+    // The cookie is set by the response, but we need to extract it for the context
+    const cookies = await this.page.context().cookies();
+    const authCookie = cookies.find(c => c.name === 'calorie-auth');
+
+    if (!authCookie) {
+      // If cookie wasn't set automatically, we need to handle it manually
+      const setCookieHeader = response.headers()['set-cookie'];
+      if (setCookieHeader) {
+        // Parse and set the cookie manually
+        const match = setCookieHeader.match(/calorie-auth=([^;]+)/);
+        if (match) {
+          await this.page.context().addCookies([{
+            name: 'calorie-auth',
+            value: match[1],
+            domain: 'localhost',
+            path: '/',
+          }]);
+        }
+      }
+    }
   }
 
   /**

@@ -75,21 +75,42 @@ REALISTIC PORTION EXAMPLES:
   * "tablespoon of mayo" → quantity: 1, unit: "tbsp", kcal: 90 (total for 1 tbsp)
   * "shot of tequila" → ${units === 'metric' ? 'quantity: 44, unit: "ml", kcal: 97' : 'quantity: 1.5, unit: "oz", kcal: 97'} (standard shot size)`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a nutrition expert. Respond only with valid JSON.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: 150,
-      temperature: 0.1,
-    });
+    // Try multiple models in order of preference (GPT-5 mini first)
+    const models = ['gpt-5-mini', 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+    let completion;
+    let lastError;
+
+    for (const model of models) {
+      try {
+        console.log(`🤖 Attempting to use model: ${model}`);
+        completion = await openai.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a nutrition expert. Respond only with valid JSON.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          max_tokens: 150,
+          temperature: 0.1,
+        });
+        console.log(`✅ Successfully used model: ${model}`);
+        break; // Success, exit loop
+      } catch (error) {
+        console.error(`❌ Model ${model} failed:`, error);
+        lastError = error;
+        // Continue to next model
+      }
+    }
+
+    if (!completion) {
+      console.error('All models failed, last error:', lastError);
+      throw lastError || new Error('All models failed');
+    }
 
     const responseText = completion.choices[0]?.message?.content?.trim();
     

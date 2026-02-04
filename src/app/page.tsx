@@ -79,18 +79,18 @@ function HomeContent() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Check authentication
-        const authCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('calorie-auth='));
-        const isAuth = authCookie?.split('=')[1] === 'authenticated';
+        // Check authentication via API (cookie is httpOnly)
+        const response = await fetch('/api/auth/check');
+        const data = await response.json();
+        const isAuth = data.authenticated;
         setIsAuthenticated(isAuth);
 
         if (isAuth) {
           await initializeIDB();
         }
       } catch (error) {
-        console.error('Failed to initialize IDB:', error);
+        console.error('Failed to check authentication:', error);
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }

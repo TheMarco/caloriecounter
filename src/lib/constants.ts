@@ -69,7 +69,7 @@ export const API_CONFIG = {
   USDA_BASE_URL: 'https://api.nal.usda.gov/fdc/v1',
   
   // OpenAI
-  OPENAI_MODEL: 'gpt-4o',
+  OPENAI_MODEL: 'gpt-5-mini',
   OPENAI_MAX_TOKENS: 150,
   
   // Whisper

@@ -45,6 +45,33 @@ export async function GET(
 
     console.log('🔍 Barcode:', code, 'Product:', productName);
 
+    // Check for OpenAI API key
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn('OPENAI_API_KEY not configured');
+
+      // If we have a product name from OpenFoodFacts, return basic info
+      if (productName !== 'Unknown Product') {
+        return NextResponse.json<BarcodeResponse>({
+          success: true,
+          data: {
+            food: productName,
+            kcal: 0,
+            fat: 0,
+            carbs: 0,
+            protein: 0,
+            unit: 'g',
+            serving_size: 100,
+          },
+        });
+      }
+
+      // No API key and no product name - return service unavailable
+      return NextResponse.json<BarcodeResponse>({
+        success: false,
+        error: 'Nutrition lookup service unavailable. Please configure OPENAI_API_KEY.',
+      }, { status: 503 });
+    }
+
     // Use OpenAI to get accurate nutritional information
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -112,21 +139,42 @@ NEVER give results like 533 calories for 355ml beer - that's physically impossib
 
     console.log('🤖 Sending prompt to OpenAI:', prompt);
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Use the full model like text input for better accuracy
-      messages: [
-        {
-          role: "system",
-          content: "You are a nutrition expert. Respond only with valid JSON for barcode product analysis."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 200,
-    });
+    // Try multiple models in order of preference (GPT-5 mini first)
+    const models = ['gpt-5-mini', 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+    let completion;
+    let lastError;
+
+    for (const model of models) {
+      try {
+        console.log(`🤖 Attempting to use model: ${model}`);
+        completion = await openai.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: "system",
+              content: "You are a nutrition expert. Respond only with valid JSON for barcode product analysis."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 200,
+        });
+        console.log(`✅ Successfully used model: ${model}`);
+        break; // Success, exit loop
+      } catch (error) {
+        console.error(`❌ Model ${model} failed:`, error);
+        lastError = error;
+        // Continue to next model
+      }
+    }
+
+    if (!completion) {
+      console.error('All models failed, last error:', lastError);
+      throw lastError || new Error('All models failed');
+    }
 
     const responseText = completion.choices[0]?.message?.content?.trim();
     if (!responseText) {

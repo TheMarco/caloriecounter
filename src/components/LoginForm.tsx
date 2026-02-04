@@ -18,24 +18,35 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     setIsLoading(true);
     setError('');
 
-    // Check password
-    if (password === 'sub2marco') {
-      // Set authentication cookie
-      document.cookie = 'calorie-auth=authenticated; path=/; max-age=86400'; // 24 hours
-      
-      // Call success callback if provided
-      if (onSuccess) {
-        onSuccess();
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        // Cookie is set by the server (httpOnly)
+        // Call success callback if provided
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          // Redirect to main app
+          router.push('/');
+        }
       } else {
-        // Redirect to main app
-        router.push('/');
+        const data = await response.json();
+        setError(data.error || 'Incorrect password');
+        setPassword('');
       }
-    } else {
-      setError('Incorrect password');
+    } catch {
+      setError('Authentication failed. Please try again.');
       setPassword('');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
