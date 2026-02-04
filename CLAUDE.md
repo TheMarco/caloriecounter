@@ -81,4 +81,4 @@ Each input method has a dedicated hook (`useBarcode`, `useVoiceInput`, `useTextI
 Required: `OPENAI_API_KEY` - Used for food parsing and photo analysis
 
 ### Path Alias
-`@/*` maps to `./src/*` for imports
+`@/*` maps to `./src/*` for imports.
