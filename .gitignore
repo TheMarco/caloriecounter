@@ -57,6 +57,4 @@ server-homepage.js
 homepage-package.json
 DEPLOYMENT-HOMEPAGE.md
 
-# Authentication and landing page (hosted version only)
-src/app/landing/
-src/middleware.ts
+# (removed - now deploying auth)
