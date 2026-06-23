@@ -25,12 +25,24 @@ public enum NutritionLabelParser {
             #"carb(?:ohydrate)?s?[:\s]+(\d+(?:\.\d+)?)"#,
         ]) ?? 0
         let protein = firstNumber(in: text, patterns: [#"protein[:\s]+(\d+(?:\.\d+)?)"#]) ?? 0
+        // Context nutrients (optional — nil when the panel doesn't list them).
+        let fiber = firstNumber(in: text, patterns: [
+            #"dietary\s+fiber[:\s]+(\d+(?:\.\d+)?)"#,
+            #"fiber[:\s]+(\d+(?:\.\d+)?)"#,
+        ])
+        let sodium = firstNumber(in: text, patterns: [#"sodium[:\s]+(\d+(?:\.\d+)?)"#])   // mg on US labels
+        let sugar = firstNumber(in: text, patterns: [
+            #"total\s+sugars[:\s]+(\d+(?:\.\d+)?)"#,
+            #"sugars[:\s]+(\d+(?:\.\d+)?)"#,
+        ])
 
         return ParsedFood(
             food: "Nutrition Label",
             quantity: 1, unit: "serving",
             kcal: kcal, fat: fat, carbs: carbs, protein: protein,
-            notes: "Read from nutrition label - please verify"
+            notes: "Read from nutrition label - please verify",
+            fiber: fiber, sodium: sodium, sugar: sugar,
+            nutritionConfidence: .label
         )
     }
 

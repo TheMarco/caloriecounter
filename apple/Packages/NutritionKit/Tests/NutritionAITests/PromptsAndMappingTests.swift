@@ -33,11 +33,25 @@ struct PromptsAndMappingTests {
         #expect(!text.isEmpty)
     }
 
-    @Test("NutritionInfo maps 1:1 to ParsedFood")
+    @Test("NutritionInfo maps macros 1:1 to ParsedFood and tags the estimate")
     func mapping() {
         let info = NutritionInfo(food: "Oatmeal", quantity: 1, unit: "bowl",
                                  kcal: 300, fat: 6, carbs: 54, protein: 10)
         #expect(info.toParsedFood() == ParsedFood(food: "Oatmeal", quantity: 1, unit: "bowl",
-                                                  kcal: 300, fat: 6, carbs: 54, protein: 10))
+                                                  kcal: 300, fat: 6, carbs: 54, protein: 10,
+                                                  fiber: 0, sodium: 0, sugar: 0,
+                                                  nutritionConfidence: .estimated))
+    }
+
+    @Test("toParsedFood rounds fiber/sodium/sugar estimates (no false precision)")
+    func nutritionInfoRounding() {
+        let info = NutritionInfo(food: "Lentil Soup", quantity: 1, unit: "bowl",
+                                 kcal: 230, fat: 2, carbs: 40, protein: 18,
+                                 fiber: 3.27, sodium: 873, sugar: 1.4)
+        let p = info.toParsedFood()
+        #expect(p.fiber == 3)        // nearest 1 g
+        #expect(p.sodium == 850)     // nearest 50 mg
+        #expect(p.sugar == 1)        // nearest 1 g
+        #expect(p.nutritionConfidence == .estimated)
     }
 }

@@ -55,4 +55,21 @@ struct NutritionLabelParserTests {
         #expect(food.carbs == 0)
         #expect(food.protein == 0)
     }
+
+    @Test("extracts dietary fiber, sodium (mg), and total sugars; tags .label")
+    func fiberSodiumSugar() throws {
+        let lines = ["Calories 240", "Total Fat 9g", "Total Carbohydrate 41g",
+                     "Dietary Fiber 7g", "Total Sugars 12g", "Sodium 350mg", "Protein 5g"]
+        let food = try #require(NutritionLabelParser.parse(lines: lines))
+        #expect(food.fiber == 7)
+        #expect(food.sodium == 350)
+        #expect(food.sugar == 12)
+        #expect(food.nutritionConfidence == .label)
+    }
+
+    @Test("fiber/sodium/sugar stay nil when the panel omits them")
+    func nutrientsOptional() throws {
+        let food = try #require(NutritionLabelParser.parse(lines: ["Calories 90", "Protein 2g"]))
+        #expect(food.fiber == nil && food.sodium == nil && food.sugar == nil)
+    }
 }

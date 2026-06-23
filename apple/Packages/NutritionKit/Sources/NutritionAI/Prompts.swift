@@ -42,6 +42,9 @@ public enum Prompts {
         whole item, not per ingredient.
         - kcal is the TOTAL calories for the quantity specified, NOT per 100g.
         - Be generous with calorie estimates for restaurant/prepared foods.
+        - Also estimate dietary fiber (grams), sodium (milligrams), and total sugars \
+        (grams) for the serving. Round fiber and sugar to whole grams and sodium to \
+        the nearest 50 mg — these are approximate, so don't imply false precision.
 
         REALISTIC PORTION EXAMPLES:
         - "plate of fettuccine alfredo" -> quantity 350, unit g, kcal ~800.

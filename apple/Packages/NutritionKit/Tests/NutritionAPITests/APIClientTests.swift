@@ -155,7 +155,8 @@ struct APIClientTests {
         }
         let food = try await makeResolver().resolve(code: "5000112637922", units: .metric)
         #expect(food == ParsedFood(food: "Greek Yogurt", quantity: 100, unit: "g",
-                                   kcal: 59, fat: 0.4, carbs: 3.6, protein: 10))
+                                   kcal: 59, fat: 0.4, carbs: 3.6, protein: 10,
+                                   nutritionConfidence: .barcode))   // no fiber/sodium/sugar in this payload → nil
 
         let cap = try #require(StubURLProtocol.captured())
         #expect(cap.url?.absoluteString == "https://world.openfoodfacts.org/api/v0/product/5000112637922.json")
@@ -193,6 +194,32 @@ struct APIClientTests {
         await #expect(throws: OpenFoodFactsError.productNotFound) {
             _ = try await makeResolver().resolve(code: "999", units: .metric)
         }
+    }
+
+    @Test("maps fiber/sugar (g) and sodium (g → mg), tagged .barcode")
+    func offFiberSodiumSugar() async throws {
+        StubURLProtocol.stub { _ in
+            .json(200, #"""
+            {"status":1,"product":{"product_name":"Bran","serving_quantity":40,
+              "nutriments":{"energy-kcal_serving":140,"proteins_serving":4,
+                "fiber_serving":10,"sugars_serving":6,"sodium_serving":0.21}}}
+            """#)
+        }
+        let food = try await makeResolver().resolve(code: "1", units: .metric)
+        #expect(food.fiber == 10)
+        #expect(food.sugar == 6)
+        #expect(food.sodium == 210)                 // 0.21 g × 1000
+        #expect(food.nutritionConfidence == .barcode)
+    }
+
+    @Test("derives sodium from salt when sodium is absent (salt / 2.5)")
+    func offSaltFallback() async throws {
+        StubURLProtocol.stub { _ in
+            .json(200, #"{"status":1,"product":{"product_name":"Chips","nutriments":{"energy-kcal_100g":500,"salt_100g":1.25}}}"#)
+        }
+        let food = try await makeResolver().resolve(code: "2", units: .metric)
+        #expect(food.sodium == 500)                 // (1.25 / 2.5) × 1000
+        #expect(food.nutritionConfidence == .barcode)
     }
 
     @Test("explicit per-serving data is preferred (matches the package label)")

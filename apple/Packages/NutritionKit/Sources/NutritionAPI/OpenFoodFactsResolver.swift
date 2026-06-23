@@ -64,7 +64,11 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
                 fat: perServing(nutriments.fatServing, nutriments.fat100g, servingGrams) ?? 0,
                 carbs: perServing(nutriments.carbsServing, nutriments.carbs100g, servingGrams) ?? 0,
                 protein: perServing(nutriments.proteinServing, nutriments.protein100g, servingGrams) ?? 0,
-                notes: servingNote(size: product.servingSize, grams: servingGrams)
+                notes: servingNote(size: product.servingSize, grams: servingGrams),
+                fiber: perServing(nutriments.fiberServing, nutriments.fiber100g, servingGrams),
+                sodium: sodiumMilligrams(nutriments, servingGrams),
+                sugar: perServing(nutriments.sugarsServing, nutriments.sugars100g, servingGrams),
+                nutritionConfidence: .barcode
             )
         }
 
@@ -75,7 +79,12 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
                 kcal: kcal,
                 fat: nutriments.fat100g ?? 0,
                 carbs: nutriments.carbs100g ?? 0,
-                protein: nutriments.protein100g ?? 0
+                protein: nutriments.protein100g ?? 0,
+                fiber: nutriments.fiber100g,
+                sodium: nutriments.sodium100g.map { $0 * 1000 }
+                    ?? nutriments.salt100g.map { $0 / 2.5 * 1000 },
+                sugar: nutriments.sugars100g,
+                nutritionConfidence: .barcode
             )
         }
 
@@ -87,6 +96,14 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
     private func perServing(_ explicit: Double?, _ per100g: Double?, _ servingGrams: Double?) -> Double? {
         if let explicit { return explicit }
         if let per100g, let servingGrams, servingGrams > 0 { return per100g * servingGrams / 100 }
+        return nil
+    }
+
+    /// Sodium for the serving, in milligrams. OFF stores sodium in grams; if only
+    /// salt is given, sodium ≈ salt / 2.5.
+    private func sodiumMilligrams(_ n: Nutriments, _ servingGrams: Double?) -> Double? {
+        if let g = perServing(n.sodiumServing, n.sodium100g, servingGrams) { return g * 1000 }
+        if let g = perServing(n.saltServing, n.salt100g, servingGrams) { return g / 2.5 * 1000 }
         return nil
     }
 
@@ -152,6 +169,15 @@ private struct Nutriments: Decodable {
     let fatServing: Double?
     let carbsServing: Double?
     let proteinServing: Double?
+    // Context nutrients. OFF stores fiber/sugars/sodium/salt in GRAMS.
+    let fiber100g: Double?
+    let fiberServing: Double?
+    let sugars100g: Double?
+    let sugarsServing: Double?
+    let sodium100g: Double?
+    let sodiumServing: Double?
+    let salt100g: Double?
+    let saltServing: Double?
 
     enum CodingKeys: String, CodingKey {
         case energyKcal100g = "energy-kcal_100g"
@@ -162,6 +188,14 @@ private struct Nutriments: Decodable {
         case fatServing = "fat_serving"
         case carbsServing = "carbohydrates_serving"
         case proteinServing = "proteins_serving"
+        case fiber100g = "fiber_100g"
+        case fiberServing = "fiber_serving"
+        case sugars100g = "sugars_100g"
+        case sugarsServing = "sugars_serving"
+        case sodium100g = "sodium_100g"
+        case sodiumServing = "sodium_serving"
+        case salt100g = "salt_100g"
+        case saltServing = "salt_serving"
     }
 
     init(from decoder: Decoder) throws {
@@ -174,6 +208,14 @@ private struct Nutriments: Decodable {
         fatServing = Nutriments.lenientDouble(c, .fatServing)
         carbsServing = Nutriments.lenientDouble(c, .carbsServing)
         proteinServing = Nutriments.lenientDouble(c, .proteinServing)
+        fiber100g = Nutriments.lenientDouble(c, .fiber100g)
+        fiberServing = Nutriments.lenientDouble(c, .fiberServing)
+        sugars100g = Nutriments.lenientDouble(c, .sugars100g)
+        sugarsServing = Nutriments.lenientDouble(c, .sugarsServing)
+        sodium100g = Nutriments.lenientDouble(c, .sodium100g)
+        sodiumServing = Nutriments.lenientDouble(c, .sodiumServing)
+        salt100g = Nutriments.lenientDouble(c, .salt100g)
+        saltServing = Nutriments.lenientDouble(c, .saltServing)
     }
 
     private static func lenientDouble(_ c: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> Double? {

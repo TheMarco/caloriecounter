@@ -26,9 +26,16 @@ public struct NutritionInfo: Sendable {
     public var carbs: Double
     @Guide(description: "Total protein grams", .range(0...500))
     public var protein: Double
+    @Guide(description: "Dietary fiber grams for this serving — your best estimate", .range(0...100))
+    public var fiber: Double
+    @Guide(description: "Sodium milligrams for this serving — your best estimate", .range(0...10000))
+    public var sodium: Double
+    @Guide(description: "Total sugars grams for this serving — your best estimate", .range(0...500))
+    public var sugar: Double
 
     public init(food: String, quantity: Double, unit: String,
-                kcal: Double, fat: Double, carbs: Double, protein: Double) {
+                kcal: Double, fat: Double, carbs: Double, protein: Double,
+                fiber: Double = 0, sodium: Double = 0, sugar: Double = 0) {
         self.food = food
         self.quantity = quantity
         self.unit = unit
@@ -36,13 +43,25 @@ public struct NutritionInfo: Sendable {
         self.fat = fat
         self.carbs = carbs
         self.protein = protein
+        self.fiber = fiber
+        self.sodium = sodium
+        self.sugar = sugar
     }
 
     /// Promote the model's structured output into the shared parser type, fixing
     /// awkward units for whole handheld foods (e.g. a sandwich tagged "slice").
+    /// Fiber/sodium are rounded so AI estimates don't look falsely precise.
     public func toParsedFood() -> ParsedFood {
         let naturalUnit = FoodUnitNormalizer.normalizedUnit(food: food, unit: unit, quantity: quantity)
         return ParsedFood(food: food, quantity: quantity, unit: naturalUnit,
-                          kcal: kcal, fat: fat, carbs: carbs, protein: protein)
+                          kcal: kcal, fat: fat, carbs: carbs, protein: protein,
+                          fiber: Self.round(fiber, toNearest: 1),
+                          sodium: Self.round(sodium, toNearest: 50),
+                          sugar: Self.round(sugar, toNearest: 1),
+                          nutritionConfidence: .estimated)
+    }
+
+    private static func round(_ value: Double, toNearest step: Double) -> Double {
+        (value / step).rounded() * step
     }
 }

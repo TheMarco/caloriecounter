@@ -16,6 +16,7 @@ public struct HeuristicFoodParser: FoodParsing {
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
         var food = Self.estimate(text, units: units)
         food.unit = FoodUnitNormalizer.normalizedUnit(food: food.food, unit: food.unit, quantity: food.quantity)
+        food.nutritionConfidence = .estimated   // heuristic: leave fiber/sodium nil, don't fabricate
         return food
     }
 
