@@ -18,7 +18,9 @@ public final class SettingsStore {
 
     @ObservationIgnored private let defaults: UserDefaults
 
-    public init(defaults: UserDefaults = .standard) {
+    /// `defaultUnits` is the fallback when the user has never chosen a unit system
+    /// (the app passes a locale-aware default; tests default to `.metric`).
+    public init(defaults: UserDefaults = .standard, defaultUnits: UnitSystem = .metric) {
         self.defaults = defaults
         // Initial assignments in init do NOT fire didSet, so nothing is persisted
         // until the user actually changes a value.
@@ -28,7 +30,7 @@ public final class SettingsStore {
             carbs: defaults.object(forKey: Keys.carbs) as? Double ?? Constants.defaultCarbsTarget,
             protein: defaults.object(forKey: Keys.protein) as? Double ?? Constants.defaultProteinTarget
         ).clamped
-        self.units = defaults.string(forKey: Keys.units).flatMap(UnitSystem.init(rawValue:)) ?? .metric
+        self.units = defaults.string(forKey: Keys.units).flatMap(UnitSystem.init(rawValue:)) ?? defaultUnits
         self.biometricLockEnabled = defaults.bool(forKey: Keys.biometricLock)
         self.hasCompletedSetup = defaults.bool(forKey: Keys.completedSetup)
     }

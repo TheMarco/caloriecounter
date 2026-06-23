@@ -16,4 +16,10 @@ public enum UnitSystem: String, Codable, Sendable, CaseIterable {
         case .imperial: return "Imperial"
         }
     }
+
+    /// Sensible default for a fresh install, inferred from the device locale:
+    /// US region → imperial (lb / ft·in), everywhere else → metric.
+    public static var deviceDefault: UnitSystem {
+        Locale.current.measurementSystem == .us ? .imperial : .metric
+    }
 }

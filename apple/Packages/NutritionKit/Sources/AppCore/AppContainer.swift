@@ -93,7 +93,7 @@ public final class AppContainer {
             photoParser: APIPhotoParser(client: client),
             labelReader: VisionLabelReader(),
             barcodeResolver: barcode,
-            settings: SettingsStore()
+            settings: SettingsStore(defaultUnits: .deviceDefault)
         )
     }
 

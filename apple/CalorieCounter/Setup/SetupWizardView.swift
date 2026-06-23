@@ -18,14 +18,16 @@ struct SetupWizardView: View {
     @State private var goal: WeightGoal?
     @State private var sex: BiologicalSex = .male
     @State private var age = 30
-    @State private var weightValue = 75.0       // display units
-    @State private var heightCmValue = 175.0
-    @State private var heightFt = 5
-    @State private var heightIn = 9
+    // Body stats are stored canonically in metric; the fields convert for display
+    // so switching units is always lossless and the defaults suit either system.
+    @State private var weightKg = 75.0
+    @State private var heightCm = 175.0
     @State private var activity: ActivityLevel = .moderate
 
     private var units: UnitSystem { container.settings.units }
     private let stepCount = 4
+
+    private static let lbPerKg = 2.2046226
 
     var body: some View {
         ZStack {
@@ -160,6 +162,14 @@ struct SetupWizardView: View {
         VStack(spacing: 16) {
             SoftCard {
                 VStack(spacing: 18) {
+                    labeledRow("Units") {
+                        Picker("", selection: unitsBinding) {
+                            ForEach(UnitSystem.allCases, id: \.self) { Text($0.label).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 180)
+                    }
+                    Divider()
                     labeledRow("Sex") {
                         Picker("", selection: $sex) {
                             ForEach(BiologicalSex.allCases) { Text($0.label).tag($0) }
@@ -173,16 +183,16 @@ struct SetupWizardView: View {
                     }
                     Divider()
                     labeledRow(units == .metric ? "Weight (kg)" : "Weight (lb)") {
-                        numberField($weightValue)
+                        numberField(weightFieldBinding)
                     }
                     Divider()
                     if units == .metric {
-                        labeledRow("Height (cm)") { numberField($heightCmValue) }
+                        labeledRow("Height (cm)") { numberField($heightCm) }
                     } else {
                         labeledRow("Height") {
                             HStack(spacing: 6) {
-                                Picker("", selection: $heightFt) { ForEach(3...8, id: \.self) { Text("\($0) ft").tag($0) } }
-                                Picker("", selection: $heightIn) { ForEach(0...11, id: \.self) { Text("\($0) in").tag($0) } }
+                                Picker("", selection: heightFtBinding) { ForEach(3...8, id: \.self) { Text("\($0) ft").tag($0) } }
+                                Picker("", selection: heightInBinding) { ForEach(0...11, id: \.self) { Text("\($0) in").tag($0) } }
                             }
                             .pickerStyle(.menu)
                         }
@@ -190,6 +200,35 @@ struct SetupWizardView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Unit-aware bindings (canonical storage is metric)
+
+    private var unitsBinding: Binding<UnitSystem> {
+        Binding(get: { container.settings.units },
+                set: { container.settings.units = $0 })
+    }
+
+    /// Weight shown in the current system; writes convert back to kg.
+    private var weightFieldBinding: Binding<Double> {
+        Binding(
+            get: { units == .metric ? weightKg : (weightKg * Self.lbPerKg) },
+            set: { weightKg = units == .metric ? $0 : ($0 / Self.lbPerKg) }
+        )
+    }
+
+    private var totalInches: Int { Int((heightCm / 2.54).rounded()) }
+    private var heightFtBinding: Binding<Int> {
+        Binding(
+            get: { totalInches / 12 },
+            set: { heightCm = (Double($0) * 12 + Double(totalInches % 12)) * 2.54 }
+        )
+    }
+    private var heightInBinding: Binding<Int> {
+        Binding(
+            get: { totalInches % 12 },
+            set: { heightCm = (Double(totalInches / 12) * 12 + Double($0)) * 2.54 }
+        )
     }
 
     private var activityStep: some View {
@@ -277,10 +316,8 @@ struct SetupWizardView: View {
     }
 
     private var profile: UserProfile {
-        let weightKg = units == .metric ? weightValue : weightValue / 2.2046226
-        let heightCm = units == .metric ? heightCmValue : (Double(heightFt) * 30.48 + Double(heightIn) * 2.54)
-        return UserProfile(sex: sex, age: age, weightKg: weightKg, heightCm: heightCm,
-                           activity: activity, goal: goal ?? .maintain)
+        UserProfile(sex: sex, age: age, weightKg: weightKg, heightCm: heightCm,
+                    activity: activity, goal: goal ?? .maintain)
     }
 
     private func finish() {

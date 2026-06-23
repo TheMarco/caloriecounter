@@ -51,4 +51,38 @@ final class SettingsUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5),
                       "Setup wizard should relaunch after a full reset")
     }
+
+    @MainActor
+    func testOnboardingUnitsCanBeSwitched() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest"]
+        app.launch()
+
+        // Reach the setup wizard via a full reset.
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 10))
+        settingsTab.tap()
+        app.swipeUp(); app.swipeUp()
+        let erase = app.buttons["Erase All Data & Start Over"]
+        XCTAssertTrue(erase.waitForExistence(timeout: 5))
+        erase.tap()
+        let confirm = app.buttons["Erase Everything"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+
+        // Step 0: pick a goal, then continue to the "About You" body step.
+        let goal = app.staticTexts["Maintain weight"]
+        XCTAssertTrue(goal.waitForExistence(timeout: 5))
+        goal.tap()
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.staticTexts["About You"].waitForExistence(timeout: 5))
+
+        // The body step now exposes a Units toggle that switches weight units.
+        app.buttons["Imperial"].tap()
+        XCTAssertTrue(app.staticTexts["Weight (lb)"].waitForExistence(timeout: 3),
+                      "Imperial should show weight in lb")
+        app.buttons["Metric"].tap()
+        XCTAssertTrue(app.staticTexts["Weight (kg)"].waitForExistence(timeout: 3),
+                      "Metric should show weight in kg")
+    }
 }
