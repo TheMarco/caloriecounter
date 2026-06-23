@@ -81,14 +81,14 @@ struct SettingsView: View {
             }
 
             Section {
-                targetField("Calories", value: $settings.targets.calories, range: 1000...5000, step: 25, unit: "kcal")
-                targetField("Fat", value: $settings.targets.fat, range: 20...200, step: 5, unit: "g")
-                targetField("Carbs", value: $settings.targets.carbs, range: 50...500, step: 5, unit: "g")
-                targetField("Protein", value: $settings.targets.protein, range: 30...300, step: 5, unit: "g")
+                targetField("Calories", value: $settings.targets.calories, unit: "kcal")
+                targetField("Fat", value: $settings.targets.fat, unit: "g")
+                targetField("Carbs", value: $settings.targets.carbs, unit: "g")
+                targetField("Protein", value: $settings.targets.protein, unit: "g")
             } header: {
                 Text("Daily Targets")
             } footer: {
-                Text("Tap a number to type it, or use +/− to adjust.")
+                Text("Tap a value to edit it. Swipe down or tap Done to finish.")
             }
 
             Section("Units") {
@@ -148,22 +148,25 @@ struct SettingsView: View {
                 NavigationLink { AboutView() } label: { Label("About", systemImage: "info.circle") }
             }
         }
+        .scrollDismissesKeyboard(.interactively)   // swipe down to dismiss the number pad
     }
 
-    /// A target row you can either type into or nudge with +/-. Typed values are
-    /// snapped into `range` when the keyboard is dismissed (see `clampTargets`).
-    private func targetField(_ label: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double, unit: String) -> some View {
-        HStack(spacing: 10) {
+    /// A tidy, tappable target row: label on the left, the value (typeable on the
+    /// number pad) and its unit on the right. Typed values are snapped into range
+    /// when the keyboard is dismissed (see `clampTargets`).
+    private func targetField(_ label: String, value: Binding<Double>, unit: String) -> some View {
+        HStack {
             Text(label)
             Spacer(minLength: 8)
             TextField(label, value: value, format: .number.grouping(.never))
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
-                .frame(width: 64)
                 .focused($focusedTarget, equals: label)
-            Text(unit).foregroundStyle(.secondary).frame(width: 32, alignment: .leading)
-            Stepper(label, value: value, in: range, step: step).labelsHidden()
+                .frame(maxWidth: 90)
+            Text(unit).foregroundStyle(.secondary)
         }
+        .contentShape(Rectangle())
+        .onTapGesture { focusedTarget = label }   // tapping anywhere on the row edits
     }
 
     /// Snap every target into its valid range (called when the number pad closes).
