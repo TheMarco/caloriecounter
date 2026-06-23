@@ -25,9 +25,9 @@ settings:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     SWIFT_STRICT_CONCURRENCY: complete
-    # Leave empty so simulator builds need no team; set your Team ID here (or in
-    # Xcode's Signing & Capabilities) before archiving for the App Store.
-    DEVELOPMENT_TEAM: ""
+    # Apple Developer Team (Marco van Hylckama Vlieg). Needed for on-device
+    # signing of the HealthKit entitlement; simulator builds ignore it.
+    DEVELOPMENT_TEAM: "3ML6V62AF5"
     CODE_SIGN_STYLE: Automatic
 
 packages:
