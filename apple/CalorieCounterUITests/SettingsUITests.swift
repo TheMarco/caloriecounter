@@ -132,12 +132,10 @@ final class SettingsUITests: XCTestCase {
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["About You"].waitForExistence(timeout: 5))
 
-        // The body step now exposes a Units toggle that switches weight units.
+        // The body step has a Units toggle; the weight chip shows the unit (kg/lb).
         app.buttons["Imperial"].tap()
-        XCTAssertTrue(app.staticTexts["Weight (lb)"].waitForExistence(timeout: 3),
-                      "Imperial should show weight in lb")
+        XCTAssertTrue(app.staticTexts["lb"].waitForExistence(timeout: 3), "Imperial weight chip shows lb")
         app.buttons["Metric"].tap()
-        XCTAssertTrue(app.staticTexts["Weight (kg)"].waitForExistence(timeout: 3),
-                      "Metric should show weight in kg")
+        XCTAssertTrue(app.staticTexts["kg"].waitForExistence(timeout: 3), "Metric weight chip shows kg")
     }
 }

@@ -27,6 +27,7 @@ struct SetupWizardView: View {
     @State private var weightKg = 75.0
     @State private var heightCm = 175.0
     @State private var activity: ActivityLevel = .moderate
+    @FocusState private var focusedField: String?
 
     private var units: UnitSystem { container.settings.units }
     private let stepCount = 5
@@ -51,6 +52,23 @@ struct SetupWizardView: View {
                     .padding(.horizontal, DS.screenPadding)
                     .padding(.top, 8)
                 }
+                .scrollDismissesKeyboard(.interactively)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if focusedField != nil {
+                        HStack {
+                            Spacer()
+                            Button { focusedField = nil } label: {
+                                Text("Done").font(.body.weight(.semibold))
+                                    .foregroundStyle(DS.Macro.calories.tint)
+                                    .padding(.horizontal, 4)
+                            }
+                            .buttonStyle(.glass)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
+                    }
+                }
+                .onChange(of: focusedField) { _, new in if new == nil { clampInputs() } }
                 footer
             }
         }
@@ -166,11 +184,12 @@ struct SetupWizardView: View {
                 Text(d.detail).font(.caption).foregroundStyle(.secondary)
                 Text(d.splitLabel).font(.caption2.weight(.semibold)).foregroundStyle(color)
             }
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)   // wrap text; don't widen the row
             Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
                 .foregroundStyle(selected ? color : Color.secondary.opacity(0.4))
         }
+        .fixedSize(horizontal: false, vertical: true)
         .padding(16)
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -195,11 +214,12 @@ struct SetupWizardView: View {
                 Text(g.label).font(.headline)
                 Text(g.detail).font(.caption).foregroundStyle(.secondary)
             }
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
                 .foregroundStyle(selected ? color : Color.secondary.opacity(0.4))
         }
+        .fixedSize(horizontal: false, vertical: true)
         .padding(16)
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -231,16 +251,14 @@ struct SetupWizardView: View {
                         .frame(width: 180)
                     }
                     Divider()
-                    labeledRow("Age") {
-                        Stepper("\(age)", value: $age, in: 14...100).fixedSize()
-                    }
+                    labeledRow("Age") { ageChip }
                     Divider()
-                    labeledRow(units == .metric ? "Weight (kg)" : "Weight (lb)") {
-                        numberField(weightFieldBinding)
+                    labeledRow("Weight") {
+                        numberField("weight", weightFieldBinding, unit: units.weightUnit)
                     }
                     Divider()
                     if units == .metric {
-                        labeledRow("Height (cm)") { numberField($heightCm) }
+                        labeledRow("Height") { numberField("height", $heightCm, unit: "cm") }
                     } else {
                         labeledRow("Height") {
                             HStack(spacing: 6) {
@@ -342,12 +360,51 @@ struct SetupWizardView: View {
         }
     }
 
-    private func numberField(_ value: Binding<Double>) -> some View {
-        TextField("", value: value, format: .number.precision(.fractionLength(0...1)))
-            .keyboardType(.decimalPad)
-            .multilineTextAlignment(.trailing)
-            .frame(width: 90)
-            .textFieldStyle(.roundedBorder)
+    /// A tappable value chip matching Settings: faintly filled at rest, accent-
+    /// highlighted while editing.
+    private func numberField(_ id: String, _ value: Binding<Double>, unit: String? = nil) -> some View {
+        chip(id: id) {
+            TextField("", value: value, format: .number.precision(.fractionLength(0...1)))
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .focused($focusedField, equals: id)
+                .fixedSize()
+            if let unit { Text(unit).font(.callout).foregroundStyle(.secondary) }
+        }
+    }
+
+    private var ageChip: some View {
+        chip(id: "age") {
+            TextField("", value: $age, format: .number)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .focused($focusedField, equals: "age")
+                .fixedSize()
+        }
+    }
+
+    @ViewBuilder
+    private func chip<Content: View>(id: String, @ViewBuilder _ content: () -> Content) -> some View {
+        let editing = focusedField == id
+        HStack(spacing: 4) { content() }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(editing ? DS.Macro.calories.tint.opacity(0.20) : Color.primary.opacity(0.06))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .stroke(editing ? DS.Macro.calories.tint.opacity(0.7) : .clear, lineWidth: 1.5)
+                    }
+            }
+            .animation(.easeInOut(duration: 0.15), value: editing)
+    }
+
+    /// Snap typed values into sane ranges when the keyboard closes.
+    private func clampInputs() {
+        age = min(max(age, 14), 100)
+        weightKg = min(max(weightKg, 25), 400)
+        heightCm = min(max(heightCm, 90), 250)
     }
 
     private func planRow(_ label: String, _ value: String, _ macro: DS.Macro) -> some View {
