@@ -88,4 +88,27 @@ struct CSVImporterTests {
         _ = await CSVImporter.apply(result, to: store)
         #expect(try await store.entries(on: "2026-06-22").count == 2)
     }
+
+    @Test("imported per-entry data surfaces in the 90-day history window")
+    func importedDataAppearsInDailyTotals() async throws {
+        let store = try SwiftDataStore.make(inMemory: true)
+        let cal = Calendar.current
+        func key(daysAgo: Int) -> String {
+            LocalDate.key(for: cal.date(byAdding: .day, value: -daysAgo, to: Date())!)
+        }
+        let today = key(daysAgo: 0), mid = key(daysAgo: 45)
+        let csv = """
+        \(CSVExporter.entryHeader)
+        \(today),08:00,Oatmeal,1,bowl,310,6.0,54.0,10.0,text
+        \(mid),19:00,"Salmon, Rice",1,plate,560,22.0,50.0,38.0,text
+        \(today),,Adjustment,,,300,,,,offset
+        """
+        let result = try CSVImporter.parse(csv)
+        _ = await CSVImporter.apply(result, to: store)
+
+        let days = try await store.dailyTotals(lastDays: 90)
+        let withFood = days.filter { $0.totals.calories > 0 }
+        #expect(withFood.count == 2)                                     // both days land in-window
+        #expect(days.contains { $0.date == today && $0.offset == 300 })  // offset applied
+    }
 }
