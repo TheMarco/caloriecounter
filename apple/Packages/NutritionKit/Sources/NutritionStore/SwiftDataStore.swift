@@ -149,6 +149,14 @@ public actor SwiftDataStore: NutritionStoring {
         }
         try modelContext.save()
     }
+
+    // MARK: - Full wipe
+
+    public func deleteAll() async throws {
+        try modelContext.delete(model: EntryRecord.self)
+        try modelContext.delete(model: DayOffsetRecord.self)
+        try modelContext.save()
+    }
 }
 
 public extension SwiftDataStore {

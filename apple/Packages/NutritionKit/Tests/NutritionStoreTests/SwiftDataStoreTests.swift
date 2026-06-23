@@ -259,4 +259,21 @@ struct SwiftDataStoreTests {
         let capped = try await store.searchPreviousFoods("berry", limit: 1)
         #expect(capped.map(\.food) == ["Berry Smoothie"])
     }
+
+    @Test("deleteAll wipes every entry and offset, store stays usable")
+    func deleteAllWipesEverything() async throws {
+        let store = try makeStore()
+        try await store.add(makeEntry(id: "a", date: "2026-06-21", food: "Oats"))
+        try await store.add(makeEntry(id: "b", date: "2026-06-22", food: "Eggs"))
+        try await store.setOffset(300, on: "2026-06-22")
+
+        try await store.deleteAll()
+
+        #expect(try await store.entries(from: "0000-01-01", to: "9999-12-31").isEmpty)
+        #expect(try await store.offset(on: "2026-06-22") == 0)
+
+        // The store remains usable afterwards.
+        try await store.add(makeEntry(id: "c", date: "2026-06-23", food: "Apple"))
+        #expect(try await store.entries(on: "2026-06-23").count == 1)
+    }
 }

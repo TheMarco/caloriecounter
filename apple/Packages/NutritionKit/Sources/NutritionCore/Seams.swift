@@ -40,6 +40,10 @@ public protocol NutritionStoring: Sendable {
     func offset(on date: String) async throws -> Double
     /// Upsert the day's offset (web `setCalorieOffset`).
     func setOffset(_ value: Double, on date: String) async throws
+
+    /// Delete every entry and offset — a full data wipe for the "erase all data,
+    /// start over" reset. Irreversible.
+    func deleteAll() async throws
 }
 
 /// Text/voice → structured food (on-device Foundation Models, or heuristic fallback).

@@ -14,6 +14,7 @@ struct SettingsView: View {
 
     @State private var exportURL: URL?
     @State private var showResetConfirm = false
+    @State private var showEraseConfirm = false
     @State private var showImporter = false
     @State private var importMessage: String?
     @State private var showWizard = false
@@ -32,6 +33,14 @@ struct SettingsView: View {
                         container.settings.targets = .default
                         container.settings.units = .metric
                     }
+                }
+                .confirmationDialog("Erase all data and start over?",
+                                    isPresented: $showEraseConfirm, titleVisibility: .visible) {
+                    Button("Erase Everything", role: .destructive) {
+                        Task { await performFullReset() }
+                    }
+                } message: {
+                    Text("This permanently deletes every food entry and offset, resets your targets, and restarts setup. This can't be undone.")
                 }
                 .fileImporter(isPresented: $showImporter,
                               allowedContentTypes: [.commaSeparatedText, .plainText, .text]) { result in
@@ -103,6 +112,18 @@ struct SettingsView: View {
             }
 
             Section {
+                Button(role: .destructive) {
+                    showEraseConfirm = true
+                } label: {
+                    Label("Erase All Data & Start Over", systemImage: "trash")
+                }
+            } header: {
+                Text("Reset")
+            } footer: {
+                Text("Delete everything and return to the setup wizard. Export a backup first if you want to keep your history.")
+            }
+
+            Section {
                 NavigationLink { AboutView() } label: { Label("About", systemImage: "info.circle") }
             }
         }
@@ -124,6 +145,18 @@ struct SettingsView: View {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(CSVExporter.filename())
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         exportURL = url
+    }
+
+    /// Full factory reset: wipe all entries/offsets, restore default settings, and
+    /// relaunch the setup wizard (which re-sets targets and marks setup complete).
+    private func performFullReset() async {
+        try? await container.store.deleteAll()
+        container.settings.targets = .default
+        container.settings.units = .metric
+        container.settings.biometricLockEnabled = false
+        container.settings.hasCompletedSetup = false
+        await prepareExport()       // export now reflects the empty store
+        showWizard = true
     }
 
     private func handleImport(_ result: Result<URL, Error>) async {
