@@ -45,8 +45,12 @@ public actor AppleHealthKitService: HealthSyncing {
     private var foodType: HKCorrelationType { HKCorrelationType(.food) }
     private var weightType: HKQuantityType { HKQuantityType(.bodyMass) }
 
+    // NB: authorization can only be requested for the individual quantity samples,
+    // NOT for the `.food` correlation type (HealthKit rejects that with
+    // "Authorization to share … is disallowed: HKCorrelationTypeIdentifierFood").
+    // Writing the correlation still works because we hold access to its samples.
     private var nutritionShareTypes: Set<HKSampleType> {
-        Set(nutritionTypes as [HKSampleType] + [foodType])
+        Set(nutritionTypes as [HKSampleType])
     }
 
     // MARK: - Availability / authorization

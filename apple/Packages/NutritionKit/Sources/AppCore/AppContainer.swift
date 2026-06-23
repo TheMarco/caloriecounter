@@ -35,6 +35,9 @@ public final class AppContainer {
     public let settings: SettingsStore
     /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
     public let healthSync: any HealthSyncing
+    /// Whether HealthKit exists on this device — cached once at launch so views
+    /// never call the (potentially slow) availability check during a render.
+    public let isHealthAvailable: Bool
 
     /// Bumped whenever stored data changes in a way other screens must reflect
     /// (import, full reset, logging/editing/deleting a food, offset edits). Views
@@ -141,6 +144,7 @@ public final class AppContainer {
         self.barcodeResolver = barcodeResolver
         self.settings = settings
         self.healthSync = healthSync
+        self.isHealthAvailable = healthSync.isAvailable()
     }
 
     /// Launch in a clean, deterministic state for UI tests (in-memory store, no

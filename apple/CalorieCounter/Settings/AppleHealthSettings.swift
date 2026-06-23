@@ -21,19 +21,20 @@ struct AppleHealthSettings: View {
     var body: some View {
         @Bindable var settings = container.settings
         // HealthKit isn't available on every device — hide the whole section then.
-        if container.healthSync.isAvailable() {
+        // (Cached at launch so we never call the availability check during a render.)
+        if container.isHealthAvailable {
             Section {
                 Toggle("Sync nutrition to Apple Health", isOn: $settings.healthNutritionSyncEnabled)
                     .onChange(of: settings.healthNutritionSyncEnabled) { _, on in
-                        if on { Task { try? await container.healthSync.requestNutritionWriteAccess() } }
+                        if on { requestAfterAnimation { try? await container.healthSync.requestNutritionWriteAccess() } }
                     }
                 Toggle("Sync weight to Apple Health", isOn: $settings.healthWeightSyncEnabled)
                     .onChange(of: settings.healthWeightSyncEnabled) { _, on in
-                        if on { Task { try? await container.healthSync.requestWeightAccess() } }
+                        if on { requestAfterAnimation { try? await container.healthSync.requestWeightAccess() } }
                     }
                 Toggle("Import weight from Apple Health", isOn: $settings.healthWeightImportEnabled)
                     .onChange(of: settings.healthWeightImportEnabled) { _, on in
-                        if on { Task { try? await container.healthSync.requestWeightAccess(); await runImport() } }
+                        if on { requestAfterAnimation { try? await container.healthSync.requestWeightAccess(); await runImport() } }
                     }
 
                 if settings.healthNutritionSyncEnabled || settings.healthWeightSyncEnabled {
@@ -78,6 +79,15 @@ struct AppleHealthSettings: View {
             .sheet(isPresented: $showConflicts) {
                 WeightConflictSheet(conflicts: conflicts, units: container.settings.units)
             }
+        }
+    }
+
+    /// Run a HealthKit permission request just after the toggle's animation has
+    /// settled, so presenting the system sheet never interrupts it mid-slide.
+    private func requestAfterAnimation(_ work: @escaping @Sendable () async -> Void) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            await work()
         }
     }
 
