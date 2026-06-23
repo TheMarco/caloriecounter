@@ -18,8 +18,8 @@ public enum Constants {
     public static let defaultProteinTarget: Double = 100  // ~20% of 2000 kcal
 
     public static let minFatTarget: Double = 20
-    public static let maxFatTarget: Double = 200
-    public static let minCarbsTarget: Double = 50
+    public static let maxFatTarget: Double = 300       // room for keto (high fat)
+    public static let minCarbsTarget: Double = 20      // room for keto / very low carb
     public static let maxCarbsTarget: Double = 500
     public static let minProteinTarget: Double = 30
     public static let maxProteinTarget: Double = 300

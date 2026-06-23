@@ -75,7 +75,7 @@ struct SettingsView: View {
                     Text(importMessage ?? "")
                 }
                 .fullScreenCover(isPresented: $showWizard) {
-                    SetupWizardView {}
+                    SetupWizardView(allowsCancel: true) {}
                 }
         }
     }
@@ -199,11 +199,7 @@ struct SettingsView: View {
 
     /// Snap every target into its valid range (called when the number pad closes).
     private func clampTargets() {
-        let s = container.settings
-        s.targets.calories = min(max(s.targets.calories, 1000), 5000)
-        s.targets.fat      = min(max(s.targets.fat, 20), 200)
-        s.targets.carbs    = min(max(s.targets.carbs, 50), 500)
-        s.targets.protein  = min(max(s.targets.protein, 30), 300)
+        container.settings.targets = container.settings.targets.clamped
     }
 
     private func prepareExport() async {

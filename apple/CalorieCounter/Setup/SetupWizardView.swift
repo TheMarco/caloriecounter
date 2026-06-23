@@ -12,10 +12,14 @@ import NutritionCore
 struct SetupWizardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
+    /// Whether the user can back out without finishing (true when re-run from
+    /// Settings; false for mandatory first-launch onboarding).
+    var allowsCancel: Bool = false
     let onFinish: () -> Void
 
     @State private var step = 0
     @State private var goal: WeightGoal?
+    @State private var diet: DietStyle = .balanced
     @State private var sex: BiologicalSex = .male
     @State private var age = 30
     // Body stats are stored canonically in metric; the fields convert for display
@@ -25,7 +29,7 @@ struct SetupWizardView: View {
     @State private var activity: ActivityLevel = .moderate
 
     private var units: UnitSystem { container.settings.units }
-    private let stepCount = 4
+    private let stepCount = 5
 
     private static let lbPerKg = 2.2046226
 
@@ -38,8 +42,9 @@ struct SetupWizardView: View {
                     Group {
                         switch step {
                         case 0: goalStep
-                        case 1: bodyStep
-                        case 2: activityStep
+                        case 1: dietStep
+                        case 2: bodyStep
+                        case 3: activityStep
                         default: planStep
                         }
                     }
@@ -55,6 +60,13 @@ struct SetupWizardView: View {
 
     private var header: some View {
         VStack(spacing: 14) {
+            if allowsCancel {
+                HStack {
+                    Button("Cancel") { dismiss() }
+                        .tint(DS.Macro.calories.tint)
+                    Spacer()
+                }
+            }
             HStack(spacing: 6) {
                 ForEach(0..<stepCount, id: \.self) { i in
                     Capsule()
@@ -104,16 +116,18 @@ struct SetupWizardView: View {
     private var title: String {
         switch step {
         case 0: return "Your Goal"
-        case 1: return "About You"
-        case 2: return "Activity"
+        case 1: return "Diet Style"
+        case 2: return "About You"
+        case 3: return "Activity"
         default: return "Your Plan"
         }
     }
     private var subtitle: String {
         switch step {
         case 0: return "What are you working toward?"
-        case 1: return "We use this to estimate your needs."
-        case 2: return "How active are you day to day?"
+        case 1: return "How do you like to eat?"
+        case 2: return "We use this to estimate your needs."
+        case 3: return "How active are you day to day?"
         default: return "Tuned to your goal — adjust anytime in Settings."
         }
     }
@@ -126,6 +140,45 @@ struct SetupWizardView: View {
                 Button { goal = g } label: { goalCard(g) }
                     .buttonStyle(.plain)
             }
+        }
+    }
+
+    private var dietStep: some View {
+        VStack(spacing: 12) {
+            ForEach(DietStyle.allCases) { d in
+                Button { diet = d } label: { dietCard(d) }
+                    .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func dietCard(_ d: DietStyle) -> some View {
+        let selected = diet == d
+        let color = DS.Macro.calories.tint
+        return HStack(spacing: 14) {
+            ZStack {
+                Circle().fill(color.opacity(0.18))
+                Image(systemName: d.systemImage).font(.system(size: 20, weight: .semibold)).foregroundStyle(color)
+            }
+            .frame(width: 48, height: 48)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(d.label).font(.headline)
+                Text(d.detail).font(.caption).foregroundStyle(.secondary)
+                Text(d.splitLabel).font(.caption2.weight(.semibold)).foregroundStyle(color)
+            }
+            Spacer()
+            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(selected ? color : Color.secondary.opacity(0.4))
+        }
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(selected ? color.opacity(0.7) : .white.opacity(0.06), lineWidth: selected ? 2 : 1)
+                }
         }
     }
 
@@ -317,7 +370,7 @@ struct SetupWizardView: View {
 
     private var profile: UserProfile {
         UserProfile(sex: sex, age: age, weightKg: weightKg, heightCm: heightCm,
-                    activity: activity, goal: goal ?? .maintain)
+                    activity: activity, goal: goal ?? .maintain, dietStyle: diet)
     }
 
     private func finish() {

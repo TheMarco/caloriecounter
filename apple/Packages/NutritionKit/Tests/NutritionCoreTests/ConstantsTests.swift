@@ -38,8 +38,8 @@ struct ConstantsTests {
     @Test("each macro target clamps to its own range")
     func macroClamps() {
         #expect(Constants.clampedFatTarget(5) == 20)
-        #expect(Constants.clampedFatTarget(999) == 200)
-        #expect(Constants.clampedCarbsTarget(10) == 50)
+        #expect(Constants.clampedFatTarget(999) == 300)
+        #expect(Constants.clampedCarbsTarget(10) == 20)
         #expect(Constants.clampedCarbsTarget(999) == 500)
         #expect(Constants.clampedProteinTarget(10) == 30)
         #expect(Constants.clampedProteinTarget(999) == 300)
@@ -48,7 +48,7 @@ struct ConstantsTests {
     @Test("MacroTargets.clamped clamps every field at once")
     func macroTargetsClamped() {
         let wild = MacroTargets(calories: 100, fat: 999, carbs: 1, protein: 999).clamped
-        #expect(wild == MacroTargets(calories: 1000, fat: 200, carbs: 50, protein: 300))
+        #expect(wild == MacroTargets(calories: 1000, fat: 300, carbs: 20, protein: 300))
     }
 
     @Test("DateRange presets carry the web day counts and labels")

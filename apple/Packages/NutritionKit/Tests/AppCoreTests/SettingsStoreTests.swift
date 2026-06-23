@@ -48,6 +48,7 @@ struct SettingsStoreTests {
         a.targets = MacroTargets(calories: 100, fat: 999, carbs: 1, protein: 999)
 
         let b = SettingsStore(defaults: defaults)
-        #expect(b.targets == MacroTargets(calories: 1000, fat: 200, carbs: 50, protein: 300))
+        // Ranges widened for keto/low-carb: fat ≤ 300, carbs ≥ 20.
+        #expect(b.targets == MacroTargets(calories: 1000, fat: 300, carbs: 20, protein: 300))
     }
 }

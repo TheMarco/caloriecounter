@@ -82,13 +82,60 @@ public enum WeightGoal: String, CaseIterable, Sendable, Identifiable {
         case .gain: return 350
         }
     }
-    /// Grams of protein per kg of bodyweight (higher on a deficit).
-    public var proteinPerKg: Double {
+}
+
+/// How the day's calories are split across macros. The weight goal sets *how
+/// much* you eat; the diet style sets *what* it's made of — so people can run
+/// balanced, high-protein, low-carb, keto, high-carb, or Mediterranean.
+public enum DietStyle: String, CaseIterable, Sendable, Identifiable {
+    case balanced, highProtein, lowCarb, keto, highCarb, mediterranean
+    public var id: String { rawValue }
+
+    public var label: String {
         switch self {
-        case .radicalLoss, .steadyLoss: return 2.0
-        case .maintain: return 1.6
-        case .gain: return 1.8
+        case .balanced: return "Balanced"
+        case .highProtein: return "High Protein"
+        case .lowCarb: return "Low Carb"
+        case .keto: return "Keto"
+        case .highCarb: return "High Carb"
+        case .mediterranean: return "Mediterranean"
         }
+    }
+    public var detail: String {
+        switch self {
+        case .balanced: return "An even mix of carbs, protein, and fat"
+        case .highProtein: return "More protein to build and keep muscle"
+        case .lowCarb: return "Fewer carbs, more fat and protein"
+        case .keto: return "Very low carb, high fat"
+        case .highCarb: return "Carb-forward for endurance and big training days"
+        case .mediterranean: return "Whole foods with plenty of healthy fats"
+        }
+    }
+    public var systemImage: String {
+        switch self {
+        case .balanced: return "fork.knife"
+        case .highProtein: return "dumbbell.fill"
+        case .lowCarb: return "leaf.fill"
+        case .keto: return "drop.fill"
+        case .highCarb: return "bolt.fill"
+        case .mediterranean: return "sun.max.fill"
+        }
+    }
+    /// Macro split as fractions of total calories — (protein, carbs, fat), sums to 1.
+    public var split: (protein: Double, carbs: Double, fat: Double) {
+        switch self {
+        case .balanced:      return (0.30, 0.40, 0.30)
+        case .highProtein:   return (0.40, 0.30, 0.30)
+        case .lowCarb:       return (0.35, 0.20, 0.45)
+        case .keto:          return (0.25, 0.05, 0.70)
+        case .highCarb:      return (0.25, 0.55, 0.20)
+        case .mediterranean: return (0.25, 0.45, 0.30)
+        }
+    }
+    /// Compact split label, e.g. "40% C · 30% P · 30% F".
+    public var splitLabel: String {
+        let s = split
+        return "\(Int(s.carbs * 100))% C · \(Int(s.protein * 100))% P · \(Int(s.fat * 100))% F"
     }
 }
 
@@ -99,19 +146,19 @@ public struct UserProfile: Sendable, Equatable {
     public var heightCm: Double
     public var activity: ActivityLevel
     public var goal: WeightGoal
+    public var dietStyle: DietStyle
 
     public init(sex: BiologicalSex, age: Int, weightKg: Double, heightCm: Double,
-                activity: ActivityLevel, goal: WeightGoal) {
+                activity: ActivityLevel, goal: WeightGoal, dietStyle: DietStyle = .balanced) {
         self.sex = sex; self.age = age; self.weightKg = weightKg
         self.heightCm = heightCm; self.activity = activity; self.goal = goal
+        self.dietStyle = dietStyle
     }
 }
 
 public enum GoalPlanner {
     /// A floor so aggressive deficits never recommend an unsafe intake.
     static let minimumCalories: Double = 1200
-    /// Fat as a share of total calories.
-    static let fatCaloriePortion = 0.27
 
     /// Mifflin-St Jeor basal metabolic rate (kcal/day).
     public static func bmr(_ p: UserProfile) -> Double {
@@ -124,15 +171,16 @@ public enum GoalPlanner {
         bmr(p) * p.activity.factor
     }
 
-    /// Recommended daily targets for the profile + goal, clamped to valid ranges.
-    /// Values are rounded to tidy increments (calories to 25, macros to 5) so the
-    /// plan reads like a goal a person would set, not a raw calculation (e.g. 2075
-    /// rather than 2076).
+    /// Recommended daily targets for the profile. The weight goal sets calories
+    /// (TDEE + delta); the diet style splits those calories across macros. Values
+    /// are rounded to tidy increments (calories to 25, macros to 5) so the plan
+    /// reads like a goal a person would set, not a raw calculation.
     public static func targets(for p: UserProfile) -> MacroTargets {
         let calories = round(max(minimumCalories, tdee(p) + p.goal.calorieDelta), toNearest: 25)
-        let protein = round(p.weightKg * p.goal.proteinPerKg, toNearest: 5)
-        let fat = round(calories * fatCaloriePortion / 9, toNearest: 5)
-        let carbs = max(0, round((calories - protein * 4 - fat * 9) / 4, toNearest: 5))
+        let s = p.dietStyle.split
+        let protein = round(calories * s.protein / 4, toNearest: 5)   // 4 kcal/g
+        let fat = round(calories * s.fat / 9, toNearest: 5)           // 9 kcal/g
+        let carbs = round(calories * s.carbs / 4, toNearest: 5)       // 4 kcal/g
         return MacroTargets(calories: calories, fat: fat, carbs: carbs, protein: protein).clamped
     }
 

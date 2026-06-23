@@ -46,6 +46,23 @@ final class SettingsUITests: XCTestCase {
     }
 
     @MainActor
+    func testGoalWizardCanBeCancelled() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest"]
+        app.launch()
+
+        app.tabBars.buttons["Settings"].tap()
+        let setBtn = app.buttons["Set targets from a goal"]
+        XCTAssertTrue(setBtn.waitForExistence(timeout: 10))
+        setBtn.tap()
+
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5), "Wizard should open")
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["Daily Targets"].waitForExistence(timeout: 5),
+                      "Cancel should return to Settings without forcing the wizard")
+    }
+
+    @MainActor
     func testFullResetReturnsToSetupWizard() {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest"]
@@ -88,10 +105,14 @@ final class SettingsUITests: XCTestCase {
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         confirm.tap()
 
-        // Step 0: pick a goal, then continue to the "About You" body step.
+        // Step 0: pick a goal → Continue. Step 1: Diet Style (has a default) →
+        // Continue. Step 2: the "About You" body step.
         let goal = app.staticTexts["Maintain weight"]
         XCTAssertTrue(goal.waitForExistence(timeout: 5))
         goal.tap()
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.staticTexts["Diet Style"].waitForExistence(timeout: 5), "Diet Style step should appear")
+        XCTAssertTrue(app.staticTexts["Keto"].exists, "Diet styles should be listed")
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["About You"].waitForExistence(timeout: 5))
 
