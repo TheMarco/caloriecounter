@@ -61,6 +61,17 @@ struct SettingsStoreTests {
         #expect(b.healthLastSyncAt == Date(timeIntervalSince1970: 1_750_000_000))
     }
 
+    @Test("the saved body profile persists and reloads")
+    func profilePersistence() {
+        let defaults = makeDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.savedProfile == nil)
+        let p = UserProfile(sex: .female, age: 41, weightKg: 68, heightCm: 165,
+                            activity: .light, goal: .steadyLoss, dietStyle: .lowCarb)
+        a.savedProfile = p
+        #expect(SettingsStore(defaults: defaults).savedProfile == p)
+    }
+
     @Test("out-of-range targets are clamped when persisted")
     func clamping() {
         let defaults = makeDefaults()

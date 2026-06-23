@@ -30,6 +30,19 @@ public final class SettingsStore {
         didSet { defaults.set(healthLastSyncAt?.timeIntervalSince1970 ?? 0, forKey: Keys.healthLastSync) }
     }
 
+    /// The body profile the current targets were computed from (saved by the setup
+    /// wizard). Lets the wizard pre-fill on re-run and drives the "weight changed —
+    /// update targets?" nudge.
+    public var savedProfile: UserProfile? {
+        didSet {
+            if let p = savedProfile, let data = try? JSONEncoder().encode(p) {
+                defaults.set(data, forKey: Keys.profile)
+            } else {
+                defaults.removeObject(forKey: Keys.profile)
+            }
+        }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// `defaultUnits` is the fallback when the user has never chosen a unit system
@@ -53,6 +66,8 @@ public final class SettingsStore {
         self.healthWeightImportEnabled = defaults.bool(forKey: Keys.healthWeightImport)
         let lastSync = defaults.double(forKey: Keys.healthLastSync)
         self.healthLastSyncAt = lastSync > 0 ? Date(timeIntervalSince1970: lastSync) : nil
+        self.savedProfile = defaults.data(forKey: Keys.profile)
+            .flatMap { try? JSONDecoder().decode(UserProfile.self, from: $0) }
     }
 
     /// The domain settings snapshot (targets + units); lock is an app concern.
@@ -81,5 +96,6 @@ public final class SettingsStore {
         static let healthWeight = "settings.healthWeightSync"
         static let healthWeightImport = "settings.healthWeightImport"
         static let healthLastSync = "settings.healthLastSyncAt"
+        static let profile = "settings.savedProfile"
     }
 }

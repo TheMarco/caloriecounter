@@ -44,6 +44,13 @@ struct AboutView: View {
             .font(.subheadline)
 
             Section {
+                Label("Targets are estimates, not medical advice.", systemImage: "stethoscope")
+            } footer: {
+                Text("Calorie and macro targets use the Mifflin–St Jeor formula and standard activity factors — a sensible starting point, not personalized nutrition therapy. If you have a health condition or specific goals, check with a doctor or registered dietitian.")
+            }
+            .font(.subheadline)
+
+            Section {
                 LabeledContent("Built by", value: "Marco van Hylckama Vlieg")
             } footer: {
                 Text("© 2026 Unthinking AI, LLC. All rights reserved.")

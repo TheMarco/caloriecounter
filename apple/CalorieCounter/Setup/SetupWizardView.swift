@@ -72,6 +72,7 @@ struct SetupWizardView: View {
                 footer
             }
         }
+        .task { await prefill() }
     }
 
     // MARK: - Chrome
@@ -347,6 +348,10 @@ struct SetupWizardView: View {
             }
             Text("Based on a \(Int(GoalPlanner.tdee(profile))) kcal maintenance estimate.")
                 .font(.caption).foregroundStyle(.tertiary)
+            Text("These are estimates to get you started, not medical advice. If you have a health condition or specific goals, check with a doctor or registered dietitian.")
+                .font(.caption2).foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 4)
         }
     }
 
@@ -432,8 +437,9 @@ struct SetupWizardView: View {
 
     private func finish() {
         container.settings.targets = GoalPlanner.targets(for: profile)
+        container.settings.savedProfile = profile   // basis for pre-fill + the weight-drift nudge
         container.settings.hasCompletedSetup = true
-        // Seed the weight history with the starting weight from onboarding.
+        // Seed the weight history with the weight used for this plan.
         let today = LocalDate.today()
         let weight = WeightEntry(id: WeightEntry.id(for: today), date: today, timestamp: Date(), weightKg: weightKg)
         Task {
@@ -442,5 +448,16 @@ struct SetupWizardView: View {
         }
         onFinish()
         dismiss()
+    }
+
+    /// On re-run, pre-fill the user's previous answers and their latest weigh-in.
+    private func prefill() async {
+        if let p = container.settings.savedProfile {
+            sex = p.sex; age = p.age; heightCm = p.heightCm
+            weightKg = p.weightKg; activity = p.activity; diet = p.dietStyle; goal = p.goal
+        }
+        if let latest = (try? await container.store.latestWeight())?.weightKg {
+            weightKg = latest   // prefer current weight (drives the nudge's recalc)
+        }
     }
 }

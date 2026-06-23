@@ -15,6 +15,9 @@ struct TodayView: View {
     @State private var activeInput: InputMethod?
     @State private var editingEntry: Entry?
     @State private var editingOffset = false
+    @State private var latestWeightKg: Double?
+    @State private var showWizard = false
+    @State private var nudgeDismissed = false
 
     var body: some View {
         NavigationStack {
@@ -32,6 +35,10 @@ struct TodayView: View {
                 model = m
                 await container.bootstrap()   // seeds demo data in -demo mode (idempotent)
                 await m.load()
+                latestWeightKg = (try? await container.store.latestWeight())?.weightKg
+            }
+            .fullScreenCover(isPresented: $showWizard) {
+                SetupWizardView(allowsCancel: true) {}
             }
             .sheet(item: $activeInput) { method in
                 InputFlowView(method: method) { container.dataDidChange() }
@@ -52,6 +59,11 @@ struct TodayView: View {
     @ViewBuilder
     private func dashboard(_ model: TodayModel) -> some View {
         List {
+            if showNudge {
+                Section {
+                    weightDriftBanner.clearRow()
+                }
+            }
             Section {
                 QuickAddBar { activeInput = $0 }
                     .padding(.bottom, 8)
@@ -98,6 +110,41 @@ struct TodayView: View {
         .scrollContentBackground(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .top)
         .refreshable { await model.load() }
+    }
+
+    // MARK: - Weight-drift nudge
+
+    private var weightDrift: Double? {
+        WeightDrift.driftKg(plan: container.settings.savedProfile?.weightKg, latest: latestWeightKg)
+    }
+    private var showNudge: Bool {
+        !nudgeDismissed && container.settings.savedProfile != nil && WeightDrift.isSignificant(weightDrift)
+    }
+    private var nudgeMessage: String {
+        guard let drift = weightDrift else { return "" }
+        let u = container.settings.units
+        let amount = abs(u.weightForDisplay(kg: drift))
+        let dir = drift < 0 ? "lighter" : "heavier"
+        return String(format: "You're about %.0f %@ %@ than when you set your plan.", amount, u.weightUnit, dir)
+    }
+
+    private var weightDriftBanner: some View {
+        SoftCard {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("Your weight has changed", systemImage: "scalemass")
+                    .font(.subheadline.weight(.semibold))
+                Text("\(nudgeMessage) Update your targets so they match.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 10) {
+                    Button("Update targets") { showWizard = true }
+                        .buttonStyle(.glass).tint(DS.Macro.calories.tint)
+                    Button("Not now") { nudgeDismissed = true }
+                        .buttonStyle(.glass)
+                }
+                .font(.subheadline)
+            }
+        }
     }
 }
 

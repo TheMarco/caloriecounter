@@ -6,13 +6,13 @@
 import Foundation
 import NutritionCore
 
-public enum BiologicalSex: String, CaseIterable, Sendable, Identifiable {
+public enum BiologicalSex: String, CaseIterable, Codable, Sendable, Identifiable {
     case male, female
     public var id: String { rawValue }
     public var label: String { self == .male ? "Male" : "Female" }
 }
 
-public enum ActivityLevel: String, CaseIterable, Sendable, Identifiable {
+public enum ActivityLevel: String, CaseIterable, Codable, Sendable, Identifiable {
     case sedentary, light, moderate, active, veryActive
     public var id: String { rawValue }
 
@@ -45,7 +45,7 @@ public enum ActivityLevel: String, CaseIterable, Sendable, Identifiable {
     }
 }
 
-public enum WeightGoal: String, CaseIterable, Sendable, Identifiable {
+public enum WeightGoal: String, CaseIterable, Codable, Sendable, Identifiable {
     case radicalLoss, steadyLoss, maintain, gain
     public var id: String { rawValue }
 
@@ -87,7 +87,7 @@ public enum WeightGoal: String, CaseIterable, Sendable, Identifiable {
 /// How the day's calories are split across macros. The weight goal sets *how
 /// much* you eat; the diet style sets *what* it's made of — so people can run
 /// balanced, high-protein, low-carb, keto, high-carb, or Mediterranean.
-public enum DietStyle: String, CaseIterable, Sendable, Identifiable {
+public enum DietStyle: String, CaseIterable, Codable, Sendable, Identifiable {
     case balanced, highProtein, lowCarb, keto, highCarb, mediterranean
     public var id: String { rawValue }
 
@@ -139,7 +139,7 @@ public enum DietStyle: String, CaseIterable, Sendable, Identifiable {
     }
 }
 
-public struct UserProfile: Sendable, Equatable {
+public struct UserProfile: Codable, Sendable, Equatable {
     public var sex: BiologicalSex
     public var age: Int
     public var weightKg: Double
