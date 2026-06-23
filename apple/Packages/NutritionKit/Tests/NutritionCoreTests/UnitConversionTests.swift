@@ -35,12 +35,14 @@ struct UnitConversionTests {
         #expect(UnitConversion.convert(1, from: "piece", to: "oz") == nil)
     }
 
-    @Test("compatibleUnits returns the food's own family only")
+    @Test("compatibleUnits offers the mass/volume family, but nothing for portions")
     func compatibleUnits() {
         #expect(UnitConversion.compatibleUnits(with: "oz") == ["g", "oz", "lb"])
         #expect(UnitConversion.compatibleUnits(with: "cup") == ["ml", "cup", "tbsp", "tsp"])
-        #expect(UnitConversion.compatibleUnits(with: "serving") == ["piece", "slice", "bowl", "plate", "serving"])
-        // A weight food never offers bowl/cup/etc.
+        // Portion units have no convertible alternatives → only themselves (the UI
+        // then shows a fixed label instead of a do-nothing dropdown).
+        #expect(UnitConversion.compatibleUnits(with: "serving") == ["serving"])
+        #expect(UnitConversion.compatibleUnits(with: "bowl") == ["bowl"])
         #expect(UnitConversion.compatibleUnits(with: "g").contains("bowl") == false)
     }
 

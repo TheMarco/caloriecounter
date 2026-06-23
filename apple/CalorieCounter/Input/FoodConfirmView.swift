@@ -52,10 +52,15 @@ private struct ConfirmForm: View {
                     TextField("Quantity", text: $model.quantityText)
                         .keyboardType(.decimalPad)
                     Divider()
-                    Picker("Unit", selection: $model.unit) {
-                        ForEach(UnitConversion.compatibleUnits(with: model.unit), id: \.self) { Text($0).tag($0) }
+                    let units = UnitConversion.compatibleUnits(with: model.unit)
+                    if units.count > 1 {
+                        Picker("Unit", selection: $model.unit) {
+                            ForEach(units, id: \.self) { Text($0).tag($0) }
+                        }
+                        .labelsHidden()
+                    } else {
+                        Text(model.unit).foregroundStyle(.secondary)
                     }
-                    .labelsHidden()
                 }
             }
             Section("Nutrition (recalculated)") {

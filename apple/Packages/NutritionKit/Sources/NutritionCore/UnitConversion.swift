@@ -20,13 +20,15 @@ public enum UnitConversion {
         "ml": 1, "cup": 240, "tbsp": 15, "tsp": 5,
     ]
 
-    /// The units worth offering for a food currently measured in `unit`: its own
-    /// physical family (mass, volume, or the abstract portions). Switching within a
-    /// mass/volume family recomputes nutrition; abstract units are relabels.
+    /// The units worth OFFERING for a food currently measured in `unit`. Mass and
+    /// volume foods get their whole family (switching recomputes calories).
+    /// Portion units (slice/bowl/serving…) and anything unknown get only
+    /// themselves — there's no weight to convert between them, so the UI shows the
+    /// unit as a fixed label and the amount drives the calories. (No more dropdown
+    /// of options that change nothing.)
     public static func compatibleUnits(with unit: String) -> [String] {
         if massUnits.contains(unit) { return massUnits }
         if volumeUnits.contains(unit) { return volumeUnits }
-        if abstractUnits.contains(unit) { return abstractUnits }
         return [unit]
     }
 

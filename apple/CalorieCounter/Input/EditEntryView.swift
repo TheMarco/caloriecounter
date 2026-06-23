@@ -48,10 +48,15 @@ struct EditEntryView: View {
                     HStack {
                         TextField("Quantity", text: $quantityText).keyboardType(.decimalPad)
                         Divider()
-                        Picker("Unit", selection: $unit) {
-                            ForEach(UnitConversion.compatibleUnits(with: unit), id: \.self) { Text($0).tag($0) }
+                        let units = UnitConversion.compatibleUnits(with: unit)
+                        if units.count > 1 {
+                            Picker("Unit", selection: $unit) {
+                                ForEach(units, id: \.self) { Text($0).tag($0) }
+                            }
+                            .labelsHidden()
+                        } else {
+                            Text(unit).foregroundStyle(.secondary)
                         }
-                        .labelsHidden()
                     }
                 }
                 Section("Nutrition (recalculated)") {
