@@ -26,6 +26,14 @@ enum DS {
     static let cardRadius: CGFloat = 28
     static let chipRadius: CGFloat = 20
 
+    /// Over-target signal: a warm, unmistakable red that still fits the muted
+    /// palette. Used for the overage ring arc and "X over" labels.
+    static let over = Color(hex: 0xE0594F)
+    static let overGradient = AngularGradient(
+        colors: [Color(hex: 0xD6433D), Color(hex: 0xEC7A6F), Color(hex: 0xD6433D)],
+        center: .center, angle: .degrees(-90)
+    )
+
     /// The four tracked macros with their identity colors + gradients.
     enum Macro: String, CaseIterable, Identifiable {
         case calories, protein, carbs, fat

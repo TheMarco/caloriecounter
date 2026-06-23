@@ -16,19 +16,31 @@ struct MacroRing: View {
     var animate: Bool = true
 
     var body: some View {
+        let over = fraction > 1
         let clamped = max(0, min(fraction, 1))
+        let overage = over ? min(fraction - 1, 1) : 0   // how far past 100%, wrapped once
         ZStack {
             Circle().stroke(macro.tint.opacity(0.16), lineWidth: lineWidth)
-            if fraction > 1 {
-                Circle().stroke(macro.tint.opacity(0.35), lineWidth: lineWidth)
-            }
+
+            // Base fill — completes the full ring once the target is reached.
             Circle()
-                .trim(from: 0, to: clamped)
+                .trim(from: 0, to: over ? 1 : clamped)
                 .stroke(macro.ringGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .shadow(color: macro.tint.opacity(0.18), radius: lineWidth * 0.15)
+
+            // Overage arc — wraps back over the ring in warning red so going over
+            // the limit is unmistakable (more excess → more red).
+            if over {
+                Circle()
+                    .trim(from: 0, to: overage)
+                    .stroke(DS.overGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .shadow(color: DS.over.opacity(0.45), radius: lineWidth * 0.3)
+            }
         }
         .animation(animate ? .smooth(duration: 0.7) : nil, value: clamped)
+        .animation(animate ? .smooth(duration: 0.7) : nil, value: overage)
     }
 }
 
@@ -60,28 +72,42 @@ struct MacroDashboard: View {
     private func fraction(_ m: DS.Macro) -> Double {
         let t = target(m); return t > 0 ? consumed(m) / t : 0
     }
+    private func isOver(_ m: DS.Macro) -> Bool { consumed(m) > target(m) && target(m) > 0 }
+
+    // Calories track the headline *net* number against the goal, so the ring, the
+    // big number, and the over-indicator all agree (exercise raises the budget).
+    private var calorieFraction: Double { targets.calories > 0 ? net / targets.calories : 0 }
+    private var caloriesOver: Bool { net > targets.calories && targets.calories > 0 }
 
     var body: some View {
         VStack(spacing: 38) {
             ZStack {
-                MacroRing(macro: .calories, fraction: fraction(.calories), lineWidth: 22, animate: !reduceMotion)
+                MacroRing(macro: .calories, fraction: calorieFraction, lineWidth: 22, animate: !reduceMotion)
                     .frame(width: 232, height: 232)
                 VStack(spacing: 1) {
                     Text("\(Int(net))")
                         .font(.system(size: 66, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(caloriesOver ? AnyShapeStyle(DS.over) : AnyShapeStyle(.primary))
                         .contentTransition(.numericText())
                     Text(offset > 0 ? "net kcal" : "kcal")
                         .font(.callout.weight(.semibold))
-                        .foregroundStyle(DS.Macro.calories.tint)
-                    Text("of \(Int(targets.calories)) goal")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(caloriesOver ? DS.over : DS.Macro.calories.tint)
+                    if caloriesOver {
+                        Text("\(Int(net - targets.calories)) over")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DS.over)
+                    } else {
+                        Text("of \(Int(targets.calories)) goal")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Calories")
-            .accessibilityValue("\(Int(net)) net of \(Int(targets.calories)) goal")
+            .accessibilityValue(caloriesOver
+                ? "\(Int(net)) net, over the \(Int(targets.calories)) goal by \(Int(net - targets.calories))"
+                : "\(Int(net)) net of \(Int(targets.calories)) goal")
 
             HStack(spacing: 12) {
                 ForEach([DS.Macro.protein, .carbs, .fat]) { m in
@@ -103,10 +129,17 @@ struct MacroDashboard: View {
             VStack(spacing: 1) {
                 Text("\(Int(consumed(m)))")
                     .font(.callout.weight(.bold).monospacedDigit())
+                    .foregroundStyle(isOver(m) ? AnyShapeStyle(DS.over) : AnyShapeStyle(.primary))
                     .contentTransition(.numericText())
-                Text("/ \(Int(target(m)))g")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                if isOver(m) {
+                    Text("\(Int(consumed(m) - target(m)))g over")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(DS.over)
+                } else {
+                    Text("/ \(Int(target(m)))g")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
             Text(m.title.uppercased())
                 .font(.system(size: 10, weight: .semibold))
@@ -116,6 +149,8 @@ struct MacroDashboard: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(m.title)
-        .accessibilityValue("\(Int(consumed(m))) of \(Int(target(m))) grams")
+        .accessibilityValue(isOver(m)
+            ? "\(Int(consumed(m))) grams, over the \(Int(target(m))) gram target by \(Int(consumed(m) - target(m)))"
+            : "\(Int(consumed(m))) of \(Int(target(m))) grams")
     }
 }
