@@ -28,6 +28,24 @@ final class SettingsUITests: XCTestCase {
     }
 
     @MainActor
+    func testCaloriesTargetCanBeTyped() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest"]
+        app.launch()
+
+        app.tabBars.buttons["Settings"].tap()
+        let field = app.textFields["Calories"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Calories should be an editable field")
+
+        // Double-tap selects the existing number; typing then replaces it.
+        field.doubleTap()
+        field.typeText("1800")
+        app.buttons["Done"].tap()
+
+        XCTAssertEqual(field.value as? String, "1800", "Typed calorie target should stick")
+    }
+
+    @MainActor
     func testFullResetReturnsToSetupWizard() {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest"]

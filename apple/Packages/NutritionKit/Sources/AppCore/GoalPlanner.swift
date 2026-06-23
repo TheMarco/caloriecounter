@@ -125,11 +125,19 @@ public enum GoalPlanner {
     }
 
     /// Recommended daily targets for the profile + goal, clamped to valid ranges.
+    /// Values are rounded to tidy increments (calories to 25, macros to 5) so the
+    /// plan reads like a goal a person would set, not a raw calculation (e.g. 2075
+    /// rather than 2076).
     public static func targets(for p: UserProfile) -> MacroTargets {
-        let calories = max(minimumCalories, (tdee(p) + p.goal.calorieDelta).rounded())
-        let protein = (p.weightKg * p.goal.proteinPerKg).rounded()
-        let fat = (calories * fatCaloriePortion / 9).rounded()
-        let carbs = max(0, ((calories - protein * 4 - fat * 9) / 4).rounded())
+        let calories = round(max(minimumCalories, tdee(p) + p.goal.calorieDelta), toNearest: 25)
+        let protein = round(p.weightKg * p.goal.proteinPerKg, toNearest: 5)
+        let fat = round(calories * fatCaloriePortion / 9, toNearest: 5)
+        let carbs = max(0, round((calories - protein * 4 - fat * 9) / 4, toNearest: 5))
         return MacroTargets(calories: calories, fat: fat, carbs: carbs, protein: protein).clamped
+    }
+
+    /// Round to the nearest `step` (e.g. nearest 25 kcal).
+    static func round(_ value: Double, toNearest step: Double) -> Double {
+        (value / step).rounded() * step
     }
 }

@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var showImporter = false
     @State private var importMessage: String?
     @State private var showWizard = false
+    @FocusState private var focusedTarget: String?
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,15 @@ struct SettingsView: View {
                     .scrollContentBackground(.hidden)
             }
                 .navigationTitle("Settings")
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { focusedTarget = nil }
+                    }
+                }
+                .onChange(of: focusedTarget) { _, new in
+                    if new == nil { clampTargets() }   // number pad closed → snap to valid ranges
+                }
                 .task { await prepareExport() }
                 .confirmationDialog("Reset all targets to the defaults?", isPresented: $showResetConfirm, titleVisibility: .visible) {
                     Button("Reset", role: .destructive) {
@@ -70,11 +80,15 @@ struct SettingsView: View {
                 Text("Re-run the setup wizard to recalculate your calorie & macro targets.")
             }
 
-            Section("Daily Targets") {
-                targetStepper("Calories", value: $settings.targets.calories, range: 1000...5000, step: 50, unit: "kcal")
-                targetStepper("Fat", value: $settings.targets.fat, range: 20...200, step: 5, unit: "g")
-                targetStepper("Carbs", value: $settings.targets.carbs, range: 50...500, step: 5, unit: "g")
-                targetStepper("Protein", value: $settings.targets.protein, range: 30...300, step: 5, unit: "g")
+            Section {
+                targetField("Calories", value: $settings.targets.calories, range: 1000...5000, step: 25, unit: "kcal")
+                targetField("Fat", value: $settings.targets.fat, range: 20...200, step: 5, unit: "g")
+                targetField("Carbs", value: $settings.targets.carbs, range: 50...500, step: 5, unit: "g")
+                targetField("Protein", value: $settings.targets.protein, range: 30...300, step: 5, unit: "g")
+            } header: {
+                Text("Daily Targets")
+            } footer: {
+                Text("Tap a number to type it, or use +/− to adjust.")
             }
 
             Section("Units") {
@@ -136,10 +150,29 @@ struct SettingsView: View {
         }
     }
 
-    private func targetStepper(_ label: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double, unit: String) -> some View {
-        Stepper(value: value, in: range, step: step) {
-            LabeledContent(label, value: "\(Int(value.wrappedValue)) \(unit)")
+    /// A target row you can either type into or nudge with +/-. Typed values are
+    /// snapped into `range` when the keyboard is dismissed (see `clampTargets`).
+    private func targetField(_ label: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double, unit: String) -> some View {
+        HStack(spacing: 10) {
+            Text(label)
+            Spacer(minLength: 8)
+            TextField(label, value: value, format: .number.grouping(.never))
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 64)
+                .focused($focusedTarget, equals: label)
+            Text(unit).foregroundStyle(.secondary).frame(width: 32, alignment: .leading)
+            Stepper(label, value: value, in: range, step: step).labelsHidden()
         }
+    }
+
+    /// Snap every target into its valid range (called when the number pad closes).
+    private func clampTargets() {
+        let s = container.settings
+        s.targets.calories = min(max(s.targets.calories, 1000), 5000)
+        s.targets.fat      = min(max(s.targets.fat, 20), 200)
+        s.targets.carbs    = min(max(s.targets.carbs, 50), 500)
+        s.targets.protein  = min(max(s.targets.protein, 30), 300)
     }
 
     private func prepareExport() async {
