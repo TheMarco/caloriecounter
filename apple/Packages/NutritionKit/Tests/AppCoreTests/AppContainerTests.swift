@@ -48,7 +48,8 @@ struct AppContainerTests {
             photoParser: StubPhotoParser(),
             labelReader: StubLabelReader(),
             barcodeResolver: StubBarcode(),
-            settings: settings
+            settings: settings,
+            healthSync: MockHealthSyncService()
         )
     }
 
@@ -59,6 +60,12 @@ struct AppContainerTests {
                           food: "Egg", quantity: 1, unit: "piece", kcal: 78, fat: 5, carbs: 0.6, protein: 6, method: .text)
         try await container.store.add(entry)
         #expect(try await container.store.entries(on: "2026-06-22").first == entry)
+    }
+
+    @Test("the container exposes a HealthSyncing seam (mock in tests)")
+    func healthSyncWired() throws {
+        let container = try makeContainer()
+        #expect(container.healthSync is MockHealthSyncService)
     }
 
     @Test("seams are reachable through the container")

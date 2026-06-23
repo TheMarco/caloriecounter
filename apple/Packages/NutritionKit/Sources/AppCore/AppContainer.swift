@@ -18,6 +18,7 @@ import NutritionCore
 import NutritionStore
 import NutritionAPI
 import NutritionAI
+import NutritionHealth
 
 @Observable
 @MainActor
@@ -32,6 +33,8 @@ public final class AppContainer {
     public let labelReader: any LabelReading
     public let barcodeResolver: any BarcodeResolving
     public let settings: SettingsStore
+    /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
+    public let healthSync: any HealthSyncing
 
     /// Bumped whenever stored data changes in a way other screens must reflect
     /// (import, full reset, logging/editing/deleting a food, offset edits). Views
@@ -57,7 +60,8 @@ public final class AppContainer {
         photoParser: any PhotoParsing,
         labelReader: any LabelReading,
         barcodeResolver: any BarcodeResolving,
-        settings: SettingsStore
+        settings: SettingsStore,
+        healthSync: any HealthSyncing
     ) {
         self.store = store
         self.keychain = keychain
@@ -67,6 +71,7 @@ public final class AppContainer {
         self.labelReader = labelReader
         self.barcodeResolver = barcodeResolver
         self.settings = settings
+        self.healthSync = healthSync
     }
 
     /// Launch in a clean, deterministic state for UI tests (in-memory store, no
@@ -102,7 +107,10 @@ public final class AppContainer {
             photoParser: APIPhotoParser(client: client),
             labelReader: VisionLabelReader(),
             barcodeResolver: barcode,
-            settings: SettingsStore(defaultUnits: .deviceDefault)
+            settings: SettingsStore(defaultUnits: .deviceDefault),
+            healthSync: (AppContainer.isUITest || AppContainer.isDemo)
+                ? MockHealthSyncService()
+                : AppleHealthKitService()
         )
     }
 

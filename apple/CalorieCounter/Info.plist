@@ -42,5 +42,9 @@
 	<string>CalorieCounter transcribes your voice on device to turn spoken meals into food entries.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>CalorieCounter can use Face ID to lock the app so only you can open your food log.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>CalorieCounter reads your weight from Apple Health so your weigh-ins can appear in the app.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>CalorieCounter can save your meals, macros, and weigh-ins to Apple Health. This is optional and you choose what to share.</string>
 </dict>
 </plist>

@@ -35,11 +35,18 @@ let package = Package(
         .target(name: "NutritionStore", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .target(name: "NutritionAPI", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .target(name: "NutritionAI", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
-        .target(name: "AppCore", dependencies: ["NutritionCore", "NutritionStore", "NutritionAPI", "NutritionAI"], swiftSettings: [.swiftLanguageMode(.v6)]),
+        .target(
+            name: "NutritionHealth",
+            dependencies: ["NutritionCore"],
+            swiftSettings: [.swiftLanguageMode(.v6)],
+            linkerSettings: [.linkedFramework("HealthKit")]
+        ),
+        .target(name: "AppCore", dependencies: ["NutritionCore", "NutritionStore", "NutritionAPI", "NutritionAI", "NutritionHealth"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionCoreTests", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionStoreTests", dependencies: ["NutritionStore", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionAPITests", dependencies: ["NutritionAPI", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionAITests", dependencies: ["NutritionAI", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
+        .testTarget(name: "NutritionHealthTests", dependencies: ["NutritionHealth", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "AppCoreTests", dependencies: ["AppCore", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
     ]
 )
