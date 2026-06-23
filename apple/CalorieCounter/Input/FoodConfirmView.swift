@@ -70,6 +70,15 @@ private struct ConfirmForm: View {
                 nutritionRow("Carbs", model.carbs, "g")
                 nutritionRow("Protein", model.protein, "g")
             }
+            Section {
+                advancedRow("Fiber", $model.fiberText, "g")
+                advancedRow("Sodium", $model.sodiumText, "mg")
+                advancedRow("Sugar", $model.sugarText, "g")
+            } header: {
+                Text("Advanced Nutrition").font(.footnote)
+            } footer: {
+                Text("Optional — leave blank if unknown.").font(.caption2)
+            }
             if let notes, !notes.isEmpty {
                 Section("Notes") {
                     Text(notes).font(.footnote).foregroundStyle(.secondary)
@@ -100,6 +109,21 @@ private struct ConfirmForm: View {
             Text("\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)")
                 .contentTransition(.numericText())
                 .monospacedDigit()
+        }
+    }
+
+    /// A quiet, secondary row for optional fiber/sodium/sugar (visually subordinate
+    /// to the macros above).
+    private func advancedRow(_ label: String, _ text: Binding<String>, _ unit: String) -> some View {
+        HStack {
+            Text(label).font(.subheadline).foregroundStyle(.secondary)
+            Spacer()
+            TextField("—", text: text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .font(.subheadline)
+                .frame(maxWidth: 80)
+            Text(unit).font(.subheadline).foregroundStyle(.secondary)
         }
     }
 }

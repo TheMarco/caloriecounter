@@ -19,6 +19,9 @@ struct EditEntryView: View {
     @State private var food: String
     @State private var quantityText: String
     @State private var unit: String
+    @State private var fiberText: String
+    @State private var sodiumText: String
+    @State private var sugarText: String
     @State private var saving = false
 
     init(entry: Entry, onSaved: @escaping () -> Void) {
@@ -28,6 +31,18 @@ struct EditEntryView: View {
         _quantityText = State(initialValue: entry.quantity == entry.quantity.rounded()
                               ? String(Int(entry.quantity)) : String(entry.quantity))
         _unit = State(initialValue: entry.unit)
+        _fiberText = State(initialValue: Self.fmt(entry.fiber))
+        _sodiumText = State(initialValue: Self.fmt(entry.sodium))
+        _sugarText = State(initialValue: Self.fmt(entry.sugar))
+    }
+
+    private static func fmt(_ v: Double?) -> String {
+        guard let v else { return "" }
+        return v == v.rounded() ? String(Int(v)) : String(v)
+    }
+    private func parse(_ text: String) -> Double? {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        return t.isEmpty ? nil : Double(t)
     }
 
     private var quantity: Double { Double(quantityText) ?? 0 }
@@ -65,6 +80,15 @@ struct EditEntryView: View {
                     LabeledContent("Carbs", value: "\(scaled.carbs.formatted(.number.precision(.fractionLength(0...1)))) g")
                     LabeledContent("Protein", value: "\(scaled.protein.formatted(.number.precision(.fractionLength(0...1)))) g")
                 }
+                Section {
+                    advancedRow("Fiber", $fiberText, "g")
+                    advancedRow("Sodium", $sodiumText, "mg")
+                    advancedRow("Sugar", $sugarText, "g")
+                } header: {
+                    Text("Advanced Nutrition").font(.footnote)
+                } footer: {
+                    Text("Optional — leave blank if unknown.").font(.caption2)
+                }
             }
             .navigationTitle("Edit Food")
             .navigationBarTitleDisplayMode(.inline)
@@ -77,6 +101,10 @@ struct EditEntryView: View {
                         updated.food = food.trimmingCharacters(in: .whitespacesAndNewlines)
                         updated.quantity = quantity // store the amount + unit the user sees
                         updated.unit = unit
+                        updated.fiber = parse(fiberText)
+                        updated.sodium = parse(sodiumText)
+                        updated.sugar = parse(sugarText)
+                        updated.nutritionConfidence = .userEdited
                         Task {
                             try? await container.store.update(updated)
                             await container.healthSyncFood(updated)   // rewrites Health data for this id
@@ -89,6 +117,19 @@ struct EditEntryView: View {
                     .disabled(food.trimmingCharacters(in: .whitespaces).isEmpty || quantity <= 0 || saving)
                 }
             }
+        }
+    }
+
+    private func advancedRow(_ label: String, _ text: Binding<String>, _ unit: String) -> some View {
+        HStack {
+            Text(label).font(.subheadline).foregroundStyle(.secondary)
+            Spacer()
+            TextField("—", text: text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .font(.subheadline)
+                .frame(maxWidth: 80)
+            Text(unit).font(.subheadline).foregroundStyle(.secondary)
         }
     }
 }

@@ -21,6 +21,29 @@ struct FoodConfirmModelTests {
     private let parsed = ParsedFood(food: "Brown Rice", quantity: 100, unit: "g",
                                     kcal: 111, fat: 0.9, carbs: 23, protein: 2.6)
 
+    @Test("advanced nutrition is seeded, editable, and marks user-edited; blank → nil")
+    func advancedNutrition() throws {
+        let parsed = ParsedFood(food: "Bran", quantity: 1, unit: "bowl", kcal: 200,
+                                fiber: 12, sodium: 210, sugar: nil, nutritionConfidence: .barcode)
+        let model = FoodConfirmModel(parsed: parsed, method: .barcode, store: try makeStore())
+        // Seeded from the parse.
+        #expect(model.fiberText == "12")
+        #expect(model.sodiumText == "210")
+        #expect(model.sugarText == "")
+
+        // Unedited → keeps the parse source and values.
+        #expect(model.makeEntry().fiber == 12)
+        #expect(model.makeEntry().nutritionConfidence == .barcode)
+
+        // Editing a value flips the source to .userEdited; a blank stays nil.
+        model.fiberText = "9"
+        model.sodiumText = ""
+        let e = model.makeEntry()
+        #expect(e.fiber == 9)
+        #expect(e.sodium == nil)
+        #expect(e.nutritionConfidence == .userEdited)
+    }
+
     @Test("nutrition scales (and rounds kcal) the moment the quantity changes")
     func derivedScaling() throws {
         let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())

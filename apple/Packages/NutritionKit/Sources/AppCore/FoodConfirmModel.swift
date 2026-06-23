@@ -19,6 +19,10 @@ public final class FoodConfirmModel {
     public var unit: String
     /// Edited as text so the field can be cleared; `quantity` parses it.
     public var quantityText: String
+    // Optional "Advanced Nutrition" — editable, blank = unknown.
+    public var fiberText: String
+    public var sodiumText: String
+    public var sugarText: String
 
     public let method: InputMethod
     @ObservationIgnored private let original: ParsedFood
@@ -29,11 +33,26 @@ public final class FoodConfirmModel {
         self.food = parsed.food
         self.unit = parsed.unit
         self.quantityText = FoodConfirmModel.format(parsed.quantity)
+        self.fiberText = parsed.fiber.map(FoodConfirmModel.format) ?? ""
+        self.sodiumText = parsed.sodium.map(FoodConfirmModel.format) ?? ""
+        self.sugarText = parsed.sugar.map(FoodConfirmModel.format) ?? ""
         self.method = method
         self.store = store
     }
 
     public var quantity: Double { Double(quantityText) ?? 0 }
+    public var fiber: Double? { parseOptional(fiberText) }
+    public var sodium: Double? { parseOptional(sodiumText) }
+    public var sugar: Double? { parseOptional(sugarText) }
+
+    private func parseOptional(_ text: String) -> Double? {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        return t.isEmpty ? nil : Double(t)
+    }
+    /// True once the user has typed/changed any advanced-nutrition value.
+    private var advancedEdited: Bool {
+        fiber != original.fiber || sodium != original.sodium || sugar != original.sugar
+    }
 
     /// The current amount expressed in the ORIGINAL parse's unit, so nutrition is
     /// preserved across a compatible unit change (e.g. g↔oz). When the units
@@ -64,7 +83,9 @@ public final class FoodConfirmModel {
             food: food.trimmingCharacters(in: .whitespacesAndNewlines),
             quantity: quantity, unit: unit,
             kcal: kcal, fat: fat, carbs: carbs, protein: protein,
-            method: method, confidence: original.confidence
+            method: method, confidence: original.confidence,
+            fiber: fiber, sodium: sodium, sugar: sugar,
+            nutritionConfidence: advancedEdited ? .userEdited : original.nutritionConfidence
         )
     }
 
