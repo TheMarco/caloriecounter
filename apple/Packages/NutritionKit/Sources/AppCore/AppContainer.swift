@@ -209,34 +209,45 @@ public final class AppContainer {
         let today = LocalDate.today()
         guard ((try? await store.entries(on: today)) ?? []).isEmpty else { return }
 
-        struct Meal { let food: String; let qty: Double; let unit: String; let kcal, fat, carbs, protein: Double; let method: InputMethod }
+        // fiber (g) / sodium (mg) / sugar (g) included so every screen — Nutrition
+        // Signals, History trends, insights — has realistic context data.
+        struct Meal {
+            let food: String; let qty: Double; let unit: String
+            let kcal, fat, carbs, protein: Double
+            let fiber, sodium, sugar: Double?
+            let method: InputMethod
+        }
         let breakfasts: [Meal] = [
-            .init(food: "Greek Yogurt & Berries", qty: 1, unit: "bowl", kcal: 220, fat: 5, carbs: 28, protein: 18, method: .voice),
-            .init(food: "Oatmeal with Banana", qty: 1, unit: "bowl", kcal: 310, fat: 6, carbs: 54, protein: 10, method: .text),
-            .init(food: "Scrambled Eggs & Toast", qty: 1, unit: "plate", kcal: 340, fat: 18, carbs: 24, protein: 20, method: .text),
-            .init(food: "Avocado Toast", qty: 1, unit: "piece", kcal: 290, fat: 17, carbs: 28, protein: 8, method: .label),
-            .init(food: "Protein Smoothie", qty: 1, unit: "cup", kcal: 250, fat: 4, carbs: 30, protein: 25, method: .voice),
+            .init(food: "Greek Yogurt & Berries", qty: 1, unit: "bowl", kcal: 220, fat: 5, carbs: 28, protein: 18, fiber: 3, sodium: 80, sugar: 18, method: .label),
+            .init(food: "Oatmeal with Banana", qty: 1, unit: "bowl", kcal: 310, fat: 6, carbs: 54, protein: 10, fiber: 6, sodium: 120, sugar: 14, method: .text),
+            .init(food: "Scrambled Eggs & Toast", qty: 1, unit: "plate", kcal: 340, fat: 18, carbs: 24, protein: 20, fiber: 2, sodium: 520, sugar: 4, method: .text),
+            .init(food: "Avocado Toast", qty: 1, unit: "piece", kcal: 290, fat: 17, carbs: 28, protein: 8, fiber: 7, sodium: 380, sugar: 3, method: .label),
+            .init(food: "Protein Smoothie", qty: 1, unit: "cup", kcal: 250, fat: 4, carbs: 30, protein: 25, fiber: 4, sodium: 150, sugar: 22, method: .voice),
         ]
         let lunches: [Meal] = [
-            .init(food: "Grilled Chicken Salad", qty: 1, unit: "bowl", kcal: 420, fat: 18, carbs: 22, protein: 40, method: .text),
-            .init(food: "Turkey Sandwich", qty: 1, unit: "piece", kcal: 380, fat: 12, carbs: 42, protein: 28, method: .text),
-            .init(food: "Chicken Burrito Bowl", qty: 1, unit: "bowl", kcal: 620, fat: 20, carbs: 68, protein: 38, method: .voice),
-            .init(food: "Tuna Wrap", qty: 1, unit: "piece", kcal: 400, fat: 14, carbs: 40, protein: 30, method: .label),
-            .init(food: "Quinoa & Veggie Bowl", qty: 1, unit: "bowl", kcal: 480, fat: 16, carbs: 62, protein: 18, method: .text),
+            .init(food: "Grilled Chicken Salad", qty: 1, unit: "bowl", kcal: 420, fat: 18, carbs: 22, protein: 40, fiber: 5, sodium: 480, sugar: 6, method: .text),
+            .init(food: "Turkey Sandwich", qty: 1, unit: "piece", kcal: 380, fat: 12, carbs: 42, protein: 28, fiber: 4, sodium: 920, sugar: 6, method: .barcode),
+            .init(food: "Chicken Burrito Bowl", qty: 1, unit: "bowl", kcal: 620, fat: 20, carbs: 68, protein: 38, fiber: 12, sodium: 1100, sugar: 8, method: .voice),
+            .init(food: "Tuna Wrap", qty: 1, unit: "piece", kcal: 400, fat: 14, carbs: 40, protein: 30, fiber: 4, sodium: 850, sugar: 4, method: .label),
+            .init(food: "Quinoa & Veggie Bowl", qty: 1, unit: "bowl", kcal: 480, fat: 16, carbs: 62, protein: 18, fiber: 10, sodium: 420, sugar: 7, method: .text),
         ]
         let dinners: [Meal] = [
-            .init(food: "Salmon, Rice & Greens", qty: 1, unit: "plate", kcal: 560, fat: 22, carbs: 50, protein: 38, method: .text),
-            .init(food: "Spaghetti Bolognese", qty: 1, unit: "plate", kcal: 650, fat: 22, carbs: 78, protein: 32, method: .voice),
-            .init(food: "Grilled Steak & Potatoes", qty: 1, unit: "plate", kcal: 700, fat: 30, carbs: 45, protein: 50, method: .text),
-            .init(food: "Chicken Stir-fry", qty: 1, unit: "plate", kcal: 520, fat: 18, carbs: 48, protein: 38, method: .text),
-            .init(food: "Veggie Curry & Rice", qty: 1, unit: "plate", kcal: 540, fat: 18, carbs: 72, protein: 16, method: .voice),
+            .init(food: "Salmon, Rice & Greens", qty: 1, unit: "plate", kcal: 560, fat: 22, carbs: 50, protein: 38, fiber: 6, sodium: 380, sugar: 4, method: .text),
+            .init(food: "Spaghetti Bolognese", qty: 1, unit: "plate", kcal: 650, fat: 22, carbs: 78, protein: 32, fiber: 7, sodium: 980, sugar: 12, method: .voice),
+            .init(food: "Grilled Steak & Potatoes", qty: 1, unit: "plate", kcal: 700, fat: 30, carbs: 45, protein: 50, fiber: 5, sodium: 650, sugar: 3, method: .text),
+            .init(food: "Chicken Stir-fry", qty: 1, unit: "plate", kcal: 520, fat: 18, carbs: 48, protein: 38, fiber: 6, sodium: 1200, sugar: 10, method: .text),
+            .init(food: "Takeout Pad Thai", qty: 1, unit: "plate", kcal: 720, fat: 26, carbs: 92, protein: 26, fiber: 4, sodium: 1900, sugar: 18, method: .voice),
         ]
         let snacks: [Meal] = [
-            .init(food: "Almonds", qty: 30, unit: "g", kcal: 174, fat: 15, carbs: 6, protein: 6, method: .label),
-            .init(food: "Apple", qty: 1, unit: "piece", kcal: 95, fat: 0, carbs: 25, protein: 0, method: .barcode),
-            .init(food: "Protein Bar", qty: 1, unit: "piece", kcal: 200, fat: 7, carbs: 22, protein: 20, method: .barcode),
-            .init(food: "Greek Yogurt", qty: 1, unit: "cup", kcal: 120, fat: 0, carbs: 8, protein: 18, method: .voice),
+            .init(food: "Almonds", qty: 30, unit: "g", kcal: 174, fat: 15, carbs: 6, protein: 6, fiber: 4, sodium: 0, sugar: 1, method: .label),
+            .init(food: "Apple", qty: 1, unit: "piece", kcal: 95, fat: 0, carbs: 25, protein: 0, fiber: 4, sodium: 2, sugar: 19, method: .barcode),
+            .init(food: "Protein Bar", qty: 1, unit: "piece", kcal: 200, fat: 7, carbs: 22, protein: 20, fiber: 6, sodium: 200, sugar: 14, method: .barcode),
+            .init(food: "Greek Yogurt", qty: 1, unit: "cup", kcal: 120, fat: 0, carbs: 8, protein: 18, fiber: nil, sodium: 60, sugar: 6, method: .voice),
         ]
+
+        func confidence(for method: InputMethod) -> NutritionConfidence {
+            switch method { case .barcode: return .barcode; case .label: return .label; default: return .estimated }
+        }
 
         let cal = Calendar.current
         let now = Date()
@@ -250,7 +261,9 @@ public final class AppContainer {
                 let entry = Entry(id: "demo-\(key)-\(seq)", date: key, timestamp: ts,
                                   food: meal.food, quantity: meal.qty, unit: meal.unit,
                                   kcal: meal.kcal, fat: meal.fat, carbs: meal.carbs, protein: meal.protein,
-                                  method: meal.method)
+                                  method: meal.method,
+                                  fiber: meal.fiber, sodium: meal.sodium, sugar: meal.sugar,
+                                  nutritionConfidence: confidence(for: meal.method))
                 seq += 1
                 try? await store.add(entry)
             }
