@@ -8,11 +8,44 @@ import NutritionCore
 
 public enum CSVExporter {
     public static let header = "date,calories_consumed,calories_burned,net_calories,carbs,fat,protein"
+    /// Full per-entry export header (one row per logged food).
+    public static let entryHeader = "date,time,food,quantity,unit,calories,fat,carbs,protein,method"
 
-    /// Build the CSV text for the given daily rows (oldest-first from the store).
+    /// Build the daily-totals CSV (legacy/summary format).
     public static func csv(from days: [DayTotals]) -> String {
         let rows = days.filter(hasData).map(row(for:))
         return ([header] + rows).joined(separator: "\n")
+    }
+
+    /// Full export: one row per individual food (CSV-escaped name) plus one row per
+    /// day-offset (`method` column = "offset"). Round-trips through CSVImporter, so
+    /// it's a complete backup — every food is preserved, not just daily totals.
+    public static func entriesCSV(entries: [Entry], offsets: [String: Double]) -> String {
+        var lines = [entryHeader]
+        for e in entries.sorted(by: { $0.timestamp < $1.timestamp }) {
+            lines.append([
+                e.date,
+                timeString(e.timestamp),
+                CSV.escape(e.food),
+                number(e.quantity),
+                CSV.escape(e.unit),
+                number(e.kcal),
+                oneDecimal(e.fat),
+                oneDecimal(e.carbs),
+                oneDecimal(e.protein),
+                e.method.rawValue,
+            ].joined(separator: ","))
+        }
+        for (date, value) in offsets.sorted(by: { $0.key < $1.key }) where value > 0 {
+            lines.append([date, "", "Exercise & Adjustment", "", "", number(value), "", "", "", "offset"]
+                .joined(separator: ","))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    static func timeString(_ date: Date) -> String {
+        let c = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return String(format: "%02d:%02d", c.hour ?? 0, c.minute ?? 0)
     }
 
     /// Default export filename: `calorie-counter-data-YYYY-MM-DD.csv`.

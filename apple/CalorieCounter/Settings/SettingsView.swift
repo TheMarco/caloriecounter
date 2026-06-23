@@ -115,8 +115,12 @@ struct SettingsView: View {
     }
 
     private func prepareExport() async {
-        let days = (try? await container.store.dailyTotals(lastDays: 365)) ?? []
-        let csv = CSVExporter.csv(from: days)
+        // Full backup: every individual food + each day's offset.
+        let entries = (try? await container.store.entries(from: "0000-01-01", to: "9999-12-31")) ?? []
+        let dayRows = (try? await container.store.dailyTotals(lastDays: 730)) ?? []
+        var offsets: [String: Double] = [:]
+        for d in dayRows where d.offset > 0 { offsets[d.date] = d.offset }
+        let csv = CSVExporter.entriesCSV(entries: entries, offsets: offsets)
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(CSVExporter.filename())
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         exportURL = url
@@ -136,11 +140,11 @@ struct SettingsView: View {
             return
         }
         do {
-            let days = try CSVImporter.parse(text)
-            let count = await CSVImporter.apply(days, to: container.store)
+            let result = try CSVImporter.parse(text)
+            let count = await CSVImporter.apply(result, to: container.store)
             await prepareExport()   // refresh the export to include imported data
             importMessage = "Imported \(count) day\(count == 1 ? "" : "s") of data. Pull to refresh Today and History."
-        } catch CSVImporter.ImportError.missingHeader {
+        } catch CSVImporter.ImportError.unrecognizedFormat {
             importMessage = "That doesn't look like a CalorieCounter export CSV."
         } catch {
             importMessage = "No data rows found in that file."
