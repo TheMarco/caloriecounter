@@ -11,6 +11,8 @@ public enum InputMethod: String, Codable, Sendable, CaseIterable, Identifiable {
     case voice
     case text
     case photo
+    /// On-device Vision OCR of a packaged food's nutrition-facts panel.
+    case label
 
     /// Identity for SwiftUI `.sheet(item:)` etc. (the raw wire string is stable).
     public var id: String { rawValue }
@@ -22,6 +24,7 @@ public enum InputMethod: String, Codable, Sendable, CaseIterable, Identifiable {
         case .voice: return "Voice"
         case .text: return "Text"
         case .photo: return "Photo"
+        case .label: return "Label"
         }
     }
 
@@ -32,6 +35,7 @@ public enum InputMethod: String, Codable, Sendable, CaseIterable, Identifiable {
         case .voice: return "Speak your food"
         case .text: return "Type food name"
         case .photo: return "Take a photo of food"
+        case .label: return "Scan a nutrition label"
         }
     }
 
@@ -42,6 +46,7 @@ public enum InputMethod: String, Codable, Sendable, CaseIterable, Identifiable {
         case .voice: return "mic.fill"
         case .text: return "keyboard"
         case .photo: return "camera.fill"
+        case .label: return "doc.text.viewfinder"
         }
     }
 }

@@ -12,7 +12,7 @@ import NutritionCore
 struct QuickAddBar: View {
     var onSelect: (InputMethod) -> Void
 
-    private let methods: [InputMethod] = [.barcode, .voice, .text]
+    private let methods: [InputMethod] = [.barcode, .voice, .text, .label]
 
     var body: some View {
         // Independent glass buttons (NOT inside a single GlassEffectContainer —
@@ -46,6 +46,7 @@ struct QuickAddBar: View {
         case .voice: return "Speak"
         case .text: return "Type"
         case .photo: return "Photo"
+        case .label: return "Label"
         }
     }
 }

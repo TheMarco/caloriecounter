@@ -12,8 +12,6 @@ import NutritionCore
 struct SettingsView: View {
     @Environment(AppContainer.self) private var container
 
-    @State private var photoConnected = false
-    @State private var showLogin = false
     @State private var exportURL: URL?
     @State private var showResetConfirm = false
     @State private var showImporter = false
@@ -28,13 +26,7 @@ struct SettingsView: View {
                     .scrollContentBackground(.hidden)
             }
                 .navigationTitle("Settings")
-                .task {
-                    photoConnected = await container.isPhotoProxyAuthenticated()
-                    await prepareExport()
-                }
-                .sheet(isPresented: $showLogin) {
-                    PhotoProxyLoginSheet { Task { photoConnected = await container.isPhotoProxyAuthenticated() } }
-                }
+                .task { await prepareExport() }
                 .confirmationDialog("Reset all targets to the defaults?", isPresented: $showResetConfirm, titleVisibility: .visible) {
                     Button("Reset", role: .destructive) {
                         container.settings.targets = .default
@@ -88,21 +80,6 @@ struct SettingsView: View {
                 Text("Security")
             } footer: {
                 Text("Lock the app when it goes to the background. Your data stays on this device.")
-            }
-
-            Section {
-                if photoConnected {
-                    LabeledContent("Photo parsing", value: "Connected")
-                    Button("Disconnect", role: .destructive) {
-                        Task { await container.signOutPhotoProxy(); photoConnected = false }
-                    }
-                } else {
-                    Button("Connect photo parsing") { showLogin = true }
-                }
-            } header: {
-                Text("Plate Photos")
-            } footer: {
-                Text("Plate-of-food photos use the secure cloud service. Barcodes, labels, text, and voice all stay on-device.")
             }
 
             Section {

@@ -15,6 +15,7 @@ extension InputMethod {
         case .voice:   return Color(hex: 0xFF375F)   // pink
         case .text:    return Color(hex: 0x0A84FF)   // blue
         case .photo:   return Color(hex: 0xFF9F0A)   // amber
+        case .label:   return Color(hex: 0x30D158)   // green
         }
     }
 }

@@ -82,11 +82,14 @@ struct DomainModelTests {
 
     // MARK: - Enum raw values & metadata
 
-    @Test("InputMethod raw values match the web union")
+    @Test("InputMethod raw values cover the web union plus the on-device label scan")
     func inputMethodRawValues() {
-        #expect(InputMethod.allCases.map(\.rawValue) == ["barcode", "voice", "text", "photo"])
+        // The first four mirror the web union 'barcode'|'voice'|'text'|'photo';
+        // 'label' is an iOS-only addition (on-device nutrition-label OCR).
+        #expect(InputMethod.allCases.map(\.rawValue) == ["barcode", "voice", "text", "photo", "label"])
         #expect(InputMethod.text.label == "Text")
         #expect(InputMethod.barcode.detail == "Scan product barcode")
+        #expect(InputMethod.label.detail == "Scan a nutrition label")
     }
 
     @Test("Hyphenated portion enums keep web-compatible raw values")

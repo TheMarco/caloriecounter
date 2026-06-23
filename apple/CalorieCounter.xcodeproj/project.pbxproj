@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,9 +19,9 @@
 		4A86D49DDE36C82806BA2727 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637C47D228C9D45E809A840B /* SettingsView.swift */; };
 		4E7E099335EC69BB628C05B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A98C554F7A317C8F684DFC1A /* Assets.xcassets */; };
 		53A06130F5CBAD9F8ADA10DD /* VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */; };
+		596CFE8080187FA3ABCD69D7 /* LabelCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C482D1FCE43D1EA26C9AC8 /* LabelCaptureView.swift */; };
 		5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E9485996765BF65226D3DA /* RootView.swift */; };
 		5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */; };
-		7BD50311C99265FE48D8E855 /* PhotoCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */; };
 		88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9712F7B63B8E377089201042 /* NutritionChart.swift */; };
 		935CD8303DD3B941E9411CD5 /* FoodConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */; };
 		995199EE02AB7604CA1A9C3A /* EditEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */; };
@@ -60,6 +60,7 @@
 		13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieCounterApp.swift; sourceTree = "<group>"; };
 		2D40788EDBEB586B5F670A2F /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
 		31FEF4F62F3154FF83305493 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
+		32C482D1FCE43D1EA26C9AC8 /* LabelCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelCaptureView.swift; sourceTree = "<group>"; };
 		40A1CA067B942AD2F09725D2 /* CalorieCounterUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CalorieCounterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		473873BDC1C01302A500085F /* QuickAddBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddBar.swift; sourceTree = "<group>"; };
 		5C9366EAA330B5AAA386831D /* TextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputView.swift; sourceTree = "<group>"; };
@@ -69,7 +70,7 @@
 		6D408ED847960B3129EF3A94 /* SetupWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizardView.swift; sourceTree = "<group>"; };
 		7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
 		7802482394DF8F98400A488D /* CalorieOffsetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieOffsetView.swift; sourceTree = "<group>"; };
-		7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		90AF669C8138357F7FAFF8B2 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		9712F7B63B8E377089201042 /* NutritionChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionChart.swift; sourceTree = "<group>"; };
 		989E2BA736989DF4117DDF67 /* InputFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputFlowView.swift; sourceTree = "<group>"; };
@@ -78,8 +79,7 @@
 		AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodConfirmView.swift; sourceTree = "<group>"; };
 		B11EFF2C94E03B3961AF68B4 /* MacroDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroDashboard.swift; sourceTree = "<group>"; };
 		BBA79A0510AA6F1BE192D2CD /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
-		C0FB868B18204886E2271B14 /* CalorieCounter.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CalorieCounter.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCaptureView.swift; sourceTree = "<group>"; };
+		C0FB868B18204886E2271B14 /* CalorieCounter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalorieCounter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1487B1E2EF3F13601523B41 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		D28121B70EB4EE036EF5629F /* TextFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFlowUITests.swift; sourceTree = "<group>"; };
 		D8189A60D879FAE780A7725F /* VoiceInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputView.swift; sourceTree = "<group>"; };
@@ -132,7 +132,7 @@
 				112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */,
 				AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */,
 				989E2BA736989DF4117DDF67 /* InputFlowView.swift */,
-				C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */,
+				32C482D1FCE43D1EA26C9AC8 /* LabelCaptureView.swift */,
 				5C9366EAA330B5AAA386831D /* TextInputView.swift */,
 				D8189A60D879FAE780A7725F /* VoiceInputView.swift */,
 			);
@@ -284,7 +284,6 @@
 						TestTargetID = D0DA7D21B01E980A8435D715;
 					};
 					D0DA7D21B01E980A8435D715 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -302,7 +301,6 @@
 			packageReferences = (
 				2FD0849C2F03BB92F5AB3EF8 /* XCLocalSwiftPackageReference "Packages/NutritionKit" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -353,10 +351,10 @@
 				935CD8303DD3B941E9411CD5 /* FoodConfirmView.swift in Sources */,
 				B3D31995848299B852AA6EDF /* HistoryView.swift in Sources */,
 				CEC34B1A8BBD6C1C613C45EF /* InputFlowView.swift in Sources */,
+				596CFE8080187FA3ABCD69D7 /* LabelCaptureView.swift in Sources */,
 				388415BDFA196EACF8EFC570 /* MacroDashboard.swift in Sources */,
 				D7BF81F3069B762B344ABC81 /* MainTabView.swift in Sources */,
 				88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */,
-				7BD50311C99265FE48D8E855 /* PhotoCaptureView.swift in Sources */,
 				1F352880CD4E068DF04B35DF /* QuickAddBar.swift in Sources */,
 				5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */,
 				4A86D49DDE36C82806BA2727 /* SettingsView.swift in Sources */,
@@ -387,6 +385,7 @@
 				CODE_SIGN_ENTITLEMENTS = CalorieCounter/CalorieCounter.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3ML6V62AF5;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CalorieCounter/Info.plist;
@@ -573,6 +572,7 @@
 				CODE_SIGN_ENTITLEMENTS = CalorieCounter/CalorieCounter.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3ML6V62AF5;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CalorieCounter/Info.plist;
