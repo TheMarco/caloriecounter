@@ -57,4 +57,13 @@ struct LocalDateTests {
         #expect(LocalDate.lastDays(0, calendar: utc).isEmpty)
         #expect(LocalDate.lastDays(-5, calendar: utc).isEmpty)
     }
+
+    @Test("dayCount is inclusive and resilient to bad input")
+    func dayCountInclusive() {
+        #expect(LocalDate.dayCount(from: "2026-01-01", to: "2026-01-01", calendar: utc) == 1)
+        #expect(LocalDate.dayCount(from: "2026-01-01", to: "2026-01-07", calendar: utc) == 7)
+        #expect(LocalDate.dayCount(from: "2025-12-30", to: "2026-01-05", calendar: utc) == 7)
+        #expect(LocalDate.dayCount(from: "2026-02-10", to: "2026-02-01", calendar: utc) == 1)  // end before start
+        #expect(LocalDate.dayCount(from: "garbage", to: "2026-01-05", calendar: utc) == 1)     // malformed
+    }
 }

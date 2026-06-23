@@ -53,10 +53,12 @@ struct ConstantsTests {
 
     @Test("DateRange presets carry the web day counts and labels")
     func dateRangePresets() {
-        #expect(DateRange.allCases.map(\.rawValue) == ["7d", "30d", "90d"])
+        #expect(DateRange.allCases.map(\.rawValue) == ["7d", "30d", "90d", "all"])
         #expect(DateRange.week.days == 7)
         #expect(DateRange.month.days == 30)
         #expect(DateRange.quarter.days == 90)
         #expect(DateRange.week.label == "7 Days")
+        #expect(DateRange.all.label == "All")
+        #expect(DateRange.all.isAll)
     }
 }

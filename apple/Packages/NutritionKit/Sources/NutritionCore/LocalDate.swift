@@ -22,6 +22,25 @@ public enum LocalDate {
         key(for: now, calendar: calendar)
     }
 
+    /// Parse a `YYYY-MM-DD` key back into a `Date` (midnight, calendar's timezone).
+    public static func date(from key: String, calendar: Calendar = .current) -> Date? {
+        let parts = key.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        var c = DateComponents()
+        c.year = parts[0]; c.month = parts[1]; c.day = parts[2]
+        return calendar.date(from: c)
+    }
+
+    /// Inclusive count of calendar days from `start` to `end` (both `YYYY-MM-DD`),
+    /// e.g. same day → 1. Returns 1 if either key is malformed or `end` precedes
+    /// `start`. Used to size the "All" history range from the earliest entry.
+    public static func dayCount(from start: String, to end: String, calendar: Calendar = .current) -> Int {
+        guard let s = date(from: start, calendar: calendar),
+              let e = date(from: end, calendar: calendar) else { return 1 }
+        let diff = calendar.dateComponents([.day], from: s, to: e).day ?? 0
+        return max(1, diff + 1)
+    }
+
     /// The keys for the last `days` calendar days ending on `endingOn` (inclusive),
     /// returned OLDEST-FIRST to match the chart-ready order of `getDailyTotals`
     /// (which builds newest→oldest then `.reverse()`s). Returns `[]` for `days <= 0`.

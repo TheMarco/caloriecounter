@@ -64,7 +64,18 @@ public final class HistoryModel {
     public func load() async {
         isLoading = true
         defer { isLoading = false }
-        days = (try? await store.dailyTotals(lastDays: range.days)) ?? []
+        let span = await dayCount(for: range)
+        days = (try? await store.dailyTotals(lastDays: span)) ?? []
+    }
+
+    /// Days to load: the preset span, or — for `.all` — the inclusive span from the
+    /// earliest logged day to today (falls back to a week when there's no data).
+    private func dayCount(for range: DateRange) async -> Int {
+        guard range.isAll else { return range.days }
+        let today = LocalDate.today()
+        let all = (try? await store.entries(from: "0001-01-01", to: today)) ?? []
+        guard let earliest = all.map(\.date).min() else { return DateRange.week.days }
+        return min(LocalDate.dayCount(from: earliest, to: today), range.days)
     }
 
     /// Per-day points for `macro`, flagged when over `targets` (chart coloring).

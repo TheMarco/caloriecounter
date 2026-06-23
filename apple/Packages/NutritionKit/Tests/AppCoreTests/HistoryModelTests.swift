@@ -45,6 +45,28 @@ struct HistoryModelTests {
         #expect(byDate[keys[1]]?.isOverTarget == true)       // 2500 > 2000
     }
 
+    @Test("the All range spans from the earliest entry to today")
+    func loadAllRange() async throws {
+        let store = try makeStore()
+        // An entry 120 days ago — beyond the 90-day preset, so only "All" includes it.
+        let oldKey = LocalDate.lastDays(120).first!
+        try await store.add(Entry(id: "old", date: oldKey, timestamp: Date(timeIntervalSince1970: 0),
+                                  food: "Old", quantity: 1, unit: "g", kcal: 700, fat: 0, carbs: 0, protein: 0, method: .text))
+
+        let model = HistoryModel(store: store, range: .all)
+        await model.load()
+        #expect(model.days.count == 120)                  // earliest → today, inclusive
+        #expect(model.days.first?.date == oldKey)
+        #expect(model.days.first?.totals.calories == 700)
+    }
+
+    @Test("the All range falls back to a week when there is no data")
+    func loadAllRangeEmpty() async throws {
+        let model = HistoryModel(store: try makeStore(), range: .all)
+        await model.load()
+        #expect(model.days.count == 7)
+    }
+
     @Test("datesWithEntries lists only days that have logged food")
     func datesWithEntries() async throws {
         let store = try makeStore()
