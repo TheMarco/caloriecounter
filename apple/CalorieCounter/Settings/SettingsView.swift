@@ -28,20 +28,20 @@ struct SettingsView: View {
                     .scrollContentBackground(.hidden)
             }
                 .navigationTitle("Settings")
-                .safeAreaInset(edge: .bottom) {
+                .safeAreaInset(edge: .bottom, spacing: 0) {
                     // A real bar pinned above the keyboard — reliable, unlike the
                     // SwiftUI keyboard-accessory toolbar which flickers in/out on device.
+                    // Uses the system bar material so it blends with the keyboard.
                     if focusedTarget != nil {
                         HStack {
                             Spacer()
                             Button("Done") { focusedTarget = nil }
                                 .font(.body.weight(.semibold))
-                                .tint(DS.Macro.calories.tint)
                         }
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(.ultraThinMaterial)
-                        .overlay(alignment: .top) { Divider() }
+                        .frame(height: 44)
+                        .frame(maxWidth: .infinity)
+                        .background(.bar)
                     }
                 }
                 .onChange(of: focusedTarget) { _, new in
