@@ -27,7 +27,10 @@ public enum Prompts {
         - Rice dishes: "plate/bowl of rice" = 200-300g cooked rice + toppings.
         - Salads: "bowl/plate of salad" = 150-250g depending on ingredients.
         - Sandwiches/burgers: use the "piece" unit, total weight 150-300g.
-        - Pizza: use the "slice" unit, a typical slice = 100-150g.
+        - Pizza: use the "slice" unit, a typical slice = 100-150g (~250-320 kcal).
+        - Bread: a "slice of bread" is SMALL — 25-45g, ~70-130 kcal. A hearty/seeded
+          sandwich loaf (e.g. Dave's Killer Bread) slice is ~110-130 kcal. NEVER
+          estimate a bread slice like a pizza slice.
         - Soups: use the "bowl" unit, a typical serving = 250-300ml.
         - Meat portions: restaurant serving = 150-200g, home serving = 100-150g.
 
@@ -51,6 +54,8 @@ public enum Prompts {
         - "bowl of chicken fried rice" -> quantity 300, unit g, kcal ~520.
         - "chili dog with cheese" -> quantity 1, unit piece, kcal ~550.
         - "slice of pepperoni pizza" -> quantity 1, unit slice, kcal ~298.
+        - "slice of bread" -> quantity 1, unit slice, kcal ~80.
+        - "slice of Dave's Killer Bread" -> quantity 1, unit slice, kcal ~120.
         - "2 eggs" -> quantity 2, unit piece, kcal ~140.
         """
     }
