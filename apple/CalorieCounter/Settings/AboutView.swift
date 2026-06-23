@@ -15,10 +15,12 @@ struct AboutView: View {
     var body: some View {
         List {
             Section {
-                VStack(spacing: 8) {
-                    Image(systemName: "fork.knife")
-                        .font(.system(size: 48, weight: .semibold))
-                        .foregroundStyle(.tint)
+                VStack(spacing: 10) {
+                    Image("AppLogo")
+                        .resizable()
+                        .frame(width: 96, height: 96)
+                        .clipShape(RoundedRectangle(cornerRadius: 21, style: .continuous))
+                        .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
                     Text("CalorieCounter").font(.title2.weight(.semibold))
                     Text("Version \(version)").font(.footnote).foregroundStyle(.secondary)
                 }
@@ -29,15 +31,15 @@ struct AboutView: View {
 
             Section("Privacy") {
                 Label("Your nutrition data is stored only on this device.", systemImage: "lock.shield")
-                Label("Barcodes, labels, text, and voice are processed on-device.", systemImage: "cpu")
-                Label("Only plate-of-food photos use a secure cloud service.", systemImage: "icloud")
+                Label("Barcodes, labels, text, and voice are all processed on-device.", systemImage: "cpu")
+                Label("Nothing is sent to the cloud or shared with anyone.", systemImage: "hand.raised")
             }
             .font(.subheadline)
 
             Section {
-                LabeledContent("Made by", value: "AI Dash Created")
+                LabeledContent("Built by", value: "Marco van Hylckama Vlieg")
             } footer: {
-                Text("© 2026 AI Dash Created. All rights reserved.")
+                Text("© 2026 Unthinking AI, LLC. All rights reserved.")
             }
         }
         .navigationTitle("About")
