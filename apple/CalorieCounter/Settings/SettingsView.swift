@@ -29,19 +29,22 @@ struct SettingsView: View {
             }
                 .navigationTitle("Settings")
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    // A real bar pinned above the keyboard — reliable, unlike the
-                    // SwiftUI keyboard-accessory toolbar which flickers in/out on device.
-                    // Uses the system bar material so it blends with the keyboard.
+                    // A floating Liquid Glass "Done" pill pinned above the keyboard.
+                    // It mirrors the native keyboard-accessory look but is a real view,
+                    // so it can't flicker in/out like SwiftUI's .toolbar(.keyboard).
                     if focusedTarget != nil {
                         HStack {
                             Spacer()
-                            Button("Done") { focusedTarget = nil }
-                                .font(.body.weight(.semibold))
+                            Button { focusedTarget = nil } label: {
+                                Text("Done")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(DS.Macro.calories.tint)
+                                    .padding(.horizontal, 4)
+                            }
+                            .buttonStyle(.glass)
                         }
                         .padding(.horizontal, 16)
-                        .frame(height: 44)
-                        .frame(maxWidth: .infinity)
-                        .background(.bar)
+                        .padding(.bottom, 8)
                     }
                 }
                 .onChange(of: focusedTarget) { _, new in
