@@ -14,7 +14,7 @@ import Foundation
 import HealthKit
 import NutritionCore
 
-public final class AppleHealthKitService: HealthSyncing, @unchecked Sendable {
+public actor AppleHealthKitService: HealthSyncing {
     private let store = HKHealthStore()
     private let appVersion: String
 
@@ -51,7 +51,7 @@ public final class AppleHealthKitService: HealthSyncing, @unchecked Sendable {
 
     // MARK: - Availability / authorization
 
-    public func isAvailable() -> Bool { HKHealthStore.isHealthDataAvailable() }
+    nonisolated public func isAvailable() -> Bool { HKHealthStore.isHealthDataAvailable() }
 
     public func requestNutritionWriteAccess() async throws {
         guard isAvailable() else { return }
