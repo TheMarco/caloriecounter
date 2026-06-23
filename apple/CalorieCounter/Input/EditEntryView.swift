@@ -49,14 +49,9 @@ struct EditEntryView: View {
                         TextField("Quantity", text: $quantityText).keyboardType(.decimalPad)
                         Divider()
                         Picker("Unit", selection: $unit) {
-                            ForEach(Constants.foodUnits, id: \.self) { Text($0).tag($0) }
+                            ForEach(UnitConversion.compatibleUnits(with: unit), id: \.self) { Text($0).tag($0) }
                         }
                         .labelsHidden()
-                        .onChange(of: unit) { old, new in
-                            if let converted = UnitConversion.convert(quantity, from: old, to: new) {
-                                quantityText = UnitFormat.amount(converted)
-                            }
-                        }
                     }
                 }
                 Section("Nutrition (recalculated)") {

@@ -10,7 +10,6 @@
 		09D05BC9144301D6C2778EAB /* EntryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D22B5247DB607D50552B4C4 /* EntryRow.swift */; };
 		0D3E7F523AEDFD02CF20EE85 /* AppCore in Frameworks */ = {isa = PBXBuildFile; productRef = DB708EB5C448AB5F2A195D0B /* AppCore */; };
 		1805A24C296B4827BF45360D /* AppLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FEF4F62F3154FF83305493 /* AppLockView.swift */; };
-		1D02CB1E5D2E3BF5366EF514 /* UnitFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBFDC0A30EDABEA3D6D2C1B /* UnitFormat.swift */; };
 		1F352880CD4E068DF04B35DF /* QuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473873BDC1C01302A500085F /* QuickAddBar.swift */; };
 		377F3C56A3E229C7815953BC /* TextFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28121B70EB4EE036EF5629F /* TextFlowUITests.swift */; };
 		3CAFC351BE6D1FDD1FE8D3DF /* CalorieOffsetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802482394DF8F98400A488D /* CalorieOffsetView.swift */; };
@@ -60,7 +59,6 @@
 		40A1CA067B942AD2F09725D2 /* CalorieCounterUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CalorieCounterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		473873BDC1C01302A500085F /* QuickAddBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddBar.swift; sourceTree = "<group>"; };
 		5C9366EAA330B5AAA386831D /* TextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputView.swift; sourceTree = "<group>"; };
-		5DBFDC0A30EDABEA3D6D2C1B /* UnitFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormat.swift; sourceTree = "<group>"; };
 		637C47D228C9D45E809A840B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		669EEFDFC8D9324904A67FC0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		6D22B5247DB607D50552B4C4 /* EntryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRow.swift; sourceTree = "<group>"; };
@@ -130,7 +128,6 @@
 				989E2BA736989DF4117DDF67 /* InputFlowView.swift */,
 				C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */,
 				5C9366EAA330B5AAA386831D /* TextInputView.swift */,
-				5DBFDC0A30EDABEA3D6D2C1B /* UnitFormat.swift */,
 				D8189A60D879FAE780A7725F /* VoiceInputView.swift */,
 			);
 			path = Input;
@@ -339,7 +336,6 @@
 				B33C19BC515DF15DBB3BE02C /* TabbedTotalCard.swift in Sources */,
 				ABEB17C57DFB81148435231E /* TextInputView.swift in Sources */,
 				4306649DECE14DECF673344A /* TodayView.swift in Sources */,
-				1D02CB1E5D2E3BF5366EF514 /* UnitFormat.swift in Sources */,
 				A12A420D891564464675F02D /* VoiceInputView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

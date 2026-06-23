@@ -35,18 +35,14 @@ struct FoodConfirmModelTests {
         #expect(abs(model.protein - 5.2) < 1e-9)
     }
 
-    @Test("a compatible unit change preserves nutrition (same physical amount)")
-    func compatibleUnitChangePreservesNutrition() throws {
-        let bread = ParsedFood(food: "Bread", quantity: 100, unit: "g", kcal: 244, fat: 4, carbs: 49, protein: 11)
+    @Test("changing to a compatible unit recomputes calories for that much")
+    func compatibleUnitChangeRecomputes() throws {
+        // 1 oz of bread = 70 kcal; the amount NUMBER stays, the unit reinterprets.
+        let bread = ParsedFood(food: "Bread", quantity: 1, unit: "oz", kcal: 70, fat: 1, carbs: 14, protein: 3)
         let model = FoodConfirmModel(parsed: bread, method: .barcode, store: try makeStore())
-        #expect(model.kcal == 244)
-        // The same 100 g expressed as ≈3.53 oz — calories stay the same.
-        model.unit = "oz"
-        model.quantityText = "3.5274"
-        #expect(model.kcal == 244)
-        // Doubling the oz amount doubles the calories.
-        model.quantityText = "7.0549"
-        #expect(model.kcal == 488)
+        #expect(model.kcal == 70)
+        model.unit = "lb"             // keep "1", now 1 lb = 16 oz
+        #expect(model.kcal == 1120)   // 70 × 16
     }
 
     @Test("an incompatible unit change relabels (nutrition follows the number only)")

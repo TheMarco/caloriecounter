@@ -53,16 +53,9 @@ private struct ConfirmForm: View {
                         .keyboardType(.decimalPad)
                     Divider()
                     Picker("Unit", selection: $model.unit) {
-                        ForEach(Constants.foodUnits, id: \.self) { Text($0).tag($0) }
+                        ForEach(UnitConversion.compatibleUnits(with: model.unit), id: \.self) { Text($0).tag($0) }
                     }
                     .labelsHidden()
-                    .onChange(of: model.unit) { old, new in
-                        // Switching between compatible units (g↔oz, ml↔cup…) converts
-                        // the amount so the real food is preserved.
-                        if let converted = UnitConversion.convert(model.quantity, from: old, to: new) {
-                            model.quantityText = UnitFormat.amount(converted)
-                        }
-                    }
                 }
             }
             Section("Nutrition (recalculated)") {

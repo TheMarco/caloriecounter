@@ -35,6 +35,15 @@ struct UnitConversionTests {
         #expect(UnitConversion.convert(1, from: "piece", to: "oz") == nil)
     }
 
+    @Test("compatibleUnits returns the food's own family only")
+    func compatibleUnits() {
+        #expect(UnitConversion.compatibleUnits(with: "oz") == ["g", "oz", "lb"])
+        #expect(UnitConversion.compatibleUnits(with: "cup") == ["ml", "cup", "tbsp", "tsp"])
+        #expect(UnitConversion.compatibleUnits(with: "serving") == ["piece", "slice", "bowl", "plate", "serving"])
+        // A weight food never offers bowl/cup/etc.
+        #expect(UnitConversion.compatibleUnits(with: "g").contains("bowl") == false)
+    }
+
     @Test("areCompatible reflects convertibility")
     func compatibility() {
         #expect(UnitConversion.areCompatible("g", "lb"))
