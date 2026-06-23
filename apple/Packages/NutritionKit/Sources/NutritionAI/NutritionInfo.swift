@@ -16,7 +16,7 @@ public struct NutritionInfo: Sendable {
     public var food: String
     @Guide(description: "Quantity for the serving")
     public var quantity: Double
-    @Guide(description: "Unit: g, ml, cup, tbsp, tsp, piece, slice, bowl, plate, serving, oz, lb")
+    @Guide(description: "The single most natural unit. Use 'piece' for whole handheld foods (sandwich, burger, hot dog, taco, wrap, egg, muffin). Use 'slice' ONLY for foods actually served in slices (pizza, bread, cake). Use 'bowl' or 'plate' for served meals, and 'g'/'ml' for loose ingredients. One of: g, ml, cup, tbsp, tsp, piece, slice, bowl, plate, serving, oz, lb")
     public var unit: String
     @Guide(description: "Total calories for this serving", .range(0...5000))
     public var kcal: Double
@@ -38,9 +38,11 @@ public struct NutritionInfo: Sendable {
         self.protein = protein
     }
 
-    /// Promote the model's structured output into the shared parser type.
+    /// Promote the model's structured output into the shared parser type, fixing
+    /// awkward units for whole handheld foods (e.g. a sandwich tagged "slice").
     public func toParsedFood() -> ParsedFood {
-        ParsedFood(food: food, quantity: quantity, unit: unit,
-                   kcal: kcal, fat: fat, carbs: carbs, protein: protein)
+        let naturalUnit = FoodUnitNormalizer.normalizedUnit(food: food, unit: unit, quantity: quantity)
+        return ParsedFood(food: food, quantity: quantity, unit: naturalUnit,
+                          kcal: kcal, fat: fat, carbs: carbs, protein: protein)
     }
 }

@@ -31,6 +31,12 @@ public enum Prompts {
         - Soups: use the "bowl" unit, a typical serving = 250-300ml.
         - Meat portions: restaurant serving = 150-200g, home serving = 100-150g.
 
+        UNIT SELECTION:
+        - Whole handheld foods are ONE 'piece': sandwich, burger, hot dog, corn dog, \
+        taco, burrito, wrap, quesadilla, egg, muffin, bagel. Never call these "slice".
+        - Use 'slice' only for foods truly served in slices (pizza, bread, cake).
+        - Use 'bowl'/'plate' for served meals, 'g'/'ml' for loose ingredients.
+
         IMPORTANT RULES:
         - For compound foods (e.g. "chili dog with cheese"), give the TOTAL for the \
         whole item, not per ingredient.
