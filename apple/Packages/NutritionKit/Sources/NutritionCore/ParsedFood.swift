@@ -18,6 +18,11 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
     public var confidence: Double?
     /// Free-form parser notes (web `ParseFoodResponse.data.notes`).
     public var notes: String?
+    // Optional context nutrients (nil = unknown).
+    public var fiber: Double?      // grams
+    public var sodium: Double?     // milligrams
+    public var sugar: Double?      // grams
+    public var nutritionConfidence: NutritionConfidence?
 
     public init(
         food: String,
@@ -28,7 +33,11 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         carbs: Double = 0,
         protein: Double = 0,
         confidence: Double? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        fiber: Double? = nil,
+        sodium: Double? = nil,
+        sugar: Double? = nil,
+        nutritionConfidence: NutritionConfidence? = nil
     ) {
         self.food = food
         self.quantity = quantity
@@ -39,6 +48,10 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         self.protein = protein
         self.confidence = confidence
         self.notes = notes
+        self.fiber = fiber
+        self.sodium = sodium
+        self.sugar = sugar
+        self.nutritionConfidence = nutritionConfidence
     }
 
     /// Build a parse from an existing entry (e.g. re-adding from autocomplete).
@@ -46,7 +59,9 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         self.init(
             food: entry.food, quantity: entry.quantity, unit: entry.unit,
             kcal: entry.kcal, fat: entry.fat, carbs: entry.carbs, protein: entry.protein,
-            confidence: entry.confidence, notes: nil
+            confidence: entry.confidence, notes: nil,
+            fiber: entry.fiber, sodium: entry.sodium, sugar: entry.sugar,
+            nutritionConfidence: entry.nutritionConfidence
         )
     }
 
@@ -70,7 +85,11 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
             carbs: carbs,
             protein: protein,
             method: method,
-            confidence: confidence
+            confidence: confidence,
+            fiber: fiber,
+            sodium: sodium,
+            sugar: sugar,
+            nutritionConfidence: nutritionConfidence
         )
     }
 }

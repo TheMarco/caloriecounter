@@ -30,6 +30,10 @@ public final class EntryRecord {
     public var protein: Double
     public var method: String        // InputMethod.rawValue
     public var confidence: Double?
+    public var fiber: Double?         // grams (nil = unknown)
+    public var sodium: Double?        // milligrams (nil = unknown)
+    public var sugar: Double?         // grams (nil = unknown)
+    public var nutritionConfidence: String?   // NutritionConfidence.rawValue
 
     public init(from e: Entry) {
         self.id = e.id
@@ -44,6 +48,10 @@ public final class EntryRecord {
         self.protein = e.protein
         self.method = e.method.rawValue
         self.confidence = e.confidence
+        self.fiber = e.fiber
+        self.sodium = e.sodium
+        self.sugar = e.sugar
+        self.nutritionConfidence = e.nutritionConfidence?.rawValue
     }
 
     /// Overwrite this row in place from a domain entry (id is the match key and
@@ -60,6 +68,10 @@ public final class EntryRecord {
         protein = e.protein
         method = e.method.rawValue
         confidence = e.confidence
+        fiber = e.fiber
+        sodium = e.sodium
+        sugar = e.sugar
+        nutritionConfidence = e.nutritionConfidence?.rawValue
     }
 
     /// Map back to the domain `Entry`. An unrecognized `method` string falls back
@@ -77,7 +89,11 @@ public final class EntryRecord {
             carbs: carbs,
             protein: protein,
             method: InputMethod(rawValue: method) ?? .text,
-            confidence: confidence
+            confidence: confidence,
+            fiber: fiber,
+            sodium: sodium,
+            sugar: sugar,
+            nutritionConfidence: nutritionConfidence.flatMap(NutritionConfidence.init(rawValue:))
         )
     }
 }

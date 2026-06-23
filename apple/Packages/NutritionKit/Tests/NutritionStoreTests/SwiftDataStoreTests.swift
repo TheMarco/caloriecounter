@@ -316,4 +316,28 @@ struct SwiftDataStoreTests {
         #expect(all.map(\.date) == ["2026-06-21"])
         #expect(try await store.latestWeight()?.weightKg == 79.5)
     }
+
+    // MARK: - Fiber / sodium / sugar + confidence
+
+    @Test("fiber/sodium/sugar + confidence round-trip; nil stays nil, 0 stays 0")
+    func nutrientFieldsRoundTrip() async throws {
+        let store = try makeStore()
+        let entry = Entry(id: "n1", date: "2026-06-23", timestamp: Date(timeIntervalSince1970: 0),
+                          food: "Lentils", quantity: 1, unit: "bowl", kcal: 230, fat: 1, carbs: 40, protein: 18,
+                          method: .barcode, fiber: 15, sodium: 0, sugar: nil, nutritionConfidence: .barcode)
+        try await store.add(entry)
+
+        let got = try await store.entries(on: "2026-06-23").first
+        #expect(got?.fiber == 15)
+        #expect(got?.sodium == 0)      // a KNOWN zero stays zero
+        #expect(got?.sugar == nil)     // UNKNOWN stays nil — not coerced to 0
+        #expect(got?.nutritionConfidence == .barcode)
+        #expect(got == entry)          // full Equatable round-trip
+
+        // A plain entry leaves all new fields nil.
+        try await store.add(Entry(id: "n2", date: "2026-06-23", timestamp: Date(timeIntervalSince1970: 1),
+                                  food: "Plain", quantity: 1, unit: "g", kcal: 50, fat: 0, carbs: 0, protein: 0, method: .text))
+        let plain = try await store.entries(on: "2026-06-23").first { $0.id == "n2" }
+        #expect(plain?.fiber == nil && plain?.sodium == nil && plain?.nutritionConfidence == nil)
+    }
 }

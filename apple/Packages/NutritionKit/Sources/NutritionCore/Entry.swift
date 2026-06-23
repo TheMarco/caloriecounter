@@ -29,6 +29,14 @@ public struct Entry: Identifiable, Codable, Sendable, Equatable {
     /// Optional 0…1 parser confidence (web `Entry.confidence?`).
     public var confidence: Double?
 
+    // Optional context nutrients. `nil` = unknown, `0` = a known zero — never
+    // coerce unknown to zero in summaries.
+    public var fiber: Double?      // grams
+    public var sodium: Double?     // milligrams
+    public var sugar: Double?      // grams
+    /// Where the nutrition numbers came from (drives display precision).
+    public var nutritionConfidence: NutritionConfidence?
+
     public init(
         id: String,
         date: String,
@@ -41,7 +49,11 @@ public struct Entry: Identifiable, Codable, Sendable, Equatable {
         carbs: Double,
         protein: Double,
         method: InputMethod,
-        confidence: Double? = nil
+        confidence: Double? = nil,
+        fiber: Double? = nil,
+        sodium: Double? = nil,
+        sugar: Double? = nil,
+        nutritionConfidence: NutritionConfidence? = nil
     ) {
         self.id = id
         self.date = date
@@ -55,5 +67,9 @@ public struct Entry: Identifiable, Codable, Sendable, Equatable {
         self.protein = protein
         self.method = method
         self.confidence = confidence
+        self.fiber = fiber
+        self.sodium = sodium
+        self.sugar = sugar
+        self.nutritionConfidence = nutritionConfidence
     }
 }

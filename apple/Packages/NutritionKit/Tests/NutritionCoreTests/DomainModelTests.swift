@@ -145,4 +145,28 @@ struct DomainModelTests {
         #expect(DayTotals(date: "2026-06-22", totals: totals, offset: 500).netCalories == 1500)
         #expect(DayTotals(date: "2026-06-22", totals: totals, offset: 2500).netCalories == 0)
     }
+
+    @Test("ParsedFood carries fiber/sodium/sugar + confidence into Entry and back")
+    func parsedFoodNutrients() {
+        let p = ParsedFood(food: "X", quantity: 1, unit: "g", kcal: 100,
+                           fiber: 3, sodium: 850, sugar: nil, nutritionConfidence: .estimated)
+        let e = p.makeEntry(id: "e", date: "2026-06-23", timestamp: Date(timeIntervalSince1970: 0), method: .text)
+        #expect(e.fiber == 3)
+        #expect(e.sodium == 850)
+        #expect(e.sugar == nil)
+        #expect(e.nutritionConfidence == .estimated)
+
+        let back = ParsedFood(entry: e)   // round-trip back out
+        #expect(back.fiber == 3 && back.sodium == 850 && back.sugar == nil)
+        #expect(back.nutritionConfidence == .estimated)
+    }
+
+    @Test("NutritionConfidence.isExact distinguishes measured sources from estimates")
+    func confidenceIsExact() {
+        #expect(NutritionConfidence.label.isExact)
+        #expect(NutritionConfidence.barcode.isExact)
+        #expect(NutritionConfidence.userEdited.isExact)
+        #expect(!NutritionConfidence.estimated.isExact)
+        #expect(!NutritionConfidence.unknown.isExact)
+    }
 }
