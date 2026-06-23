@@ -23,10 +23,18 @@ struct VoiceInputView: View {
     var body: some View {
         VStack(spacing: 28) {
             Spacer()
-            Image(systemName: dictation.isRecording ? "waveform" : "mic.circle.fill")
-                .font(.system(size: 88))
-                .foregroundStyle(dictation.isRecording ? Color.red : Color.accentColor)
-                .symbolEffect(.variableColor, isActive: dictation.isRecording && !reduceMotion)
+            Button {
+                Task { await toggle() }
+            } label: {
+                Image(systemName: dictation.isRecording ? "waveform.circle.fill" : "mic.circle.fill")
+                    .font(.system(size: 96))
+                    .foregroundStyle(dictation.isRecording ? Color.red : Color.accentColor)
+                    .symbolEffect(.variableColor, isActive: dictation.isRecording && !reduceMotion)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(.plain)
+            .disabled(parsing)
+            .accessibilityLabel(dictation.isRecording ? "Stop recording" : "Start recording")
 
             Text(dictation.transcript.isEmpty ? "Tap the mic and say what you ate" : dictation.transcript)
                 .font(.title3)
