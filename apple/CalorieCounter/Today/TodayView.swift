@@ -27,9 +27,6 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("Today")
-            .safeAreaInset(edge: .bottom) {
-                QuickAddBar { activeInput = $0 }
-            }
             .task {
                 let m = model ?? TodayModel(store: container.store)
                 model = m
@@ -56,8 +53,13 @@ struct TodayView: View {
     private func dashboard(_ model: TodayModel) -> some View {
         List {
             Section {
+                QuickAddBar { activeInput = $0 }
+                    .padding(.bottom, 8)
+                    .clearRow()
+            }
+            Section {
                 MacroDashboard(totals: model.totals, targets: container.settings.targets, offset: model.offset)
-                    .padding(.top, 4)
+                    .padding(.top, 24)
                     .clearRow()
             }
             Section {

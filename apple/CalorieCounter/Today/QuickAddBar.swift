@@ -1,7 +1,9 @@
 //
 //  QuickAddBar.swift
-//  The four food-capture launch buttons as a Liquid Glass cluster, anchored at the
-//  bottom for thumb reach. Each method carries its own accent color.
+//  The food-capture launch buttons as a Liquid Glass row anchored at the TOP of
+//  Today, so it never collides with the bottom tab bar. Each method carries its
+//  own accent color. (Photo capture is intentionally omitted — barcode, voice,
+//  and text are all on-device and reliable.)
 //
 
 import SwiftUI
@@ -10,32 +12,32 @@ import NutritionCore
 struct QuickAddBar: View {
     var onSelect: (InputMethod) -> Void
 
-    private let methods: [InputMethod] = [.barcode, .voice, .text, .photo]
+    private let methods: [InputMethod] = [.barcode, .voice, .text]
 
     var body: some View {
-        GlassEffectContainer(spacing: 18) {
-            HStack(spacing: 18) {
-                ForEach(methods) { method in
-                    Button {
-                        onSelect(method)
-                    } label: {
-                        VStack(spacing: 5) {
-                            Image(systemName: method.systemImage)
-                                .font(.system(size: 21, weight: .semibold))
-                                .foregroundStyle(method.accent)
-                                .frame(width: 54, height: 54)
-                            Text(shortLabel(method))
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                        }
+        // Independent glass buttons (NOT inside a single GlassEffectContainer —
+        // that merges the interactive surfaces and routes every tap to one button).
+        HStack(spacing: 10) {
+            ForEach(methods) { method in
+                Button {
+                    onSelect(method)
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: method.systemImage)
+                            .font(.system(size: 20, weight: .semibold))
+                        Text(shortLabel(method))
+                            .font(.caption.weight(.semibold))
                     }
-                    .glassEffect(.regular.tint(method.accent.opacity(0.18)).interactive(), in: .rect(cornerRadius: 22))
-                    .accessibilityLabel(method.label)
-                    .accessibilityHint(method.detail)
+                    .foregroundStyle(method.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
                 }
+                .buttonStyle(.glass)
+                .tint(method.accent)
+                .accessibilityLabel(method.label)
+                .accessibilityHint(method.detail)
             }
         }
-        .padding(.bottom, 6)
     }
 
     private func shortLabel(_ m: InputMethod) -> String {
