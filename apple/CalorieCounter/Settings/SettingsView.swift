@@ -28,10 +28,20 @@ struct SettingsView: View {
                     .scrollContentBackground(.hidden)
             }
                 .navigationTitle("Settings")
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") { focusedTarget = nil }
+                .safeAreaInset(edge: .bottom) {
+                    // A real bar pinned above the keyboard — reliable, unlike the
+                    // SwiftUI keyboard-accessory toolbar which flickers in/out on device.
+                    if focusedTarget != nil {
+                        HStack {
+                            Spacer()
+                            Button("Done") { focusedTarget = nil }
+                                .font(.body.weight(.semibold))
+                                .tint(DS.Macro.calories.tint)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial)
+                        .overlay(alignment: .top) { Divider() }
                     }
                 }
                 .onChange(of: focusedTarget) { _, new in
@@ -151,22 +161,37 @@ struct SettingsView: View {
         .scrollDismissesKeyboard(.interactively)   // swipe down to dismiss the number pad
     }
 
-    /// A tidy, tappable target row: label on the left, the value (typeable on the
-    /// number pad) and its unit on the right. Typed values are snapped into range
-    /// when the keyboard is dismissed (see `clampTargets`).
+    /// A tidy, tappable target row: label on the left, and the value + unit in a
+    /// chip on the right that's clearly an input — faintly filled at rest and
+    /// accent-highlighted while you're editing it, so it's obvious which field is
+    /// active. Typed values snap into range when the keyboard closes (clampTargets).
     private func targetField(_ label: String, value: Binding<Double>, unit: String) -> some View {
-        HStack {
+        let editing = focusedTarget == label
+        return HStack {
             Text(label)
             Spacer(minLength: 8)
-            TextField(label, value: value, format: .number.grouping(.never))
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focusedTarget, equals: label)
-                .frame(maxWidth: 90)
-            Text(unit).foregroundStyle(.secondary)
+            HStack(spacing: 4) {
+                TextField(label, value: value, format: .number.grouping(.never))
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.trailing)
+                    .focused($focusedTarget, equals: label)
+                    .fixedSize()
+                Text(unit).font(.callout).foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(editing ? DS.Macro.calories.tint.opacity(0.20) : Color.primary.opacity(0.06))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .stroke(editing ? DS.Macro.calories.tint.opacity(0.7) : .clear, lineWidth: 1.5)
+                    }
+            }
         }
         .contentShape(Rectangle())
         .onTapGesture { focusedTarget = label }   // tapping anywhere on the row edits
+        .animation(.easeInOut(duration: 0.15), value: editing)
     }
 
     /// Snap every target into its valid range (called when the number pad closes).

@@ -65,9 +65,11 @@ struct HistoryView: View {
                             Spacer()
                             Button { showLogWeight = true } label: {
                                 Label("Log", systemImage: "plus")
+                                    .font(.subheadline.weight(.semibold))
                             }
-                            .buttonStyle(.glassProminent)
-                            .tint(DS.Macro.carbs.tint)
+                            .buttonStyle(.bordered)
+                            .tint(DS.Macro.calories.tint)
+                            .controlSize(.small)
                         }
                         WeightChart(points: model.weightPoints,
                                     units: container.settings.units,
