@@ -63,6 +63,7 @@ struct LogWeightSheet: View {
         let entry = WeightEntry(id: WeightEntry.id(for: today), date: today, timestamp: Date(), weightKg: kg)
         Task {
             try? await container.store.addWeight(entry)
+            await container.healthSyncWeight(entry)   // no-op unless weight sync is on
             container.dataDidChange()   // History reloads via .task(id:)
         }
         dismiss()

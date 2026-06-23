@@ -79,6 +79,7 @@ struct EditEntryView: View {
                         updated.unit = unit
                         Task {
                             try? await container.store.update(updated)
+                            await container.healthSyncFood(updated)   // rewrites Health data for this id
                             onSaved()
                             dismiss()
                         }

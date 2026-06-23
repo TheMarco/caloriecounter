@@ -46,6 +46,22 @@ final class SettingsUITests: XCTestCase {
     }
 
     @MainActor
+    func testAppleHealthSectionRenders() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest"]
+        app.launch()
+
+        app.tabBars.buttons["Settings"].tap()
+        app.swipeUp(); app.swipeUp()
+        XCTAssertTrue(app.staticTexts["Apple Health"].waitForExistence(timeout: 5), "Apple Health section should render")
+        // Opt-in controls present (toggle flip + persistence is covered by unit tests).
+        XCTAssertTrue(app.switches["Sync nutrition to Apple Health"].waitForExistence(timeout: 3),
+                      "Nutrition sync toggle should exist")
+        XCTAssertTrue(app.buttons["Remove this app’s data from Apple Health"].exists,
+                      "The destructive remove action should be present")
+    }
+
+    @MainActor
     func testGoalWizardCanBeCancelled() {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest"]

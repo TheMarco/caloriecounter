@@ -41,6 +41,26 @@ struct SettingsStoreTests {
         #expect(b.appearance == .dark)
     }
 
+    @Test("Apple Health sync toggles default off and persist")
+    func healthFlags() {
+        let defaults = makeDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.healthNutritionSyncEnabled == false)   // opt-in
+        #expect(a.healthWeightSyncEnabled == false)
+        #expect(a.healthWeightImportEnabled == false)
+        #expect(a.healthLastSyncAt == nil)
+
+        a.healthNutritionSyncEnabled = true
+        a.healthWeightImportEnabled = true
+        a.healthLastSyncAt = Date(timeIntervalSince1970: 1_750_000_000)
+
+        let b = SettingsStore(defaults: defaults)
+        #expect(b.healthNutritionSyncEnabled == true)
+        #expect(b.healthWeightSyncEnabled == false)
+        #expect(b.healthWeightImportEnabled == true)
+        #expect(b.healthLastSyncAt == Date(timeIntervalSince1970: 1_750_000_000))
+    }
+
     @Test("out-of-range targets are clamped when persisted")
     func clamping() {
         let defaults = makeDefaults()

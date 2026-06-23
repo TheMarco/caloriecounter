@@ -34,6 +34,7 @@ struct FoodConfirmView: View {
 }
 
 private struct ConfirmForm: View {
+    @Environment(AppContainer.self) private var container
     @Bindable var model: FoodConfirmModel
     let notes: String?
     let onSaved: () -> Void
@@ -81,7 +82,11 @@ private struct ConfirmForm: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button {
                     saving = true
-                    Task { await model.save(); onSaved() }
+                    Task {
+                        let entry = await model.save()
+                        await container.healthSyncFood(entry)   // no-op unless Health sync is on
+                        onSaved()
+                    }
                 } label: {
                     if saving { ProgressView() } else { Text("Add") }
                 }

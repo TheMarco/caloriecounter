@@ -40,7 +40,10 @@ struct DayDetailView: View {
                             ForEach(model.entries) { EntryCard(entry: $0).clearRow() }
                                 .onDelete { offsets in
                                     let ids = offsets.map { model.entries[$0].id }
-                                    Task { for id in ids { await model.deleteEntry(id: id) } }
+                                    Task {
+                                        for id in ids { await model.deleteEntry(id: id); await container.healthDeleteFood(id: id) }
+                                        container.dataDidChange()
+                                    }
                                 }
                         }
                     } header: {

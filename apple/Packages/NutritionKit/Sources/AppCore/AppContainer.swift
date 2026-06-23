@@ -45,6 +45,75 @@ public final class AppContainer {
     /// Signal that stored data changed; triggers dependent views to reload.
     public func dataDidChange() { dataVersion &+= 1 }
 
+    // MARK: - Apple Health sync glue (opt-in; each is a no-op unless its toggle is
+    // on AND HealthKit is available. Failures are swallowed — never block local use.)
+
+    public func healthSyncFood(_ entry: Entry) async {
+        guard settings.healthNutritionSyncEnabled, healthSync.isAvailable() else { return }
+        do { try await healthSync.syncFoodEntry(entry); settings.healthLastSyncAt = Date() }
+        catch { /* non-fatal: local entry is already saved */ }
+    }
+    public func healthDeleteFood(id: String) async {
+        guard settings.healthNutritionSyncEnabled, healthSync.isAvailable() else { return }
+        try? await healthSync.deleteSyncedFoodEntry(id: id)
+    }
+    public func healthSyncWeight(_ entry: WeightEntry) async {
+        guard settings.healthWeightSyncEnabled, healthSync.isAvailable() else { return }
+        do { try await healthSync.syncWeightEntry(entry); settings.healthLastSyncAt = Date() }
+        catch { /* non-fatal */ }
+    }
+
+    /// Re-sync every food entry from the last `daysBack` days (Settings → Repair).
+    public func repairHealthSync(daysBack: Int = 30) async {
+        guard settings.healthNutritionSyncEnabled, healthSync.isAvailable() else { return }
+        let keys = LocalDate.lastDays(daysBack)
+        guard let start = keys.first, let end = keys.last else { return }
+        let entries = (try? await store.entries(from: start, to: end)) ?? []
+        for e in entries { try? await healthSync.syncFoodEntry(e) }
+        settings.healthLastSyncAt = Date()
+    }
+
+    /// Import Health weights. Days with no local weight are added silently; days
+    /// that differ from an existing local weight are returned as conflicts for the
+    /// user to resolve.
+    public func importHealthWeights(daysBack: Int = 365) async -> [WeightConflict] {
+        guard settings.healthWeightImportEnabled, healthSync.isAvailable() else { return [] }
+        let imported = (try? await healthSync.importWeights(daysBack: daysBack)) ?? []
+        var conflicts: [WeightConflict] = []
+        for w in imported {
+            let localWeights = (try? await store.weights(from: w.date, to: w.date)) ?? []
+            if let localKg = localWeights.first?.weightKg {
+                if abs(localKg - w.weightKg) > 0.05 {
+                    conflicts.append(WeightConflict(date: w.date, localKg: localKg, healthKg: w.weightKg))
+                }
+            } else {
+                try? await store.addWeight(w)   // no local weight that day → import silently
+            }
+        }
+        dataDidChange()
+        return conflicts
+    }
+
+    /// Apply a conflict resolution: when `useHealth`, overwrite the local day.
+    public func resolveWeightConflict(_ c: WeightConflict, useHealth: Bool) async {
+        guard useHealth else { return }
+        let w = WeightEntry(id: WeightEntry.id(for: c.date), date: c.date, timestamp: Date(), weightKg: c.healthKg)
+        try? await store.addWeight(w)
+        dataDidChange()
+    }
+
+    /// Stop all future sync without deleting anything already in Apple Health.
+    public func disconnectHealth() {
+        settings.healthNutritionSyncEnabled = false
+        settings.healthWeightSyncEnabled = false
+        settings.healthWeightImportEnabled = false
+    }
+
+    /// Delete everything this app previously wrote to Apple Health.
+    public func removeAllHealthData() async {
+        try? await healthSync.removeAllAppData()
+    }
+
     // MARK: - Shared instance
     public static let shared: AppContainer = {
         do { return try AppContainer() }

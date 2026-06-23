@@ -77,7 +77,10 @@ struct TodayView: View {
                     }
                     .onDelete { offsets in
                         let ids = offsets.map { model.entries[$0].id }
-                        Task { for id in ids { await model.deleteEntry(id: id) }; container.dataDidChange() }
+                        Task {
+                            for id in ids { await model.deleteEntry(id: id); await container.healthDeleteFood(id: id) }
+                            container.dataDidChange()
+                        }
                     }
                 }
             } header: {

@@ -18,6 +18,18 @@ public final class SettingsStore {
     /// Color-scheme preference (auto/light/dark); the app maps it to a SwiftUI `ColorScheme?`.
     public var appearance: AppearanceMode { didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) } }
 
+    // MARK: - Apple Health (all opt-in; default off)
+    /// Write food entries (calories + macros) to Apple Health.
+    public var healthNutritionSyncEnabled: Bool { didSet { defaults.set(healthNutritionSyncEnabled, forKey: Keys.healthNutrition) } }
+    /// Write weigh-ins to Apple Health.
+    public var healthWeightSyncEnabled: Bool { didSet { defaults.set(healthWeightSyncEnabled, forKey: Keys.healthWeight) } }
+    /// Import body-mass samples from Apple Health into the app.
+    public var healthWeightImportEnabled: Bool { didSet { defaults.set(healthWeightImportEnabled, forKey: Keys.healthWeightImport) } }
+    /// Timestamp of the last successful sync, shown in Settings.
+    public var healthLastSyncAt: Date? {
+        didSet { defaults.set(healthLastSyncAt?.timeIntervalSince1970 ?? 0, forKey: Keys.healthLastSync) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// `defaultUnits` is the fallback when the user has never chosen a unit system
@@ -36,6 +48,11 @@ public final class SettingsStore {
         self.biometricLockEnabled = defaults.bool(forKey: Keys.biometricLock)
         self.hasCompletedSetup = defaults.bool(forKey: Keys.completedSetup)
         self.appearance = defaults.string(forKey: Keys.appearance).flatMap(AppearanceMode.init(rawValue:)) ?? .system
+        self.healthNutritionSyncEnabled = defaults.bool(forKey: Keys.healthNutrition)
+        self.healthWeightSyncEnabled = defaults.bool(forKey: Keys.healthWeight)
+        self.healthWeightImportEnabled = defaults.bool(forKey: Keys.healthWeightImport)
+        let lastSync = defaults.double(forKey: Keys.healthLastSync)
+        self.healthLastSyncAt = lastSync > 0 ? Date(timeIntervalSince1970: lastSync) : nil
     }
 
     /// The domain settings snapshot (targets + units); lock is an app concern.
@@ -60,5 +77,9 @@ public final class SettingsStore {
         static let completedSetup = "settings.hasCompletedSetup"
         static let biometricLock = "settings.biometricLockEnabled"
         static let appearance = "settings.appearance"
+        static let healthNutrition = "settings.healthNutritionSync"
+        static let healthWeight = "settings.healthWeightSync"
+        static let healthWeightImport = "settings.healthWeightImport"
+        static let healthLastSync = "settings.healthLastSyncAt"
     }
 }

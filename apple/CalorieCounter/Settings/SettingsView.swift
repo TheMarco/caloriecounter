@@ -125,6 +125,8 @@ struct SettingsView: View {
                 Text("Lock the app when it goes to the background. Your data stays on this device.")
             }
 
+            AppleHealthSettings()
+
             Section {
                 if let exportURL {
                     ShareLink(item: exportURL) {
