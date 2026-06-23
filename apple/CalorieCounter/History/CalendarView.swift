@@ -55,17 +55,23 @@ struct CalendarView: View {
         Button {
             onSelect(key)
         } label: {
-            VStack(spacing: 3) {
+            VStack(spacing: 4) {
                 Text("\(day)")
                     .font(.callout)
                     .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(isToday ? Color.accentColor : .primary)
+                    .foregroundStyle(isToday ? .white : .primary)
+                    .frame(width: 32, height: 32)
+                    .background {
+                        if isToday {
+                            Circle().fill(DS.Macro.calories.linearGradient)
+                                .shadow(color: DS.Macro.calories.tint.opacity(0.5), radius: 6)
+                        }
+                    }
                 Circle()
-                    .fill(hasEntries ? Color.accentColor : .clear)
+                    .fill(hasEntries ? DS.Macro.calories.tint : .clear)
                     .frame(width: 5, height: 5)
             }
-            .frame(maxWidth: .infinity, minHeight: 38)
-            .background(isToday ? Color.accentColor.opacity(0.12) : .clear, in: .rect(cornerRadius: 8))
+            .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(day)\(hasEntries ? ", has entries" : "")")

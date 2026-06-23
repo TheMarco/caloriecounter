@@ -12,19 +12,23 @@ struct RootView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.scenePhase) private var scenePhase
     @State private var lock = AppLockManager()
+    @State private var ready = false
 
     private var lockEnabled: Bool { container.settings.biometricLockEnabled }
 
     var body: some View {
         Group {
-            if lockEnabled && lock.isLocked {
+            if !ready {
+                ZStack { AppBackground(); ProgressView() }
+            } else if lockEnabled && lock.isLocked {
                 AppLockView(lock: lock)
             } else {
                 MainTabView()
             }
         }
         .task {
-            await container.bootstrap()
+            await container.bootstrap()   // (no-op normally; seeds in -demo)
+            ready = true
             if lockEnabled {
                 lock.lock()
                 await lock.authenticate()

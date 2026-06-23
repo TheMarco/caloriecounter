@@ -8,7 +8,12 @@ import SwiftUI
 
 struct MainTabView: View {
     enum Screen: Hashable { case today, history, settings }
-    @State private var selection: Screen = .today
+    @State private var selection: Screen = {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-screen-history") { return .history }
+        if args.contains("-screen-settings") { return .settings }
+        return .today
+    }()
 
     var body: some View {
         TabView(selection: $selection) {

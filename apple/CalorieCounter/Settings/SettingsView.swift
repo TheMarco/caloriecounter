@@ -18,7 +18,11 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            settingsForm(settings: container.settings)
+            ZStack {
+                AppBackground()
+                settingsForm(settings: container.settings)
+                    .scrollContentBackground(.hidden)
+            }
                 .navigationTitle("Settings")
                 .task {
                     photoConnected = await container.isPhotoProxyAuthenticated()

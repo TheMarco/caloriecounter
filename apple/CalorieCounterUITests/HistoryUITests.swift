@@ -22,6 +22,6 @@ final class HistoryUITests: XCTestCase {
         // Range selector segment and the calendar section header confirm the
         // History screen built without crashing.
         XCTAssertTrue(app.buttons["7 Days"].waitForExistence(timeout: 5), "Range selector should appear")
-        XCTAssertTrue(app.staticTexts["This month"].waitForExistence(timeout: 5), "Calendar section should appear")
+        XCTAssertTrue(app.staticTexts["This Month"].waitForExistence(timeout: 5), "Calendar section should appear")
     }
 }

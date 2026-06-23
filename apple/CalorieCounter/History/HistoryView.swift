@@ -1,7 +1,7 @@
 //
 //  HistoryView.swift
-//  Range selector (7/30/90), per-macro Swift Chart, and a month calendar. Data
-//  via HistoryModel over store.dailyTotals; tapping a calendar day opens detail.
+//  Range selector (7/30/90), per-macro Swift Chart, and a month calendar over the
+//  app backdrop. Data via HistoryModel; tapping a calendar day opens detail.
 //
 
 import SwiftUI
@@ -16,7 +16,8 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                AppBackground()
                 if let model {
                     content(model)
                 } else {
@@ -44,31 +45,56 @@ struct HistoryView: View {
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: model.range) { _, _ in Task { await model.load() } }
+                .clearRow()
             }
 
             Section {
-                Picker("Macro", selection: $macro) {
-                    ForEach(MacroKind.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
+                SoftCard {
+                    VStack(spacing: 14) {
+                        Picker("Macro", selection: $macro) {
+                            ForEach(MacroKind.allCases) { kind in
+                                Text(kind.label).tag(kind)
+                            }
+                        }
+                        .pickerStyle(.segmented)
 
-                NutritionChart(
-                    points: model.series(macro, targets: container.settings.targets),
-                    target: macro.target(in: container.settings.targets),
-                    unit: macro.unit
-                )
-                .frame(height: 240)
-                .padding(.vertical, 8)
+                        NutritionChart(
+                            points: model.series(macro, targets: container.settings.targets),
+                            target: macro.target(in: container.settings.targets),
+                            unit: macro.unit,
+                            macro: macro.ds
+                        )
+                        .frame(height: 230)
+                    }
+                }
+                .clearRow()
+            } header: {
+                sectionHeader("Trends")
             }
 
-            Section("This month") {
-                CalendarView(datesWithEntries: model.datesWithEntries) { date in
-                    selectedDate = date
+            Section {
+                SoftCard {
+                    CalendarView(datesWithEntries: model.datesWithEntries) { date in
+                        selectedDate = date
+                    }
                 }
-                .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                .clearRow()
+            } header: {
+                sectionHeader("This Month")
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .listRowSpacing(10)
+        .scrollContentBackground(.hidden)
+        .scrollEdgeEffectStyle(.soft, for: .top)
         .refreshable { await model.load() }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.headline)
+            .foregroundStyle(.primary)
+            .textCase(nil)
+            .padding(.leading, 4)
     }
 }

@@ -66,11 +66,17 @@ public final class AppContainer {
         ProcessInfo.processInfo.arguments.contains("-uitest")
     }
 
+    /// Launch with seeded sample data in an in-memory store (App Store screenshots
+    /// / demos): pass `-demo` as a launch argument.
+    public static var isDemo: Bool {
+        ProcessInfo.processInfo.arguments.contains("-demo")
+    }
+
     // MARK: - Real composition root
     public convenience init() throws {
         let keychain = KeychainStore()
         let client = APIClient(tokens: keychain)
-        let store = AppContainer.isUITest
+        let store = (AppContainer.isUITest || AppContainer.isDemo)
             ? try SwiftDataStore.make(inMemory: true)
             : try SwiftDataStore.make(url: AppContainer.storeURL())
         let barcode = CompositeBarcodeResolver(
@@ -99,9 +105,33 @@ public final class AppContainer {
     }
 
     // MARK: - Lifecycle
-    /// Preflight hook called from the root view's `.task`. The store is ready and
-    /// FM availability is resolved at wiring time; reserved for future warm-up.
-    public func bootstrap() async {}
+    /// Preflight hook called from the root view's `.task`. Seeds demo data in
+    /// `-demo` mode; otherwise the store is ready and FM availability is resolved
+    /// at wiring time.
+    public func bootstrap() async {
+        if AppContainer.isDemo { await seedDemoData() }
+    }
+
+    private func seedDemoData() async {
+        let today = LocalDate.today()
+        guard ((try? await store.entries(on: today)) ?? []).isEmpty else { return }
+        let now = Date()
+        let samples: [(String, Double, String, Double, Double, Double, Double, InputMethod)] = [
+            ("Greek Yogurt & Berries", 1, "bowl", 180, 4, 22, 16, .voice),
+            ("Grilled Chicken Breast", 150, "g", 248, 5, 0, 46, .text),
+            ("Avocado Toast", 1, "piece", 290, 17, 28, 8, .photo),
+            ("Banana", 1, "piece", 105, 0, 27, 1, .barcode),
+            ("Almonds", 30, "g", 174, 15, 6, 6, .text),
+        ]
+        for (i, s) in samples.enumerated() {
+            let entry = Entry(
+                id: "demo-\(i)", date: today, timestamp: now.addingTimeInterval(Double(-i) * 1800),
+                food: s.0, quantity: s.1, unit: s.2, kcal: s.3, fat: s.4, carbs: s.5, protein: s.6, method: s.7
+            )
+            try? await store.add(entry)
+        }
+        try? await store.setOffset(320, on: today)
+    }
 
     /// Whether the plate-photo proxy has a stored auth token.
     public func isPhotoProxyAuthenticated() async -> Bool {

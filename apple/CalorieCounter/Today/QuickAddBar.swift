@@ -1,8 +1,7 @@
 //
 //  QuickAddBar.swift
-//  The four food-capture launch buttons as a Liquid Glass cluster, anchored to
-//  the bottom of the Today screen for thumb reachability. The actual capture
-//  flows are wired in Phase 8 (the buttons report the chosen InputMethod).
+//  The four food-capture launch buttons as a Liquid Glass cluster, anchored at the
+//  bottom for thumb reach. Each method carries its own accent color.
 //
 
 import SwiftUI
@@ -14,22 +13,37 @@ struct QuickAddBar: View {
     private let methods: [InputMethod] = [.barcode, .voice, .text, .photo]
 
     var body: some View {
-        GlassEffectContainer(spacing: 20) {
-            HStack(spacing: 20) {
+        GlassEffectContainer(spacing: 18) {
+            HStack(spacing: 18) {
                 ForEach(methods) { method in
                     Button {
                         onSelect(method)
                     } label: {
-                        Image(systemName: method.systemImage)
-                            .font(.title2)
-                            .frame(width: 56, height: 56)
+                        VStack(spacing: 5) {
+                            Image(systemName: method.systemImage)
+                                .font(.system(size: 21, weight: .semibold))
+                                .foregroundStyle(method.accent)
+                                .frame(width: 54, height: 54)
+                            Text(shortLabel(method))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .glassEffect(.regular.tint(.accentColor.opacity(0.18)).interactive(), in: .circle)
+                    .glassEffect(.regular.tint(method.accent.opacity(0.18)).interactive(), in: .rect(cornerRadius: 22))
                     .accessibilityLabel(method.label)
                     .accessibilityHint(method.detail)
                 }
             }
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, 6)
+    }
+
+    private func shortLabel(_ m: InputMethod) -> String {
+        switch m {
+        case .barcode: return "Scan"
+        case .voice: return "Speak"
+        case .text: return "Type"
+        case .photo: return "Photo"
+        }
     }
 }

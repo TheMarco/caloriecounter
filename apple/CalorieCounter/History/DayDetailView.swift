@@ -1,7 +1,7 @@
 //
 //  DayDetailView.swift
-//  Entries, totals, and offset for a historical date. Reuses TodayModel (which is
-//  date-parameterized) so the same tested aggregation drives it.
+//  Entries, totals, and offset for a historical date — the same hero rings and
+//  glass cards as Today. Reuses the date-parameterized TodayModel.
 //
 
 import SwiftUI
@@ -15,34 +15,43 @@ struct DayDetailView: View {
     @State private var model: TodayModel?
 
     var body: some View {
-        Group {
+        ZStack {
+            AppBackground()
             if let model {
                 List {
                     Section {
-                        TabbedTotalCard(totals: model.totals, targets: container.settings.targets, offset: model.offset)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
+                        MacroDashboard(totals: model.totals, targets: container.settings.targets, offset: model.offset)
+                            .padding(.top, 4)
+                            .clearRow()
                     }
                     if model.offset > 0 {
                         Section {
-                            LabeledContent("Exercise / Adjustment", value: "−\(Int(model.offset)) kcal")
+                            OffsetChip(offset: model.offset) {}
+                                .disabled(true)
+                                .clearRow()
                         }
                     }
-                    Section("Food") {
+                    Section {
                         if model.entries.isEmpty {
                             Text("No entries logged this day.")
                                 .font(.subheadline).foregroundStyle(.secondary)
+                                .clearRow()
                         } else {
-                            ForEach(model.entries) { EntryRow(entry: $0) }
+                            ForEach(model.entries) { EntryCard(entry: $0).clearRow() }
                                 .onDelete { offsets in
                                     let ids = offsets.map { model.entries[$0].id }
                                     Task { for id in ids { await model.deleteEntry(id: id) } }
                                 }
                         }
+                    } header: {
+                        if !model.entries.isEmpty {
+                            Text("Food").font(.headline).textCase(nil).padding(.leading, 4)
+                        }
                     }
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
+                .listRowSpacing(10)
+                .scrollContentBackground(.hidden)
             } else {
                 ProgressView()
             }
