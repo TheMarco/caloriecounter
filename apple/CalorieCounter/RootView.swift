@@ -13,6 +13,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var lock = AppLockManager()
     @State private var ready = false
+    @State private var showWizard = false
 
     private var lockEnabled: Bool { container.settings.biometricLockEnabled }
 
@@ -24,11 +25,16 @@ struct RootView: View {
                 AppLockView(lock: lock)
             } else {
                 MainTabView()
+                    .fullScreenCover(isPresented: $showWizard) {
+                        SetupWizardView {}
+                    }
             }
         }
         .task {
             await container.bootstrap()   // (no-op normally; seeds in -demo)
             ready = true
+            showWizard = !container.settings.hasCompletedSetup
+                && !AppContainer.isUITest && !AppContainer.isDemo
             if lockEnabled {
                 lock.lock()
                 await lock.authenticate()

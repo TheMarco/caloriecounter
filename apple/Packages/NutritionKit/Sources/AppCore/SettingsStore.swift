@@ -13,6 +13,8 @@ public final class SettingsStore {
     public var targets: MacroTargets { didSet { persistTargets() } }
     public var units: UnitSystem { didSet { defaults.set(units.rawValue, forKey: Keys.units) } }
     public var biometricLockEnabled: Bool { didSet { defaults.set(biometricLockEnabled, forKey: Keys.biometricLock) } }
+    /// Whether the goal setup wizard has been completed (drives first-launch onboarding).
+    public var hasCompletedSetup: Bool { didSet { defaults.set(hasCompletedSetup, forKey: Keys.completedSetup) } }
 
     @ObservationIgnored private let defaults: UserDefaults
 
@@ -28,6 +30,7 @@ public final class SettingsStore {
         ).clamped
         self.units = defaults.string(forKey: Keys.units).flatMap(UnitSystem.init(rawValue:)) ?? .metric
         self.biometricLockEnabled = defaults.bool(forKey: Keys.biometricLock)
+        self.hasCompletedSetup = defaults.bool(forKey: Keys.completedSetup)
     }
 
     /// The domain settings snapshot (targets + units); lock is an app concern.
@@ -49,6 +52,7 @@ public final class SettingsStore {
         static let carbs = "settings.carbsTarget"
         static let protein = "settings.proteinTarget"
         static let units = "settings.units"
+        static let completedSetup = "settings.hasCompletedSetup"
         static let biometricLock = "settings.biometricLockEnabled"
     }
 }

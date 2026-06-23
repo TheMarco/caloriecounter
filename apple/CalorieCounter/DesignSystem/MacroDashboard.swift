@@ -62,7 +62,7 @@ struct MacroDashboard: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 38) {
             ZStack {
                 MacroRing(macro: .calories, fraction: fraction(.calories), lineWidth: 22, animate: !reduceMotion)
                     .frame(width: 232, height: 232)

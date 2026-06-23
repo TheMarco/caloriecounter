@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var showResetConfirm = false
     @State private var showImporter = false
     @State private var importMessage: String?
+    @State private var showWizard = false
 
     var body: some View {
         NavigationStack {
@@ -49,12 +50,25 @@ struct SettingsView: View {
                 } message: {
                     Text(importMessage ?? "")
                 }
+                .fullScreenCover(isPresented: $showWizard) {
+                    SetupWizardView {}
+                }
         }
     }
 
     private func settingsForm(settings: SettingsStore) -> some View {
         @Bindable var settings = settings
         return Form {
+            Section {
+                Button {
+                    showWizard = true
+                } label: {
+                    Label("Set targets from a goal", systemImage: "wand.and.stars")
+                }
+            } footer: {
+                Text("Re-run the setup wizard to recalculate your calorie & macro targets.")
+            }
+
             Section("Daily Targets") {
                 targetStepper("Calories", value: $settings.targets.calories, range: 1000...5000, step: 50, unit: "kcal")
                 targetStepper("Fat", value: $settings.targets.fat, range: 20...200, step: 5, unit: "g")
