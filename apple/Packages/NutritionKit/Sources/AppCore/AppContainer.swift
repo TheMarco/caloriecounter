@@ -112,25 +112,64 @@ public final class AppContainer {
         if AppContainer.isDemo { await seedDemoData() }
     }
 
+    /// Seed ~2 months of realistic, individually-named meals (breakfast / lunch /
+    /// dinner / snacks) so every screen — Today, Day Detail, History — shows genuine
+    /// food logs for screenshots. Deterministic (rotates the catalog by day index).
     private func seedDemoData() async {
         let today = LocalDate.today()
         guard ((try? await store.entries(on: today)) ?? []).isEmpty else { return }
-        let now = Date()
-        let samples: [(String, Double, String, Double, Double, Double, Double, InputMethod)] = [
-            ("Greek Yogurt & Berries", 1, "bowl", 180, 4, 22, 16, .voice),
-            ("Grilled Chicken Breast", 150, "g", 248, 5, 0, 46, .text),
-            ("Avocado Toast", 1, "piece", 290, 17, 28, 8, .photo),
-            ("Banana", 1, "piece", 105, 0, 27, 1, .barcode),
-            ("Almonds", 30, "g", 174, 15, 6, 6, .text),
+
+        struct Meal { let food: String; let qty: Double; let unit: String; let kcal, fat, carbs, protein: Double; let method: InputMethod }
+        let breakfasts: [Meal] = [
+            .init(food: "Greek Yogurt & Berries", qty: 1, unit: "bowl", kcal: 220, fat: 5, carbs: 28, protein: 18, method: .voice),
+            .init(food: "Oatmeal with Banana", qty: 1, unit: "bowl", kcal: 310, fat: 6, carbs: 54, protein: 10, method: .text),
+            .init(food: "Scrambled Eggs & Toast", qty: 1, unit: "plate", kcal: 340, fat: 18, carbs: 24, protein: 20, method: .text),
+            .init(food: "Avocado Toast", qty: 1, unit: "piece", kcal: 290, fat: 17, carbs: 28, protein: 8, method: .label),
+            .init(food: "Protein Smoothie", qty: 1, unit: "cup", kcal: 250, fat: 4, carbs: 30, protein: 25, method: .voice),
         ]
-        for (i, s) in samples.enumerated() {
-            let entry = Entry(
-                id: "demo-\(i)", date: today, timestamp: now.addingTimeInterval(Double(-i) * 1800),
-                food: s.0, quantity: s.1, unit: s.2, kcal: s.3, fat: s.4, carbs: s.5, protein: s.6, method: s.7
-            )
-            try? await store.add(entry)
+        let lunches: [Meal] = [
+            .init(food: "Grilled Chicken Salad", qty: 1, unit: "bowl", kcal: 420, fat: 18, carbs: 22, protein: 40, method: .text),
+            .init(food: "Turkey Sandwich", qty: 1, unit: "piece", kcal: 380, fat: 12, carbs: 42, protein: 28, method: .text),
+            .init(food: "Chicken Burrito Bowl", qty: 1, unit: "bowl", kcal: 620, fat: 20, carbs: 68, protein: 38, method: .voice),
+            .init(food: "Tuna Wrap", qty: 1, unit: "piece", kcal: 400, fat: 14, carbs: 40, protein: 30, method: .label),
+            .init(food: "Quinoa & Veggie Bowl", qty: 1, unit: "bowl", kcal: 480, fat: 16, carbs: 62, protein: 18, method: .text),
+        ]
+        let dinners: [Meal] = [
+            .init(food: "Salmon, Rice & Greens", qty: 1, unit: "plate", kcal: 560, fat: 22, carbs: 50, protein: 38, method: .text),
+            .init(food: "Spaghetti Bolognese", qty: 1, unit: "plate", kcal: 650, fat: 22, carbs: 78, protein: 32, method: .voice),
+            .init(food: "Grilled Steak & Potatoes", qty: 1, unit: "plate", kcal: 700, fat: 30, carbs: 45, protein: 50, method: .text),
+            .init(food: "Chicken Stir-fry", qty: 1, unit: "plate", kcal: 520, fat: 18, carbs: 48, protein: 38, method: .text),
+            .init(food: "Veggie Curry & Rice", qty: 1, unit: "plate", kcal: 540, fat: 18, carbs: 72, protein: 16, method: .voice),
+        ]
+        let snacks: [Meal] = [
+            .init(food: "Almonds", qty: 30, unit: "g", kcal: 174, fat: 15, carbs: 6, protein: 6, method: .label),
+            .init(food: "Apple", qty: 1, unit: "piece", kcal: 95, fat: 0, carbs: 25, protein: 0, method: .barcode),
+            .init(food: "Protein Bar", qty: 1, unit: "piece", kcal: 200, fat: 7, carbs: 22, protein: 20, method: .barcode),
+            .init(food: "Greek Yogurt", qty: 1, unit: "cup", kcal: 120, fat: 0, carbs: 8, protein: 18, method: .voice),
+        ]
+
+        let cal = Calendar.current
+        let now = Date()
+
+        for offset in 0..<61 {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: now) else { continue }
+            let key = LocalDate.key(for: day)
+            var seq = 0
+            func log(_ meal: Meal, hour: Int) async {
+                let ts = cal.date(bySettingHour: hour, minute: (seq * 11) % 60, second: 0, of: day) ?? day
+                let entry = Entry(id: "demo-\(key)-\(seq)", date: key, timestamp: ts,
+                                  food: meal.food, quantity: meal.qty, unit: meal.unit,
+                                  kcal: meal.kcal, fat: meal.fat, carbs: meal.carbs, protein: meal.protein,
+                                  method: meal.method)
+                seq += 1
+                try? await store.add(entry)
+            }
+            await log(breakfasts[offset % breakfasts.count], hour: 8)
+            await log(lunches[(offset + 1) % lunches.count], hour: 13)
+            await log(dinners[(offset + 2) % dinners.count], hour: 19)
+            if offset % 2 == 0 { await log(snacks[offset % snacks.count], hour: 16) }
+            if offset % 3 == 0 { try? await store.setOffset(Double(260 + (offset % 4) * 70), on: key) }
         }
-        try? await store.setOffset(320, on: today)
     }
 
     /// Whether the plate-photo proxy has a stored auth token.
