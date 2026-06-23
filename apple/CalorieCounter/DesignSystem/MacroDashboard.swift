@@ -26,7 +26,7 @@ struct MacroRing: View {
                 .trim(from: 0, to: clamped)
                 .stroke(macro.ringGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .shadow(color: macro.tint.opacity(0.5), radius: lineWidth * 0.45)
+                .shadow(color: macro.tint.opacity(0.18), radius: lineWidth * 0.15)
         }
         .animation(animate ? .smooth(duration: 0.7) : nil, value: clamped)
     }

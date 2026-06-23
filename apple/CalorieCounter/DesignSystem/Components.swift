@@ -27,10 +27,10 @@ struct EntryCard: View {
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
-                Circle().fill(entry.method.accent.opacity(0.18))
+                Circle().fill(.secondary.opacity(0.12))
                 Image(systemName: entry.method.systemImage)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(entry.method.accent)
+                    .foregroundStyle(.secondary)
             }
             .frame(width: 44, height: 44)
 
@@ -95,10 +95,10 @@ struct OffsetChip: View {
         Button(action: onTap) {
             HStack(spacing: 13) {
                 ZStack {
-                    Circle().fill(Color(hex: 0xFF9F0A).opacity(0.18))
+                    Circle().fill(DS.Macro.fat.tint.opacity(0.18))
                     Image(systemName: "flame.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(hex: 0xFF9F0A))
+                        .foregroundStyle(DS.Macro.fat.tint)
                 }
                 .frame(width: 40, height: 40)
 
@@ -113,7 +113,7 @@ struct OffsetChip: View {
                 if offset > 0 {
                     Text("−\(Int(offset))")
                         .font(.callout.weight(.bold).monospacedDigit())
-                        .foregroundStyle(Color(hex: 0xFF9F0A))
+                        .foregroundStyle(DS.Macro.fat.tint)
                 }
                 Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
             }

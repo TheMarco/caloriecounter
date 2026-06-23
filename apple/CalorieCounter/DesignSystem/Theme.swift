@@ -53,22 +53,22 @@ enum DS {
             case .fat: return "drop.fill"
             }
         }
-        /// Solid identity color.
+        /// Solid identity color — muted, refined tones (distinct but not neon).
         var tint: Color {
             switch self {
-            case .calories: return Color(hex: 0x30D158)
-            case .protein:  return Color(hex: 0xFF375F)
-            case .carbs:    return Color(hex: 0x0A84FF)
-            case .fat:      return Color(hex: 0xFF9F0A)
+            case .calories: return Color(hex: 0x57B58C)   // sage green
+            case .protein:  return Color(hex: 0xCC7C8C)   // muted rose
+            case .carbs:    return Color(hex: 0x6E9AC8)   // dusty blue
+            case .fat:      return Color(hex: 0xCFA85C)   // soft gold
             }
         }
-        /// Two-stop gradient stops used to paint rings and bars.
+        /// Two-stop gradient stops used to paint rings and bars (subtle spread).
         var stops: [Color] {
             switch self {
-            case .calories: return [Color(hex: 0x32D74B), Color(hex: 0x66E0A3)]
-            case .protein:  return [Color(hex: 0xFF375F), Color(hex: 0xFF7AA0)]
-            case .carbs:    return [Color(hex: 0x0A84FF), Color(hex: 0x64D2FF)]
-            case .fat:      return [Color(hex: 0xFF9F0A), Color(hex: 0xFFD60A)]
+            case .calories: return [Color(hex: 0x4FAE84), Color(hex: 0x73C2A1)]
+            case .protein:  return [Color(hex: 0xC4707F), Color(hex: 0xD597A3)]
+            case .carbs:    return [Color(hex: 0x6390C2), Color(hex: 0x8BB0D6)]
+            case .fat:      return [Color(hex: 0xC79E54), Color(hex: 0xDABA7C)]
             }
         }
         /// Angular gradient for a progress ring (gives the swept-color look).
@@ -82,31 +82,22 @@ enum DS {
     }
 }
 
-/// Full-screen backdrop: a soft adaptive base with a gentle colored glow behind
-/// the hero. Calm and premium so the vibrant rings/cards pop.
+/// Full-screen backdrop: a calm, near-neutral base with one barely-there glow for
+/// depth. Restrained so the content carries the color, not the chrome.
 struct AppBackground: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         ZStack {
-            (scheme == .dark ? Color(hex: 0x0B0B0F) : Color(hex: 0xF2F3F7))
+            (scheme == .dark ? Color(hex: 0x0C0D10) : Color(hex: 0xF4F5F7))
                 .ignoresSafeArea()
 
-            // Soft green glow, top-trailing.
+            // A single, very subtle accent glow at the top.
             RadialGradient(
-                colors: [DS.Macro.calories.tint.opacity(scheme == .dark ? 0.30 : 0.22), .clear],
-                center: .topTrailing, startRadius: 0, endRadius: 520
+                colors: [DS.Macro.calories.tint.opacity(scheme == .dark ? 0.10 : 0.06), .clear],
+                center: .top, startRadius: 0, endRadius: 440
             )
             .ignoresSafeArea()
-            .blendMode(scheme == .dark ? .screen : .plusDarker)
-
-            // Cooler counter-glow, bottom-leading, for depth.
-            RadialGradient(
-                colors: [DS.Macro.carbs.tint.opacity(scheme == .dark ? 0.20 : 0.14), .clear],
-                center: .bottomLeading, startRadius: 0, endRadius: 480
-            )
-            .ignoresSafeArea()
-            .blendMode(scheme == .dark ? .screen : .plusDarker)
         }
     }
 }

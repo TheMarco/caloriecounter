@@ -25,15 +25,15 @@ struct QuickAddBar: View {
                     VStack(spacing: 6) {
                         Image(systemName: method.systemImage)
                             .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.primary)
                         Text(shortLabel(method))
                             .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(method.accent)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                 }
                 .buttonStyle(.glass)
-                .tint(method.accent)
                 .accessibilityLabel(method.label)
                 .accessibilityHint(method.detail)
             }
