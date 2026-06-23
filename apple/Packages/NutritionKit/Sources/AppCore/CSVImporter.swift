@@ -53,17 +53,29 @@ public enum CSVImporter {
     // MARK: - Per-entry format
 
     private static func parsePerEntry(_ lines: [String]) -> ImportResult {
+        guard let headerLine = lines.first else { return ImportResult(entries: [], offsets: [:]) }
+        // Map by column NAME so old files (no fiber/sodium/sugar) and new ones both
+        // import, regardless of column order. Missing/blank cells → nil (not 0).
+        let cols = columnIndex(headerLine)
         var entries: [Entry] = []
         var offsets: [String: Double] = [:]
         for line in lines.dropFirst() {
             let f = CSV.split(line)
-            guard f.count >= 10, isValidDateKey(f[0]) else { continue }
-            let date = f[0], time = f[1], food = f[2]
-            let kcal = Double(f[5]) ?? 0
-            let methodRaw = f[9].lowercased()
+            func field(_ name: String) -> String {
+                guard let i = cols[name], i < f.count else { return "" }
+                return f[i]
+            }
+            func num(_ name: String) -> Double? {
+                let s = field(name).trimmingCharacters(in: .whitespaces)
+                return s.isEmpty ? nil : Double(s)
+            }
+            let date = field("date")
+            guard isValidDateKey(date) else { continue }
+            let time = field("time"), food = field("food")
+            let methodRaw = field("method").lowercased()
 
             if methodRaw == "offset" {
-                if kcal > 0 { offsets[date] = kcal }
+                if let cal = num("calories"), cal > 0 { offsets[date] = cal }
                 continue
             }
             entries.append(Entry(
@@ -71,16 +83,28 @@ public enum CSVImporter {
                 date: date,
                 timestamp: timestamp(date: date, time: time),
                 food: food,
-                quantity: Double(f[3]) ?? 0,
-                unit: f[4],
-                kcal: kcal,
-                fat: Double(f[6]) ?? 0,
-                carbs: Double(f[7]) ?? 0,
-                protein: Double(f[8]) ?? 0,
-                method: InputMethod(rawValue: methodRaw) ?? .text
+                quantity: num("quantity") ?? 0,
+                unit: field("unit"),
+                kcal: num("calories") ?? 0,
+                fat: num("fat") ?? 0,
+                carbs: num("carbs") ?? 0,
+                protein: num("protein") ?? 0,
+                method: InputMethod(rawValue: methodRaw) ?? .text,
+                fiber: num("fiber"),       // nil when the column is absent or blank
+                sodium: num("sodium"),     // milligrams
+                sugar: num("sugar")
             ))
         }
         return ImportResult(entries: entries, offsets: offsets)
+    }
+
+    /// `[lowercased column name: index]` from the header row.
+    private static func columnIndex(_ header: String) -> [String: Int] {
+        var map: [String: Int] = [:]
+        for (i, name) in CSV.split(header).enumerated() {
+            map[name.trimmingCharacters(in: .whitespaces).lowercased()] = i
+        }
+        return map
     }
 
     // MARK: - Legacy daily-totals format

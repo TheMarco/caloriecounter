@@ -37,6 +37,30 @@ struct CSVImporterTests {
         #expect(result.offsets["2026-06-22"] == 300)
     }
 
+    @Test("fiber/sodium/sugar export+import; blanks stay nil; old 10-col files still load")
+    func nutrientColumns() throws {
+        let e = Entry(id: "x", date: "2026-06-22", timestamp: Date(timeIntervalSince1970: 1_750_000_000),
+                      food: "Bran Cereal", quantity: 1, unit: "bowl", kcal: 200, fat: 2, carbs: 44, protein: 6,
+                      method: .label, fiber: 12, sodium: 210, sugar: nil)
+        let csv = CSVExporter.entriesCSV(entries: [e], offsets: [:])
+        let header = csv.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+        #expect(header.hasSuffix("fiber,sodium,sugar,method"))
+
+        let got = try #require(CSVImporter.parse(csv).entries.first)
+        #expect(got.fiber == 12)
+        #expect(got.sodium == 210)   // milligrams
+        #expect(got.sugar == nil)    // blank cell → nil, not 0
+
+        // Old 10-column file (no fiber/sodium/sugar columns) still imports cleanly.
+        let old = """
+        date,time,food,quantity,unit,calories,fat,carbs,protein,method
+        2026-06-22,08:00,Oatmeal,1,bowl,310,6.0,54.0,10.0,text
+        """
+        let oldGot = try #require(CSVImporter.parse(old).entries.first)
+        #expect(oldGot.food == "Oatmeal")
+        #expect(oldGot.fiber == nil && oldGot.sodium == nil && oldGot.sugar == nil)
+    }
+
     @Test("legacy daily-totals CSV still imports (as one row per day)")
     func legacyDailyCompat() throws {
         let csv = """
@@ -97,12 +121,12 @@ struct CSVImporterTests {
             LocalDate.key(for: cal.date(byAdding: .day, value: -daysAgo, to: Date())!)
         }
         let today = key(daysAgo: 0), mid = key(daysAgo: 45)
-        let csv = """
-        \(CSVExporter.entryHeader)
-        \(today),08:00,Oatmeal,1,bowl,310,6.0,54.0,10.0,text
-        \(mid),19:00,"Salmon, Rice",1,plate,560,22.0,50.0,38.0,text
-        \(today),,Adjustment,,,300,,,,offset
-        """
+        func mk(_ id: String, _ date: String, _ food: String) -> Entry {
+            Entry(id: id, date: date, timestamp: Date(timeIntervalSince1970: 0), food: food,
+                  quantity: 1, unit: "bowl", kcal: 310, fat: 6, carbs: 54, protein: 10, method: .text)
+        }
+        let csv = CSVExporter.entriesCSV(entries: [mk("a", today, "Oatmeal"), mk("b", mid, "Salmon, Rice")],
+                                         offsets: [today: 300])
         let result = try CSVImporter.parse(csv)
         _ = await CSVImporter.apply(result, to: store)
 

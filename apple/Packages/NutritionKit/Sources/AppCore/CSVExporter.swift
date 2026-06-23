@@ -8,8 +8,9 @@ import NutritionCore
 
 public enum CSVExporter {
     public static let header = "date,calories_consumed,calories_burned,net_calories,carbs,fat,protein"
-    /// Full per-entry export header (one row per logged food).
-    public static let entryHeader = "date,time,food,quantity,unit,calories,fat,carbs,protein,method"
+    /// Full per-entry export header (one row per logged food). Fiber/sugar in
+    /// grams, sodium in milligrams; blank when unknown.
+    public static let entryHeader = "date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,method"
 
     /// Build the daily-totals CSV (legacy/summary format).
     public static func csv(from days: [DayTotals]) -> String {
@@ -33,11 +34,14 @@ public enum CSVExporter {
                 oneDecimal(e.fat),
                 oneDecimal(e.carbs),
                 oneDecimal(e.protein),
+                optionalOneDecimal(e.fiber),   // grams, blank if unknown
+                optionalNumber(e.sodium),      // milligrams, blank if unknown
+                optionalOneDecimal(e.sugar),   // grams, blank if unknown
                 e.method.rawValue,
             ].joined(separator: ","))
         }
         for (date, value) in offsets.sorted(by: { $0.key < $1.key }) where value > 0 {
-            lines.append([date, "", "Exercise & Adjustment", "", "", number(value), "", "", "", "offset"]
+            lines.append([date, "", "Exercise & Adjustment", "", "", number(value), "", "", "", "", "", "", "offset"]
                 .joined(separator: ","))
         }
         return lines.joined(separator: "\n")
@@ -78,4 +82,7 @@ public enum CSVExporter {
     private static func oneDecimal(_ value: Double) -> String {
         String(format: "%.1f", value)
     }
+    /// Empty string for unknown (nil), so blanks import back as nil (not 0).
+    private static func optionalNumber(_ value: Double?) -> String { value.map(number) ?? "" }
+    private static func optionalOneDecimal(_ value: Double?) -> String { value.map(oneDecimal) ?? "" }
 }
