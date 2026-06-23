@@ -67,6 +67,22 @@ struct HistoryModelTests {
         #expect(model.days.count == 7)
     }
 
+    @Test("load surfaces weight points in the range and the latest weight")
+    func loadWeights() async throws {
+        let store = try makeStore()
+        let keys = LocalDate.lastDays(7)
+        try await store.addWeight(WeightEntry(id: WeightEntry.id(for: keys[0]), date: keys[0],
+                                              timestamp: Date(timeIntervalSince1970: 1), weightKg: 83.0))
+        try await store.addWeight(WeightEntry(id: WeightEntry.id(for: keys[6]), date: keys[6],
+                                              timestamp: Date(timeIntervalSince1970: 2), weightKg: 81.5))
+
+        let model = HistoryModel(store: store, range: .week)
+        await model.load()
+        #expect(model.weightPoints.map(\.date) == [keys[0], keys[6]])   // oldest-first, in window
+        #expect(model.weightPoints.last?.weightKg == 81.5)
+        #expect(model.latestWeightKg == 81.5)
+    }
+
     @Test("datesWithEntries lists only days that have logged food")
     func datesWithEntries() async throws {
         let store = try makeStore()

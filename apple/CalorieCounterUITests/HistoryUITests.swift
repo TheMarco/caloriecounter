@@ -19,9 +19,11 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(historyTab.waitForExistence(timeout: 10), "History tab should exist")
         historyTab.tap()
 
-        // Range selector segment and the calendar section header confirm the
-        // History screen built without crashing.
+        // Range selector, the Weight section, and (after scrolling past the charts)
+        // the calendar section confirm the History screen built without crashing.
         XCTAssertTrue(app.buttons["7 Days"].waitForExistence(timeout: 5), "Range selector should appear")
+        XCTAssertTrue(app.staticTexts["Current weight"].waitForExistence(timeout: 5), "Weight section should appear")
+        app.swipeUp(); app.swipeUp()
         XCTAssertTrue(app.staticTexts["This Month"].waitForExistence(timeout: 5), "Calendar section should appear")
     }
 
@@ -41,5 +43,22 @@ final class HistoryUITests: XCTestCase {
             seg.tap()
             XCTAssertFalse(empty.waitForExistence(timeout: 2), "\(range) should show data, not the empty overlay")
         }
+    }
+
+    @MainActor
+    func testWeightSectionRendersAndLogs() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-demo", "-screen-history"]
+        app.launch()
+
+        // The Weight section renders with demo measurements (no empty overlay).
+        XCTAssertTrue(app.staticTexts["Current weight"].waitForExistence(timeout: 10), "Weight section should render")
+        XCTAssertFalse(app.staticTexts["No weight logged yet"].exists, "Demo seeds a weight trend")
+
+        // Logging opens the sheet and saves back to History.
+        app.buttons["Log"].tap()
+        XCTAssertTrue(app.staticTexts["Log Weight"].waitForExistence(timeout: 5), "Log Weight sheet should appear")
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.staticTexts["Current weight"].waitForExistence(timeout: 5), "Should return to History after saving")
     }
 }

@@ -155,13 +155,49 @@ public actor SwiftDataStore: NutritionStoring {
     public func deleteAll() async throws {
         try modelContext.delete(model: EntryRecord.self)
         try modelContext.delete(model: DayOffsetRecord.self)
+        try modelContext.delete(model: WeightRecord.self)
+        try modelContext.save()
+    }
+
+    // MARK: - Body weight
+
+    public func addWeight(_ entry: WeightEntry) async throws {
+        let id = entry.id
+        let descriptor = FetchDescriptor<WeightRecord>(predicate: #Predicate { $0.id == id })
+        if let existing = try modelContext.fetch(descriptor).first {
+            existing.update(from: entry)
+        } else {
+            modelContext.insert(WeightRecord(from: entry))
+        }
+        try modelContext.save()
+    }
+
+    public func weights(from startDate: String, to endDate: String) async throws -> [WeightEntry] {
+        let start = startDate, end = endDate
+        let descriptor = FetchDescriptor<WeightRecord>(
+            predicate: #Predicate { $0.date >= start && $0.date <= end },
+            sortBy: [SortDescriptor(\.date, order: .forward)]   // oldest-first for charting
+        )
+        return try modelContext.fetch(descriptor).map { $0.toDomain() }
+    }
+
+    public func latestWeight() async throws -> WeightEntry? {
+        var descriptor = FetchDescriptor<WeightRecord>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first?.toDomain()
+    }
+
+    public func deleteWeight(id: String) async throws {
+        let target = id
+        let descriptor = FetchDescriptor<WeightRecord>(predicate: #Predicate { $0.id == target })
+        for record in try modelContext.fetch(descriptor) { modelContext.delete(record) }
         try modelContext.save()
     }
 }
 
 public extension SwiftDataStore {
     /// The model types this store manages.
-    static var schemaTypes: [any PersistentModel.Type] { [EntryRecord.self, DayOffsetRecord.self] }
+    static var schemaTypes: [any PersistentModel.Type] { [EntryRecord.self, DayOffsetRecord.self, WeightRecord.self] }
 
     /// Build a store. `inMemory` for tests/previews; an explicit `url` overrides
     /// (used by the app to place the on-disk store under Application Support with
@@ -172,7 +208,7 @@ public extension SwiftDataStore {
             return ModelConfiguration(isStoredInMemoryOnly: inMemory)
         }()
         let container = try ModelContainer(
-            for: EntryRecord.self, DayOffsetRecord.self,
+            for: EntryRecord.self, DayOffsetRecord.self, WeightRecord.self,
             configurations: configuration
         )
         return SwiftDataStore(modelContainer: container)

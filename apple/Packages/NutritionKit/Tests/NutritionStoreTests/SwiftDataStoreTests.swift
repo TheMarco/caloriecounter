@@ -243,7 +243,7 @@ struct SwiftDataStoreTests {
     @Test("schemaTypes lists both persistent models")
     func schemaTypesListed() {
         let names = SwiftDataStore.schemaTypes.map { String(describing: $0) }
-        #expect(Set(names) == ["EntryRecord", "DayOffsetRecord"])
+        #expect(Set(names) == ["EntryRecord", "DayOffsetRecord", "WeightRecord"])
     }
 
     @Test("searchPreviousFoods breaks frequency ties by recency and honors the limit")
@@ -260,20 +260,60 @@ struct SwiftDataStoreTests {
         #expect(capped.map(\.food) == ["Berry Smoothie"])
     }
 
-    @Test("deleteAll wipes every entry and offset, store stays usable")
+    @Test("deleteAll wipes every entry, offset, and weight; store stays usable")
     func deleteAllWipesEverything() async throws {
         let store = try makeStore()
         try await store.add(makeEntry(id: "a", date: "2026-06-21", food: "Oats"))
         try await store.add(makeEntry(id: "b", date: "2026-06-22", food: "Eggs"))
         try await store.setOffset(300, on: "2026-06-22")
+        try await store.addWeight(WeightEntry(id: WeightEntry.id(for: "2026-06-22"), date: "2026-06-22",
+                                              timestamp: Date(timeIntervalSince1970: 0), weightKg: 80))
 
         try await store.deleteAll()
 
         #expect(try await store.entries(from: "0000-01-01", to: "9999-12-31").isEmpty)
         #expect(try await store.offset(on: "2026-06-22") == 0)
+        #expect(try await store.latestWeight() == nil)
 
         // The store remains usable afterwards.
         try await store.add(makeEntry(id: "c", date: "2026-06-23", food: "Apple"))
         #expect(try await store.entries(on: "2026-06-23").count == 1)
+    }
+
+    // MARK: - Body weight
+
+    private func makeWeight(_ date: String, _ kg: Double, ts: TimeInterval = 0) -> WeightEntry {
+        WeightEntry(id: WeightEntry.id(for: date), date: date, timestamp: Date(timeIntervalSince1970: ts), weightKg: kg)
+    }
+
+    @Test("weight upserts per day, lists oldest-first, and reports the latest")
+    func weightCRUD() async throws {
+        let store = try makeStore()
+        try await store.addWeight(makeWeight("2026-06-10", 83.0))
+        try await store.addWeight(makeWeight("2026-06-17", 82.4))
+        try await store.addWeight(makeWeight("2026-06-23", 81.8))
+        // Re-logging a day replaces, not duplicates.
+        try await store.addWeight(makeWeight("2026-06-23", 81.5))
+
+        let all = try await store.weights(from: "2026-06-01", to: "2026-06-30")
+        #expect(all.map(\.date) == ["2026-06-10", "2026-06-17", "2026-06-23"])   // oldest-first, one per day
+        #expect(all.last?.weightKg == 81.5)                                       // upserted
+        #expect(try await store.latestWeight()?.date == "2026-06-23")
+
+        // Range filtering.
+        let recent = try await store.weights(from: "2026-06-15", to: "2026-06-30")
+        #expect(recent.map(\.date) == ["2026-06-17", "2026-06-23"])
+    }
+
+    @Test("deleteWeight removes a single day's measurement")
+    func weightDelete() async throws {
+        let store = try makeStore()
+        try await store.addWeight(makeWeight("2026-06-20", 80))
+        try await store.addWeight(makeWeight("2026-06-21", 79.5))
+        try await store.deleteWeight(id: WeightEntry.id(for: "2026-06-20"))
+
+        let all = try await store.weights(from: "2026-06-01", to: "2026-06-30")
+        #expect(all.map(\.date) == ["2026-06-21"])
+        #expect(try await store.latestWeight()?.weightKg == 79.5)
     }
 }

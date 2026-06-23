@@ -47,11 +47,20 @@ public struct MacroSeriesPoint: Sendable, Equatable, Identifiable {
     public var id: String { date }
 }
 
+/// One weight measurement for the chart (canonical kilograms; view converts).
+public struct WeightPoint: Sendable, Equatable, Identifiable {
+    public let date: String
+    public let weightKg: Double
+    public var id: String { date }
+}
+
 @Observable
 @MainActor
 public final class HistoryModel {
     public var range: DateRange
     public private(set) var days: [DayTotals] = []
+    public private(set) var weightPoints: [WeightPoint] = []
+    public private(set) var latestWeightKg: Double?
     public private(set) var isLoading = false
 
     @ObservationIgnored private let store: any NutritionStoring
@@ -66,6 +75,15 @@ public final class HistoryModel {
         defer { isLoading = false }
         let span = await dayCount(for: range)
         days = (try? await store.dailyTotals(lastDays: span)) ?? []
+
+        // Weight measurements over the same window (one per day already).
+        if let start = days.first?.date, let end = days.last?.date {
+            let ws = (try? await store.weights(from: start, to: end)) ?? []
+            weightPoints = ws.map { WeightPoint(date: $0.date, weightKg: $0.weightKg) }
+        } else {
+            weightPoints = []
+        }
+        latestWeightKg = (try? await store.latestWeight())?.weightKg
     }
 
     /// Days to load: the preset span, or — for `.all` — the inclusive span from the

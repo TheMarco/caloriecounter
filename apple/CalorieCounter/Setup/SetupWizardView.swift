@@ -323,6 +323,13 @@ struct SetupWizardView: View {
     private func finish() {
         container.settings.targets = GoalPlanner.targets(for: profile)
         container.settings.hasCompletedSetup = true
+        // Seed the weight history with the starting weight from onboarding.
+        let today = LocalDate.today()
+        let weight = WeightEntry(id: WeightEntry.id(for: today), date: today, timestamp: Date(), weightKg: weightKg)
+        Task {
+            try? await container.store.addWeight(weight)
+            container.dataDidChange()
+        }
         onFinish()
         dismiss()
     }

@@ -44,6 +44,17 @@ public protocol NutritionStoring: Sendable {
     /// Delete every entry and offset — a full data wipe for the "erase all data,
     /// start over" reset. Irreversible.
     func deleteAll() async throws
+
+    // MARK: - Body weight (logged whenever; one measurement per local day)
+
+    /// Upsert a weight measurement (matched by `id` = one per day).
+    func addWeight(_ entry: WeightEntry) async throws
+    /// Weight measurements within an inclusive `YYYY-MM-DD` range, oldest-first.
+    func weights(from startDate: String, to endDate: String) async throws -> [WeightEntry]
+    /// The most recent measurement, or nil if none logged.
+    func latestWeight() async throws -> WeightEntry?
+    /// Delete a measurement by id (no-op if absent).
+    func deleteWeight(id: String) async throws
 }
 
 /// Text/voice → structured food (on-device Foundation Models, or heuristic fallback).

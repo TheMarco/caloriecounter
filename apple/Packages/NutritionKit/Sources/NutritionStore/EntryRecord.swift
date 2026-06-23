@@ -92,3 +92,29 @@ public final class DayOffsetRecord {
         self.offset = offset
     }
 }
+
+/// A body-weight measurement (one per local day; canonical kilograms).
+@Model
+public final class WeightRecord {
+    @Attribute(.unique) public var id: String     // weight-<YYYY-MM-DD>
+    public var date: String                        // YYYY-MM-DD
+    public var timestamp: Date
+    public var weightKg: Double
+
+    public init(from w: WeightEntry) {
+        self.id = w.id
+        self.date = w.date
+        self.timestamp = w.timestamp
+        self.weightKg = w.weightKg
+    }
+
+    public func update(from w: WeightEntry) {
+        date = w.date
+        timestamp = w.timestamp
+        weightKg = w.weightKg
+    }
+
+    public func toDomain() -> WeightEntry {
+        WeightEntry(id: id, date: date, timestamp: timestamp, weightKg: weightKg)
+    }
+}

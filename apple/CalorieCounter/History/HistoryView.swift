@@ -13,6 +13,7 @@ struct HistoryView: View {
     @State private var model: HistoryModel?
     @State private var macro: MacroKind = .calories
     @State private var selectedDate: String?
+    @State private var showLogWeight = false
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,9 @@ struct HistoryView: View {
             .navigationDestination(item: $selectedDate) { date in
                 DayDetailView(date: date)
             }
+            .sheet(isPresented: $showLogWeight) {
+                LogWeightSheet(currentKg: model?.latestWeightKg, units: container.settings.units)
+            }
         }
     }
 
@@ -46,6 +50,34 @@ struct HistoryView: View {
                 .pickerStyle(.segmented)
                 .onChange(of: model.range) { _, _ in Task { await model.load() } }
                 .clearRow()
+            }
+
+            Section {
+                SoftCard {
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(currentWeightText(model))
+                                    .font(.title2.weight(.bold))
+                                    .contentTransition(.numericText())
+                                Text("Current weight").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button { showLogWeight = true } label: {
+                                Label("Log", systemImage: "plus")
+                            }
+                            .buttonStyle(.glassProminent)
+                            .tint(DS.Macro.carbs.tint)
+                        }
+                        WeightChart(points: model.weightPoints,
+                                    units: container.settings.units,
+                                    window: weightWindow(model))
+                            .frame(height: 170)
+                    }
+                }
+                .clearRow()
+            } header: {
+                sectionHeader("Weight")
             }
 
             Section {
@@ -96,5 +128,20 @@ struct HistoryView: View {
             .foregroundStyle(.primary)
             .textCase(nil)
             .padding(.leading, 4)
+    }
+
+    /// The latest measurement in the user's units, e.g. "82.5 kg" (or "—" if none).
+    private func currentWeightText(_ model: HistoryModel) -> String {
+        guard let kg = model.latestWeightKg else { return "—" }
+        let u = container.settings.units
+        return String(format: "%.1f %@", u.weightForDisplay(kg: kg), u.weightUnit)
+    }
+
+    /// The selected range as a date span, so the weight chart's x-axis covers the
+    /// whole window even when measurements are sparse.
+    private func weightWindow(_ model: HistoryModel) -> ClosedRange<Date>? {
+        guard let first = model.days.first?.date, let last = model.days.last?.date,
+              let lo = LocalDate.date(from: first), let hi = LocalDate.date(from: last), lo < hi else { return nil }
+        return lo...hi
     }
 }

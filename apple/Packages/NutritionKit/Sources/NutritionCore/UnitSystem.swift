@@ -22,4 +22,21 @@ public enum UnitSystem: String, Codable, Sendable, CaseIterable {
     public static var deviceDefault: UnitSystem {
         Locale.current.measurementSystem == .us ? .imperial : .metric
     }
+
+    // MARK: - Body-weight conversion (canonical storage is kilograms)
+
+    public static let poundsPerKilogram = 2.2046226
+
+    /// Short label for body weight in this system.
+    public var weightUnit: String { self == .metric ? "kg" : "lb" }
+
+    /// Convert canonical kilograms into this system's display value.
+    public func weightForDisplay(kg: Double) -> Double {
+        self == .metric ? kg : kg * Self.poundsPerKilogram
+    }
+
+    /// Convert a display value in this system back into canonical kilograms.
+    public func kilograms(fromDisplay value: Double) -> Double {
+        self == .metric ? value : value / Self.poundsPerKilogram
+    }
 }

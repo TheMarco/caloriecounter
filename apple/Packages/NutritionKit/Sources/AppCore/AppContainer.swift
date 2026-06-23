@@ -178,6 +178,12 @@ public final class AppContainer {
             await log(dinners[(offset + 2) % dinners.count], hour: 19)
             if offset % 2 == 0 { await log(snacks[offset % snacks.count], hour: 16) }
             if offset % 3 == 0 { try? await store.setOffset(Double(260 + (offset % 4) * 70), on: key) }
+
+            // A weekly weigh-in trending gently down (~84 kg → ~81.5 kg over 2 months).
+            if offset % 7 == 0 {
+                let kg = 81.5 + Double(offset) * 0.04 + Double((offset / 7) % 3) * 0.2 - 0.2
+                try? await store.addWeight(WeightEntry(id: WeightEntry.id(for: key), date: key, timestamp: day, weightKg: kg))
+            }
         }
     }
 
