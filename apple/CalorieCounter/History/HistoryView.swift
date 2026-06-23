@@ -25,7 +25,7 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
-            .task {
+            .task(id: container.dataVersion) {
                 let m = model ?? HistoryModel(store: container.store)
                 model = m
                 await m.load()

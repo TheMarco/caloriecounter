@@ -163,6 +163,7 @@ struct SettingsView: View {
         container.settings.biometricLockEnabled = false
         container.settings.hasCompletedSetup = false
         await prepareExport()       // export now reflects the empty store
+        container.dataDidChange()   // Today/History reload to show the wipe
         showWizard = true
     }
 
@@ -182,8 +183,9 @@ struct SettingsView: View {
         do {
             let result = try CSVImporter.parse(text)
             let count = await CSVImporter.apply(result, to: container.store)
-            await prepareExport()   // refresh the export to include imported data
-            importMessage = "Imported \(count) day\(count == 1 ? "" : "s") of data. Pull to refresh Today and History."
+            await prepareExport()       // refresh the export to include imported data
+            container.dataDidChange()   // Today and History reload automatically
+            importMessage = "Imported \(count) day\(count == 1 ? "" : "s") of data."
         } catch CSVImporter.ImportError.unrecognizedFormat {
             importMessage = "That doesn't look like a CalorieCounter export CSV."
         } catch {

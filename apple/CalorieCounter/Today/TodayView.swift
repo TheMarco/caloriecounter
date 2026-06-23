@@ -27,22 +27,22 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("Today")
-            .task {
+            .task(id: container.dataVersion) {
                 let m = model ?? TodayModel(store: container.store)
                 model = m
                 await container.bootstrap()   // seeds demo data in -demo mode (idempotent)
                 await m.load()
             }
             .sheet(item: $activeInput) { method in
-                InputFlowView(method: method) { Task { await model?.load() } }
+                InputFlowView(method: method) { container.dataDidChange() }
             }
             .sheet(item: $editingEntry) { entry in
-                EditEntryView(entry: entry) { Task { await model?.load() } }
+                EditEntryView(entry: entry) { container.dataDidChange() }
             }
             .sheet(isPresented: $editingOffset) {
                 if let model {
                     CalorieOffsetSheet(value: model.offset) { newValue in
-                        Task { await model.updateOffset(newValue) }
+                        Task { await model.updateOffset(newValue); container.dataDidChange() }
                     }
                 }
             }
@@ -77,7 +77,7 @@ struct TodayView: View {
                     }
                     .onDelete { offsets in
                         let ids = offsets.map { model.entries[$0].id }
-                        Task { for id in ids { await model.deleteEntry(id: id) } }
+                        Task { for id in ids { await model.deleteEntry(id: id) }; container.dataDidChange() }
                     }
                 }
             } header: {

@@ -33,6 +33,15 @@ public final class AppContainer {
     public let barcodeResolver: any BarcodeResolving
     public let settings: SettingsStore
 
+    /// Bumped whenever stored data changes in a way other screens must reflect
+    /// (import, full reset, logging/editing/deleting a food, offset edits). Views
+    /// key their `.task(id:)` on this so Today and History reload across tabs —
+    /// not just on pull-to-refresh.
+    public private(set) var dataVersion = 0
+
+    /// Signal that stored data changed; triggers dependent views to reload.
+    public func dataDidChange() { dataVersion &+= 1 }
+
     // MARK: - Shared instance
     public static let shared: AppContainer = {
         do { return try AppContainer() }

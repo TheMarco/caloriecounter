@@ -92,6 +92,15 @@ struct AppContainerTests {
         #expect(await container.isPhotoProxyAuthenticated() == false)
     }
 
+    @Test("dataDidChange bumps the refresh token that drives cross-tab reloads")
+    func dataVersionBumps() throws {
+        let container = try makeContainer()
+        let before = container.dataVersion
+        container.dataDidChange()
+        container.dataDidChange()
+        #expect(container.dataVersion == before + 2)
+    }
+
     @Test("foodParser selection falls back to the heuristic parser when FM is unavailable")
     func foodParserSelection() {
         let parser = AppContainer.makeFoodParser()
