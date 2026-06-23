@@ -5,6 +5,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 import AppCore
 import NutritionCore
 
@@ -15,6 +16,8 @@ struct SettingsView: View {
     @State private var showLogin = false
     @State private var exportURL: URL?
     @State private var showResetConfirm = false
+    @State private var showImporter = false
+    @State private var importMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -36,6 +39,15 @@ struct SettingsView: View {
                         container.settings.targets = .default
                         container.settings.units = .metric
                     }
+                }
+                .fileImporter(isPresented: $showImporter,
+                              allowedContentTypes: [.commaSeparatedText, .plainText, .text]) { result in
+                    Task { await handleImport(result) }
+                }
+                .alert("Import", isPresented: .constant(importMessage != nil)) {
+                    Button("OK") { importMessage = nil }
+                } message: {
+                    Text(importMessage ?? "")
                 }
         }
     }
@@ -79,7 +91,7 @@ struct SettingsView: View {
                 Text("Plate-of-food photos use the secure cloud service. Barcodes, labels, text, and voice all stay on-device.")
             }
 
-            Section("Your Data") {
+            Section {
                 if let exportURL {
                     ShareLink(item: exportURL) {
                         Label("Export CSV", systemImage: "square.and.arrow.up")
@@ -87,7 +99,16 @@ struct SettingsView: View {
                 } else {
                     HStack { ProgressView(); Text("Preparing export…").foregroundStyle(.secondary) }
                 }
+                Button {
+                    showImporter = true
+                } label: {
+                    Label("Import CSV", systemImage: "square.and.arrow.down")
+                }
                 Button("Reset targets to defaults") { showResetConfirm = true }
+            } header: {
+                Text("Your Data")
+            } footer: {
+                Text("Export a daily-totals CSV, or import one to restore your history on a new device.")
             }
 
             Section {
@@ -108,5 +129,30 @@ struct SettingsView: View {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(CSVExporter.filename())
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         exportURL = url
+    }
+
+    private func handleImport(_ result: Result<URL, Error>) async {
+        guard case let .success(url) = result else {
+            importMessage = "Couldn't open that file."
+            return
+        }
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+
+        guard let data = try? Data(contentsOf: url),
+              let text = String(data: data, encoding: .utf8) else {
+            importMessage = "Couldn't read that file."
+            return
+        }
+        do {
+            let days = try CSVImporter.parse(text)
+            let count = await CSVImporter.apply(days, to: container.store)
+            await prepareExport()   // refresh the export to include imported data
+            importMessage = "Imported \(count) day\(count == 1 ? "" : "s") of data. Pull to refresh Today and History."
+        } catch CSVImporter.ImportError.missingHeader {
+            importMessage = "That doesn't look like a CalorieCounter export CSV."
+        } catch {
+            importMessage = "No data rows found in that file."
+        }
     }
 }

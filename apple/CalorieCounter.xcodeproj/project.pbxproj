@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -67,7 +67,7 @@
 		6D22B5247DB607D50552B4C4 /* EntryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRow.swift; sourceTree = "<group>"; };
 		7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
 		7802482394DF8F98400A488D /* CalorieOffsetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieOffsetView.swift; sourceTree = "<group>"; };
-		7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		90AF669C8138357F7FAFF8B2 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		9712F7B63B8E377089201042 /* NutritionChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionChart.swift; sourceTree = "<group>"; };
 		989E2BA736989DF4117DDF67 /* InputFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputFlowView.swift; sourceTree = "<group>"; };
@@ -76,7 +76,7 @@
 		AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodConfirmView.swift; sourceTree = "<group>"; };
 		B11EFF2C94E03B3961AF68B4 /* MacroDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroDashboard.swift; sourceTree = "<group>"; };
 		BBA79A0510AA6F1BE192D2CD /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
-		C0FB868B18204886E2271B14 /* CalorieCounter.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CalorieCounter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0FB868B18204886E2271B14 /* CalorieCounter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalorieCounter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCaptureView.swift; sourceTree = "<group>"; };
 		D1487B1E2EF3F13601523B41 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		D28121B70EB4EE036EF5629F /* TextFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFlowUITests.swift; sourceTree = "<group>"; };
@@ -273,7 +273,6 @@
 						TestTargetID = D0DA7D21B01E980A8435D715;
 					};
 					D0DA7D21B01E980A8435D715 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -291,7 +290,6 @@
 			packageReferences = (
 				2FD0849C2F03BB92F5AB3EF8 /* XCLocalSwiftPackageReference "Packages/NutritionKit" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -375,6 +373,7 @@
 				CODE_SIGN_ENTITLEMENTS = CalorieCounter/CalorieCounter.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3ML6V62AF5;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CalorieCounter/Info.plist;
@@ -561,6 +560,7 @@
 				CODE_SIGN_ENTITLEMENTS = CalorieCounter/CalorieCounter.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3ML6V62AF5;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CalorieCounter/Info.plist;
