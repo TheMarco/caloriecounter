@@ -1,0 +1,616 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		09D05BC9144301D6C2778EAB /* EntryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D22B5247DB607D50552B4C4 /* EntryRow.swift */; };
+		0D3E7F523AEDFD02CF20EE85 /* AppCore in Frameworks */ = {isa = PBXBuildFile; productRef = DB708EB5C448AB5F2A195D0B /* AppCore */; };
+		1805A24C296B4827BF45360D /* AppLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FEF4F62F3154FF83305493 /* AppLockView.swift */; };
+		1D02CB1E5D2E3BF5366EF514 /* UnitFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBFDC0A30EDABEA3D6D2C1B /* UnitFormat.swift */; };
+		1F352880CD4E068DF04B35DF /* QuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473873BDC1C01302A500085F /* QuickAddBar.swift */; };
+		377F3C56A3E229C7815953BC /* TextFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28121B70EB4EE036EF5629F /* TextFlowUITests.swift */; };
+		3CAFC351BE6D1FDD1FE8D3DF /* CalorieOffsetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802482394DF8F98400A488D /* CalorieOffsetView.swift */; };
+		4306649DECE14DECF673344A /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA79A0510AA6F1BE192D2CD /* TodayView.swift */; };
+		4A86D49DDE36C82806BA2727 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637C47D228C9D45E809A840B /* SettingsView.swift */; };
+		4E7E099335EC69BB628C05B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A98C554F7A317C8F684DFC1A /* Assets.xcassets */; };
+		53A06130F5CBAD9F8ADA10DD /* VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */; };
+		5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E9485996765BF65226D3DA /* RootView.swift */; };
+		5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */; };
+		7BD50311C99265FE48D8E855 /* PhotoCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */; };
+		88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9712F7B63B8E377089201042 /* NutritionChart.swift */; };
+		935CD8303DD3B941E9411CD5 /* FoodConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */; };
+		995199EE02AB7604CA1A9C3A /* EditEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */; };
+		A12A420D891564464675F02D /* VoiceInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8189A60D879FAE780A7725F /* VoiceInputView.swift */; };
+		ABEB17C57DFB81148435231E /* TextInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9366EAA330B5AAA386831D /* TextInputView.swift */; };
+		B33C19BC515DF15DBB3BE02C /* TabbedTotalCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C33FEE8814DE9918FAB5FA /* TabbedTotalCard.swift */; };
+		B3D31995848299B852AA6EDF /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EAA48BF0C24E262B95F2D6E /* HistoryView.swift */; };
+		BB02A9AB67B24A7D51B64F6F /* HistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */; };
+		C0CDDE4C105133F6DEC3FFBF /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669EEFDFC8D9324904A67FC0 /* AboutView.swift */; };
+		C6668E361704D3A7B56A2D3A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */; };
+		CEC34B1A8BBD6C1C613C45EF /* InputFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989E2BA736989DF4117DDF67 /* InputFlowView.swift */; };
+		D58BBFD2CE034AC0862F40BA /* DayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D40788EDBEB586B5F670A2F /* DayDetailView.swift */; };
+		D7BF81F3069B762B344ABC81 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1487B1E2EF3F13601523B41 /* MainTabView.swift */; };
+		E2AC3CEB3E726EAC21EED75B /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90AF669C8138357F7FAFF8B2 /* CalendarView.swift */; };
+		F163CA28FC6C67E84FA480E6 /* CalorieCounterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */; };
+		F7C56333132490527F79A7EE /* SettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A13C42EFB457743B31125F /* SettingsUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3F5D4F7FFB96EDB2B2935571 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8E24309885258001CD5CC3E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D0DA7D21B01E980A8435D715;
+			remoteInfo = CalorieCounter;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0EAA48BF0C24E262B95F2D6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceUITests.swift; sourceTree = "<group>"; };
+		112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEntryView.swift; sourceTree = "<group>"; };
+		11E9485996765BF65226D3DA /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieCounterApp.swift; sourceTree = "<group>"; };
+		2D40788EDBEB586B5F670A2F /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
+		31FEF4F62F3154FF83305493 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
+		40A1CA067B942AD2F09725D2 /* CalorieCounterUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CalorieCounterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		473873BDC1C01302A500085F /* QuickAddBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddBar.swift; sourceTree = "<group>"; };
+		5C9366EAA330B5AAA386831D /* TextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputView.swift; sourceTree = "<group>"; };
+		5DBFDC0A30EDABEA3D6D2C1B /* UnitFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormat.swift; sourceTree = "<group>"; };
+		637C47D228C9D45E809A840B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		669EEFDFC8D9324904A67FC0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		6D22B5247DB607D50552B4C4 /* EntryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRow.swift; sourceTree = "<group>"; };
+		7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
+		7802482394DF8F98400A488D /* CalorieOffsetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieOffsetView.swift; sourceTree = "<group>"; };
+		7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		90AF669C8138357F7FAFF8B2 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		9712F7B63B8E377089201042 /* NutritionChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionChart.swift; sourceTree = "<group>"; };
+		989E2BA736989DF4117DDF67 /* InputFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputFlowView.swift; sourceTree = "<group>"; };
+		A1C33FEE8814DE9918FAB5FA /* TabbedTotalCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabbedTotalCard.swift; sourceTree = "<group>"; };
+		A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
+		A98C554F7A317C8F684DFC1A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodConfirmView.swift; sourceTree = "<group>"; };
+		BBA79A0510AA6F1BE192D2CD /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		C0FB868B18204886E2271B14 /* CalorieCounter.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CalorieCounter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCaptureView.swift; sourceTree = "<group>"; };
+		D1487B1E2EF3F13601523B41 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		D28121B70EB4EE036EF5629F /* TextFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFlowUITests.swift; sourceTree = "<group>"; };
+		D8189A60D879FAE780A7725F /* VoiceInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputView.swift; sourceTree = "<group>"; };
+		E7235BFC5A2ACDFF4C8372B7 /* NutritionKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = NutritionKit; path = Packages/NutritionKit; sourceTree = SOURCE_ROOT; };
+		F8A13C42EFB457743B31125F /* SettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsUITests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		23CFAB717ACB425A457D9119 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D3E7F523AEDFD02CF20EE85 /* AppCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0143D23E615AC36F46E936F3 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				E7235BFC5A2ACDFF4C8372B7 /* NutritionKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		0A0AB31666857AAC23B6796B /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				669EEFDFC8D9324904A67FC0 /* AboutView.swift */,
+				637C47D228C9D45E809A840B /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		12420AF49F3099D99D25743B /* Lock */ = {
+			isa = PBXGroup;
+			children = (
+				31FEF4F62F3154FF83305493 /* AppLockView.swift */,
+			);
+			path = Lock;
+			sourceTree = "<group>";
+		};
+		13AE1E359945C06D2210D6F4 /* Input */ = {
+			isa = PBXGroup;
+			children = (
+				A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */,
+				112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */,
+				AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */,
+				989E2BA736989DF4117DDF67 /* InputFlowView.swift */,
+				C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */,
+				5C9366EAA330B5AAA386831D /* TextInputView.swift */,
+				5DBFDC0A30EDABEA3D6D2C1B /* UnitFormat.swift */,
+				D8189A60D879FAE780A7725F /* VoiceInputView.swift */,
+			);
+			path = Input;
+			sourceTree = "<group>";
+		};
+		2F66CA15A40627DDC1C287DC /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				7802482394DF8F98400A488D /* CalorieOffsetView.swift */,
+				6D22B5247DB607D50552B4C4 /* EntryRow.swift */,
+				473873BDC1C01302A500085F /* QuickAddBar.swift */,
+				A1C33FEE8814DE9918FAB5FA /* TabbedTotalCard.swift */,
+				BBA79A0510AA6F1BE192D2CD /* TodayView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		87484DA4E2714A960AABEEDC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C0FB868B18204886E2271B14 /* CalorieCounter.app */,
+				40A1CA067B942AD2F09725D2 /* CalorieCounterUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9C20328D6DCD18F454DB0655 /* CalorieCounter */ = {
+			isa = PBXGroup;
+			children = (
+				B3C638309D3B050052EDD08C /* History */,
+				13AE1E359945C06D2210D6F4 /* Input */,
+				12420AF49F3099D99D25743B /* Lock */,
+				0A0AB31666857AAC23B6796B /* Settings */,
+				2F66CA15A40627DDC1C287DC /* Today */,
+				A98C554F7A317C8F684DFC1A /* Assets.xcassets */,
+				13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */,
+				D1487B1E2EF3F13601523B41 /* MainTabView.swift */,
+				7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */,
+				11E9485996765BF65226D3DA /* RootView.swift */,
+			);
+			path = CalorieCounter;
+			sourceTree = "<group>";
+		};
+		B3C638309D3B050052EDD08C /* History */ = {
+			isa = PBXGroup;
+			children = (
+				90AF669C8138357F7FAFF8B2 /* CalendarView.swift */,
+				2D40788EDBEB586B5F670A2F /* DayDetailView.swift */,
+				0EAA48BF0C24E262B95F2D6E /* HistoryView.swift */,
+				9712F7B63B8E377089201042 /* NutritionChart.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		FAAD9FEA8E51F7F729D29A41 = {
+			isa = PBXGroup;
+			children = (
+				9C20328D6DCD18F454DB0655 /* CalorieCounter */,
+				FD340BC9D180C520855EFFA5 /* CalorieCounterUITests */,
+				0143D23E615AC36F46E936F3 /* Packages */,
+				87484DA4E2714A960AABEEDC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FD340BC9D180C520855EFFA5 /* CalorieCounterUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */,
+				F8A13C42EFB457743B31125F /* SettingsUITests.swift */,
+				D28121B70EB4EE036EF5629F /* TextFlowUITests.swift */,
+				0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */,
+			);
+			path = CalorieCounterUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		56F00F179305A71281F2B28C /* CalorieCounterUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E4C379A5DA0AE24B56B47CEF /* Build configuration list for PBXNativeTarget "CalorieCounterUITests" */;
+			buildPhases = (
+				212295C51F7CA36FB8D82739 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				931AC8E257FB59949CA1F55A /* PBXTargetDependency */,
+			);
+			name = CalorieCounterUITests;
+			packageProductDependencies = (
+			);
+			productName = CalorieCounterUITests;
+			productReference = 40A1CA067B942AD2F09725D2 /* CalorieCounterUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		D0DA7D21B01E980A8435D715 /* CalorieCounter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E096BABDA05C04B5E2B6D9A1 /* Build configuration list for PBXNativeTarget "CalorieCounter" */;
+			buildPhases = (
+				2F7584D4A91D27F10719841A /* Sources */,
+				82A94EF8EF541F62302DE366 /* Resources */,
+				23CFAB717ACB425A457D9119 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CalorieCounter;
+			packageProductDependencies = (
+				DB708EB5C448AB5F2A195D0B /* AppCore */,
+			);
+			productName = CalorieCounter;
+			productReference = C0FB868B18204886E2271B14 /* CalorieCounter.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E8E24309885258001CD5CC3E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					56F00F179305A71281F2B28C = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = D0DA7D21B01E980A8435D715;
+					};
+					D0DA7D21B01E980A8435D715 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 53D9D2CFAE4D74C3DE85CC8F /* Build configuration list for PBXProject "CalorieCounter" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = FAAD9FEA8E51F7F729D29A41;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2FD0849C2F03BB92F5AB3EF8 /* XCLocalSwiftPackageReference "Packages/NutritionKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D0DA7D21B01E980A8435D715 /* CalorieCounter */,
+				56F00F179305A71281F2B28C /* CalorieCounterUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		82A94EF8EF541F62302DE366 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E7E099335EC69BB628C05B6 /* Assets.xcassets in Resources */,
+				C6668E361704D3A7B56A2D3A /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		212295C51F7CA36FB8D82739 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB02A9AB67B24A7D51B64F6F /* HistoryUITests.swift in Sources */,
+				F7C56333132490527F79A7EE /* SettingsUITests.swift in Sources */,
+				377F3C56A3E229C7815953BC /* TextFlowUITests.swift in Sources */,
+				53A06130F5CBAD9F8ADA10DD /* VoiceUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2F7584D4A91D27F10719841A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0CDDE4C105133F6DEC3FFBF /* AboutView.swift in Sources */,
+				1805A24C296B4827BF45360D /* AppLockView.swift in Sources */,
+				5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */,
+				E2AC3CEB3E726EAC21EED75B /* CalendarView.swift in Sources */,
+				F163CA28FC6C67E84FA480E6 /* CalorieCounterApp.swift in Sources */,
+				3CAFC351BE6D1FDD1FE8D3DF /* CalorieOffsetView.swift in Sources */,
+				D58BBFD2CE034AC0862F40BA /* DayDetailView.swift in Sources */,
+				995199EE02AB7604CA1A9C3A /* EditEntryView.swift in Sources */,
+				09D05BC9144301D6C2778EAB /* EntryRow.swift in Sources */,
+				935CD8303DD3B941E9411CD5 /* FoodConfirmView.swift in Sources */,
+				B3D31995848299B852AA6EDF /* HistoryView.swift in Sources */,
+				CEC34B1A8BBD6C1C613C45EF /* InputFlowView.swift in Sources */,
+				D7BF81F3069B762B344ABC81 /* MainTabView.swift in Sources */,
+				88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */,
+				7BD50311C99265FE48D8E855 /* PhotoCaptureView.swift in Sources */,
+				1F352880CD4E068DF04B35DF /* QuickAddBar.swift in Sources */,
+				5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */,
+				4A86D49DDE36C82806BA2727 /* SettingsView.swift in Sources */,
+				B33C19BC515DF15DBB3BE02C /* TabbedTotalCard.swift in Sources */,
+				ABEB17C57DFB81148435231E /* TextInputView.swift in Sources */,
+				4306649DECE14DECF673344A /* TodayView.swift in Sources */,
+				1D02CB1E5D2E3BF5366EF514 /* UnitFormat.swift in Sources */,
+				A12A420D891564464675F02D /* VoiceInputView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		931AC8E257FB59949CA1F55A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D0DA7D21B01E980A8435D715 /* CalorieCounter */;
+			targetProxy = 3F5D4F7FFB96EDB2B2935571 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		07D70B414FEBA49DDE84B343 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CalorieCounter/CalorieCounter.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CalorieCounter/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidashcreated.caloriecounter;
+				PRODUCT_NAME = CalorieCounter;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		176CC7D5BAFB3A3576575115 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidashcreated.caloriecounter.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = CalorieCounter;
+			};
+			name = Debug;
+		};
+		3AA25D14A224F01A46B5EC0D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		A6EB2193F800ED68110E3EDC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidashcreated.caloriecounter.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = CalorieCounter;
+			};
+			name = Release;
+		};
+		E35FADCDF5C91C205B4BED87 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		EA71A8DFE73F53786C6296F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CalorieCounter/CalorieCounter.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CalorieCounter/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidashcreated.caloriecounter;
+				PRODUCT_NAME = CalorieCounter;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		53D9D2CFAE4D74C3DE85CC8F /* Build configuration list for PBXProject "CalorieCounter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E35FADCDF5C91C205B4BED87 /* Debug */,
+				3AA25D14A224F01A46B5EC0D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E096BABDA05C04B5E2B6D9A1 /* Build configuration list for PBXNativeTarget "CalorieCounter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EA71A8DFE73F53786C6296F3 /* Debug */,
+				07D70B414FEBA49DDE84B343 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E4C379A5DA0AE24B56B47CEF /* Build configuration list for PBXNativeTarget "CalorieCounterUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				176CC7D5BAFB3A3576575115 /* Debug */,
+				A6EB2193F800ED68110E3EDC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		2FD0849C2F03BB92F5AB3EF8 /* XCLocalSwiftPackageReference "Packages/NutritionKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/NutritionKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DB708EB5C448AB5F2A195D0B /* AppCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E8E24309885258001CD5CC3E /* Project object */;
+}

@@ -1,0 +1,17 @@
+# Swift / SwiftPM build artifacts
+.build/
+Packages/*/.build/
+DerivedData/
+build/
+build-device/
+
+# Xcode user state — the generated .xcodeproj IS committed (xcodegen output),
+# but per-user state inside it is not.
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+.swiftpm/xcode/
+.swiftpm/configuration/
+**/.swiftpm/
+
+.DS_Store

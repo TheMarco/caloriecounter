@@ -1,0 +1,96 @@
+# CalorieCounter — XcodeGen project spec (source of truth).
+#
+# The .xcodeproj is GENERATED from this file and committed alongside it, so the
+# project opens normally in Xcode/CI without anyone needing xcodegen day-to-day.
+# Regenerate after adding/removing source files:
+#
+#     cd apple && xcodegen generate
+#
+# App sources are auto-globbed from CalorieCounter/, so new files in later phases
+# need no project surgery — just re-run the command above.
+
+name: CalorieCounter
+
+options:
+  bundleIdPrefix: com.aidashcreated
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: false
+  findCarthageFrameworks: false
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Leave empty so simulator builds need no team; set your Team ID here (or in
+    # Xcode's Signing & Capabilities) before archiving for the App Store.
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+
+packages:
+  NutritionKit:
+    path: Packages/NutritionKit
+
+targets:
+  CalorieCounter:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: CalorieCounter
+        excludes:
+          - "Info.plist"
+          - "CalorieCounter.entitlements"
+    dependencies:
+      - package: NutritionKit
+        product: AppCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aidashcreated.caloriecounter
+        PRODUCT_NAME: CalorieCounter
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: CalorieCounter/Info.plist
+        CODE_SIGN_ENTITLEMENTS: CalorieCounter/CalorieCounter.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  CalorieCounterUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: CalorieCounterUITests
+    dependencies:
+      - target: CalorieCounter
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aidashcreated.caloriecounter.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_TARGET_NAME: CalorieCounter
+
+schemes:
+  CalorieCounter:
+    build:
+      targets:
+        CalorieCounter: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - CalorieCounterUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
