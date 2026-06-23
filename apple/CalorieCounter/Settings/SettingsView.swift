@@ -83,6 +83,13 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Appearance") {
+                Picker("Theme", selection: $settings.appearance) {
+                    ForEach(AppearanceMode.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
+
             Section {
                 Toggle("Require Face ID / Touch ID", isOn: $settings.biometricLockEnabled)
             } header: {

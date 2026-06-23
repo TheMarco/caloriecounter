@@ -6,6 +6,18 @@
 //
 
 import SwiftUI
+import NutritionCore
+
+extension AppearanceMode {
+    /// SwiftUI scheme to force, or `nil` to follow the system ("Auto").
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
 
 extension Color {
     init(hex: UInt32) {

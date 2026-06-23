@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppCore
+import NutritionCore
 
 struct RootView: View {
     @Environment(AppContainer.self) private var container
@@ -40,6 +41,7 @@ struct RootView: View {
                 await lock.authenticate()
             }
         }
+        .preferredColorScheme(container.settings.appearance.colorScheme)
         .onChange(of: scenePhase) { _, phase in
             if phase == .background && lockEnabled {
                 lock.lock()

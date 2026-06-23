@@ -21,6 +21,7 @@ struct SettingsStoreTests {
         #expect(store.targets == MacroTargets(calories: 2000, fat: 65, carbs: 250, protein: 100))
         #expect(store.units == .metric)
         #expect(store.biometricLockEnabled == false)
+        #expect(store.appearance == .system)
         #expect(store.appSettings == AppSettings(targets: store.targets, units: .metric))
     }
 
@@ -31,11 +32,13 @@ struct SettingsStoreTests {
         a.units = .imperial
         a.targets = MacroTargets(calories: 2200, fat: 70, carbs: 200, protein: 120)
         a.biometricLockEnabled = true
+        a.appearance = .dark
 
         let b = SettingsStore(defaults: defaults)
         #expect(b.units == .imperial)
         #expect(b.targets == MacroTargets(calories: 2200, fat: 70, carbs: 200, protein: 120))
         #expect(b.biometricLockEnabled == true)
+        #expect(b.appearance == .dark)
     }
 
     @Test("out-of-range targets are clamped when persisted")
