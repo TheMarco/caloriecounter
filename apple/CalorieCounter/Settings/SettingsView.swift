@@ -18,7 +18,6 @@ struct SettingsView: View {
     @State private var showImporter = false
     @State private var importMessage: String?
     @State private var showWizard = false
-    @FocusState private var focusedTarget: String?
 
     var body: some View {
         NavigationStack {
@@ -29,9 +28,6 @@ struct SettingsView: View {
             }
                 .navigationTitle("Settings")
                 .keyboardDoneToolbar()
-                .onChange(of: focusedTarget) { _, new in
-                    if new == nil { clampTargets() }   // number pad closed → snap to valid ranges
-                }
                 .task { await prepareExport() }
                 .confirmationDialog("Reset all targets to the defaults?", isPresented: $showResetConfirm, titleVisibility: .visible) {
                     Button("Reset", role: .destructive) {
@@ -153,32 +149,12 @@ struct SettingsView: View {
     /// accent-highlighted while you're editing it, so it's obvious which field is
     /// active. Typed values snap into range when the keyboard closes (clampTargets).
     private func targetField(_ label: String, value: Binding<Double>, unit: String) -> some View {
-        let editing = focusedTarget == label
-        return HStack {
+        HStack {
             Text(label)
             Spacer(minLength: 8)
-            HStack(spacing: 4) {
-                TextField(label, value: value, format: .number.grouping(.never))
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                    .focused($focusedTarget, equals: label)
-                    .fixedSize()
-                Text(unit).font(.callout).foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(editing ? DS.Macro.calories.tint.opacity(0.20) : Color.primary.opacity(0.06))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .stroke(editing ? DS.Macro.calories.tint.opacity(0.7) : .clear, lineWidth: 1.5)
-                    }
-            }
+            PillNumberField(value: value, unit: unit, accessibilityLabel: label,
+                            keyboard: .numberPad, onCommit: clampTargets)
         }
-        .contentShape(Rectangle())
-        .onTapGesture { focusedTarget = label }   // tapping anywhere on the row edits
-        .animation(.easeInOut(duration: 0.15), value: editing)
     }
 
     /// Snap every target into its valid range (called when the number pad closes).

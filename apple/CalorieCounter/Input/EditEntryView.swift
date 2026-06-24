@@ -61,8 +61,9 @@ struct EditEntryView: View {
                 }
                 Section("Amount") {
                     HStack {
-                        TextField("Quantity", text: $quantityText).keyboardType(.decimalPad)
-                        Divider()
+                        Text("Quantity")
+                        Spacer(minLength: 8)
+                        PillTextField(text: $quantityText, accessibilityLabel: "Quantity")
                         let units = UnitConversion.compatibleUnits(with: unit)
                         if units.count > 1 {
                             Picker("Unit", selection: $unit) {
@@ -124,13 +125,8 @@ struct EditEntryView: View {
     private func advancedRow(_ label: String, _ text: Binding<String>, _ unit: String) -> some View {
         HStack {
             Text(label).font(.subheadline).foregroundStyle(.secondary)
-            Spacer()
-            TextField("—", text: text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .font(.subheadline)
-                .frame(maxWidth: 80)
-            Text(unit).font(.subheadline).foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            PillTextField(text: text, unit: unit, placeholder: "—", accessibilityLabel: label)
         }
     }
 }

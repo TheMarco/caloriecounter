@@ -53,11 +53,9 @@ struct CalorieOffsetSheet: View {
                     }
                     HStack {
                         Text("Exact value")
-                        Spacer()
-                        TextField("kcal", value: $value, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 100)
+                        Spacer(minLength: 8)
+                        PillNumberField(value: $value, unit: "kcal", accessibilityLabel: "Exact value",
+                                        keyboard: .numberPad, onCommit: { value = min(max(value, 0), 5000) })
                     }
                 }
             }

@@ -37,8 +37,10 @@ final class SettingsUITests: XCTestCase {
         let field = app.textFields["Calories"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Calories should be an editable field")
 
-        // Double-tap selects the existing number; typing then replaces it.
-        field.doubleTap()
+        // Tapping puts the caret at the end; clear the existing value, then type the new one.
+        field.tap()
+        let existing = field.value as? String ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
         field.typeText("1800")
         app.buttons["Done"].tap()
 

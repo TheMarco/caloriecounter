@@ -27,7 +27,6 @@ struct SetupWizardView: View {
     @State private var weightKg = 75.0
     @State private var heightCm = 175.0
     @State private var activity: ActivityLevel = .moderate
-    @FocusState private var focusedField: String?
 
     private var units: UnitSystem { container.settings.units }
     private let stepCount = 5
@@ -54,7 +53,6 @@ struct SetupWizardView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .keyboardDoneToolbar()
-                .onChange(of: focusedField) { _, new in if new == nil { clampInputs() } }
                 footer
             }
         }
@@ -241,7 +239,7 @@ struct SetupWizardView: View {
                     labeledRow("Age") { ageChip }
                     Divider()
                     labeledRow("Weight") {
-                        numberField("weight", weightFieldBinding, unit: units.weightUnit)
+                        numberField("weight", weightFieldBinding, unit: units.weightUnit, decimals: 1)
                     }
                     Divider()
                     if units == .metric {
@@ -351,44 +349,15 @@ struct SetupWizardView: View {
         }
     }
 
-    /// A tappable value chip matching Settings: faintly filled at rest, accent-
-    /// highlighted while editing.
-    private func numberField(_ id: String, _ value: Binding<Double>, unit: String? = nil) -> some View {
-        chip(id: id) {
-            TextField("", value: value, format: .number.precision(.fractionLength(0...1)))
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focusedField, equals: id)
-                .fixedSize()
-            if let unit { Text(unit).font(.callout).foregroundStyle(.secondary) }
-        }
+    /// A value pill matching the rest of the app (caret-to-end, green-check dismiss).
+    private func numberField(_ id: String, _ value: Binding<Double>, unit: String? = nil, decimals: Int = 0) -> some View {
+        PillNumberField(value: value, unit: unit, decimals: decimals,
+                        accessibilityLabel: id.capitalized, onCommit: clampInputs)
     }
 
     private var ageChip: some View {
-        chip(id: "age") {
-            TextField("", value: $age, format: .number)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focusedField, equals: "age")
-                .fixedSize()
-        }
-    }
-
-    @ViewBuilder
-    private func chip<Content: View>(id: String, @ViewBuilder _ content: () -> Content) -> some View {
-        let editing = focusedField == id
-        HStack(spacing: 4) { content() }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(editing ? DS.Macro.calories.tint.opacity(0.20) : Color.primary.opacity(0.06))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .stroke(editing ? DS.Macro.calories.tint.opacity(0.7) : .clear, lineWidth: 1.5)
-                    }
-            }
-            .animation(.easeInOut(duration: 0.15), value: editing)
+        PillNumberField(value: Binding(get: { Double(age) }, set: { age = Int($0.rounded()) }),
+                        accessibilityLabel: "Age", keyboard: .numberPad, onCommit: clampInputs)
     }
 
     /// Snap typed values into sane ranges when the keyboard closes.

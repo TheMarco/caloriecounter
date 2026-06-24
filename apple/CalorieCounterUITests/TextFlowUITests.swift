@@ -60,6 +60,7 @@ final class TextFlowUITests: XCTestCase {
         let breakdown = app.staticTexts["Breakdown"]
         XCTAssertTrue(breakdown.waitForExistence(timeout: 5), "A compound food should show a Breakdown section")
         breakdown.tap()
+        app.swipeUp()   // the breakdown rows are at the bottom of the sheet
         XCTAssertTrue(app.staticTexts["Lettuce"].waitForExistence(timeout: 3),
                       "Expanding the breakdown should reveal its ingredient rows")
     }

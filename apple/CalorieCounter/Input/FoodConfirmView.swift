@@ -50,9 +50,9 @@ private struct ConfirmForm: View {
             }
             Section("Amount") {
                 HStack {
-                    TextField("Quantity", text: $model.quantityText)
-                        .keyboardType(.decimalPad)
-                    Divider()
+                    Text("Quantity")
+                    Spacer(minLength: 8)
+                    PillTextField(text: $model.quantityText, accessibilityLabel: "Quantity")
                     let units = UnitConversion.compatibleUnits(with: model.unit)
                     if units.count > 1 {
                         Picker("Unit", selection: $model.unit) {
@@ -159,13 +159,8 @@ private struct ConfirmForm: View {
     private func advancedRow(_ label: String, _ text: Binding<String>, _ unit: String) -> some View {
         HStack {
             Text(label).font(.subheadline).foregroundStyle(.secondary)
-            Spacer()
-            TextField("—", text: text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .font(.subheadline)
-                .frame(maxWidth: 80)
-            Text(unit).font(.subheadline).foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            PillTextField(text: text, unit: unit, placeholder: "—", accessibilityLabel: label)
         }
     }
 }
@@ -197,17 +192,7 @@ private struct BreakdownRow: View {
                     .frame(minWidth: 22)
                 Text("g").font(.subheadline).foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(editing ? DS.Macro.calories.tint.opacity(0.20) : Color.primary.opacity(0.06))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .stroke(editing ? DS.Macro.calories.tint.opacity(0.7) : .clear, lineWidth: 1.5)
-                    }
-            }
-            .animation(.easeInOut(duration: 0.15), value: editing)
+            .valuePill(editing: editing)
 
             Text("\(Int(component.kcal.rounded())) kcal")
                 .font(.caption)

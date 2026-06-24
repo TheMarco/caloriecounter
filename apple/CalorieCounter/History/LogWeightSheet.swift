@@ -15,7 +15,6 @@ struct LogWeightSheet: View {
 
     private let units: UnitSystem
     @State private var value: Double
-    @FocusState private var focused: Bool
 
     init(currentKg: Double?, units: UnitSystem) {
         self.units = units
@@ -30,13 +29,9 @@ struct LogWeightSheet: View {
                     Section {
                         HStack {
                             Text("Weight")
-                            Spacer()
-                            TextField("Weight", value: $value, format: .number.precision(.fractionLength(0...1)))
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .focused($focused)
-                                .frame(maxWidth: 100)
-                            Text(units.weightUnit).foregroundStyle(.secondary)
+                            Spacer(minLength: 8)
+                            PillNumberField(value: $value, unit: units.weightUnit, decimals: 1,
+                                            accessibilityLabel: "Weight", autofocus: true)
                         }
                     } footer: {
                         Text("Saved as today's weight. Update it whenever you like — you don't have to weigh in every day.")
@@ -51,7 +46,6 @@ struct LogWeightSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("Save") { save() } }
             }
-            .onAppear { focused = true }
         }
         .presentationDetents([.height(220), .medium])
     }
