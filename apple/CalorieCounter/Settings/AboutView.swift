@@ -29,10 +29,14 @@ struct AboutView: View {
                 .listRowBackground(Color.clear)
             }
 
-            Section("Privacy") {
-                Label("Your nutrition data is stored only on this device.", systemImage: "lock.shield")
-                Label("Barcodes, labels, text, and voice are all processed on-device.", systemImage: "cpu")
-                Label("Nothing is sent to the cloud or shared with anyone.", systemImage: "hand.raised")
+            Section {
+                Label("Your food log, weights, targets, and settings are stored only on this device.", systemImage: "lock.shield")
+                Label("Typed and spoken foods, and scanned nutrition labels, are analyzed on-device with Apple Intelligence.", systemImage: "cpu")
+                Label("Scanning a barcode or searching a brand name looks it up in Open Food Facts — only that code or search term is sent.", systemImage: "wifi")
+            } header: {
+                Text("Privacy")
+            } footer: {
+                Text("That Open Food Facts lookup is the only thing that ever leaves your device. There's no account, no tracking, and no analytics.")
             }
             .font(.subheadline)
 
