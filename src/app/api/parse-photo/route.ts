@@ -107,8 +107,16 @@ If you can clearly identify food in the image, respond with this exact JSON stru
   "fat": total_fat_grams_for_this_serving,
   "carbs": total_carbs_grams_for_this_serving,
   "protein": total_protein_grams_for_this_serving,
-  "notes": "brief_description_of_what_you_see"
+  "fiber": total_dietary_fiber_grams_for_this_serving,
+  "sodium": total_sodium_milligrams_for_this_serving,
+  "sugar": total_sugars_grams_for_this_serving,
+  "notes": "brief_description_of_what_you_see",
+  "components": [ { "name": "food item", "grams": number, "kcal": number, "fat": number, "carbs": number, "protein": number } ]
 }
+
+MICRONUTRIENTS: also estimate dietary fiber (grams), sodium (milligrams), and total sugars (grams) for the whole serving. Round fiber/sugar to whole grams, sodium to the nearest 10 mg — approximate.
+
+COMPONENTS: when the plate has several distinct items (e.g. chicken + rice + broccoli, or a burger + fries), list them in "components" — each with its grams and kcal/fat/carbs/protein, summing to the totals above. For a single food, return an empty array []. Use the recognizable items on the plate, not raw sub-ingredients.
 
 If you cannot see any food at all in the image, respond with:
 {
@@ -192,7 +200,7 @@ Remember: Only proceed if you can clearly see and identify food. When in doubt, 
               ],
             },
           ],
-          max_tokens: 200,
+          max_tokens: 900,
           temperature: 0.1,
         });
         console.log(`✅ Successfully used model: ${model}`);
@@ -274,17 +282,56 @@ Remember: Only proceed if you can clearly see and identify food. When in doubt, 
 
       console.log('✅ Successfully parsed food from photo:', parsed.food);
 
+      const round1 = (v: unknown) => v != null ? Math.round(Number(v) * 10) / 10 : undefined;
+      let components = Array.isArray(parsed.components)
+        ? parsed.components
+            .filter((c: { name?: string; grams?: number }) => c && c.name && Number(c.grams) > 0)
+            .map((c: { name: string; grams: number; kcal?: number; fat?: number; carbs?: number; protein?: number }) => ({
+              name: String(c.name),
+              grams: Math.round(Number(c.grams)),
+              kcal: c.kcal != null ? Math.round(Number(c.kcal)) : undefined,
+              fat: round1(c.fat),
+              carbs: round1(c.carbs),
+              protein: round1(c.protein),
+            }))
+        : undefined;
+
+      let kcal = parsed.kcal != null ? Math.round(Number(parsed.kcal)) : undefined;
+      const fat = round1(parsed.fat);
+      const carbs = round1(parsed.carbs);
+      const protein = round1(parsed.protein);
+      const fiber = parsed.fiber != null ? Math.round(Number(parsed.fiber)) : undefined;
+
+      // Atwater floor (same as the text route): kcal can't read below its macros;
+      // scale the breakdown to match the corrected total.
+      if (kcal != null && fat != null && carbs != null && protein != null) {
+        const floor = Math.round(9 * fat + 4 * carbs + 4 * protein - 2 * (fiber ?? 0));
+        if (floor > 0 && kcal < floor * 0.97) {
+          const scale = floor / kcal;
+          kcal = floor;
+          if (components) {
+            components = components.map((c: { kcal?: number }) => ({
+              ...c, kcal: c.kcal != null ? Math.round(c.kcal * scale) : c.kcal,
+            }));
+          }
+        }
+      }
+
       return NextResponse.json<ParseFoodResponse>({
         success: true,
         data: {
           food: parsed.food,
           quantity: Number(parsed.quantity),
           unit: parsed.unit,
-          kcal: parsed.kcal ? Number(parsed.kcal) : undefined,
-          fat: parsed.fat ? Math.round(Number(parsed.fat) * 10) / 10 : undefined,
-          carbs: parsed.carbs ? Math.round(Number(parsed.carbs) * 10) / 10 : undefined,
-          protein: parsed.protein ? Math.round(Number(parsed.protein) * 10) / 10 : undefined,
+          kcal,
+          fat,
+          carbs,
+          protein,
+          fiber,
+          sodium: parsed.sodium != null ? Math.round(Number(parsed.sodium) / 10) * 10 : undefined,
+          sugar: parsed.sugar != null ? Math.round(Number(parsed.sugar)) : undefined,
           notes: parsed.notes,
+          components: components && components.length ? components : undefined,
         },
       });
 
