@@ -53,6 +53,24 @@ private struct ConfirmForm: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var saving = false
+    /// The amount the model first parsed, captured once — the portion chips scale
+    /// relative to this so "½" always means half of the original serving.
+    @State private var baseQuantity: Double?
+
+    /// One-tap portion multipliers shown under the quantity field.
+    private static let portions: [(label: String, mult: Double)] =
+        [("½", 0.5), ("1×", 1), ("1½", 1.5), ("2×", 2)]
+
+    private func setPortion(_ mult: Double) {
+        guard let base = baseQuantity, base > 0 else { return }
+        let q = base * mult
+        model.quantityText = q == q.rounded() ? String(Int(q)) : String(format: "%.1f", q)
+    }
+
+    private func isPortion(_ mult: Double) -> Bool {
+        guard let base = baseQuantity, base > 0 else { return false }
+        return abs(model.quantity - base * mult) < 0.05
+    }
 
     var body: some View {
         Form {
@@ -92,6 +110,16 @@ private struct ConfirmForm: View {
                         Text(model.unit).foregroundStyle(.secondary)
                     }
                 }
+                // One-tap portion scaling ("half eaten", bigger servings).
+                HStack(spacing: 8) {
+                    ForEach(Self.portions, id: \.label) { p in
+                        Button(p.label) { setPortion(p.mult) }
+                            .buttonStyle(.bordered)
+                            .tint(isPortion(p.mult) ? .green : .secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .font(.subheadline.weight(.medium))
             }
             Section("Nutrition (recalculated)") {
                 nutritionRow("Calories", model.kcal, "kcal")
@@ -122,6 +150,7 @@ private struct ConfirmForm: View {
         }
         .navigationTitle("Confirm Food")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { if baseQuantity == nil { baseQuantity = model.quantity } }
         .keyboardDoneToolbar()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -171,7 +200,7 @@ private struct ConfirmForm: View {
             }
         } footer: {
             if model.componentsExpanded {
-                Text("Tap an amount to adjust, or swipe to remove. The totals above update to match.")
+                Text("Use −/+ to halve or double an ingredient, tap the amount to set it exactly, or swipe to remove. The totals above update to match.")
                     .font(.caption2)
             }
         }
@@ -198,11 +227,20 @@ private struct BreakdownRow: View {
     @State private var editing = false
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Text(component.name)
                 .font(.subheadline)
                 .lineLimit(1)
-            Spacer(minLength: 8)
+                .truncationMode(.tail)
+            Spacer(minLength: 4)
+
+            Button {
+                onGramsChanged(max(1, (component.grams * 0.5).rounded()))
+            } label: {
+                Image(systemName: "minus.circle")
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Halve \(component.name)")
 
             HStack(spacing: 3) {
                 AmountField(text: $text,
@@ -216,11 +254,19 @@ private struct BreakdownRow: View {
             }
             .valuePill(editing: editing)
 
+            Button {
+                onGramsChanged((component.grams * 2).rounded())
+            } label: {
+                Image(systemName: "plus.circle")
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Double \(component.name)")
+
             Text("\(Int(component.kcal.rounded())) kcal")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-                .frame(minWidth: 58, alignment: .trailing)
+                .frame(minWidth: 52, alignment: .trailing)
         }
         .onAppear { text = Self.gramText(component.grams) }
         .onChange(of: component.grams) { _, grams in
