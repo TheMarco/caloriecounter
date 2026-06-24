@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   MicrophoneIconComponent,
   CameraIconComponent,
@@ -19,10 +18,10 @@ export default function LandingPage() {
   const [licenseContent, setLicenseContent] = useState<string>('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const handleLoginSuccess = () => {
-    router.push('/');
+    // Use full page reload to ensure cookie is sent with request
+    window.location.href = '/';
   };
 
   const screenshots = [
