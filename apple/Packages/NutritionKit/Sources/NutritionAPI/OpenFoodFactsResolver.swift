@@ -17,7 +17,7 @@ public enum OpenFoodFactsError: Error, Sendable, Equatable {
     case missingNutriments(productName: String)
 }
 
-public struct OpenFoodFactsResolver: BarcodeResolving {
+public struct OpenFoodFactsResolver: BarcodeResolving, FoodSearching {
     private let session: URLSession
     private let baseURL: URL
     /// OFF asks API clients to identify themselves; use the app's real host.
@@ -46,49 +46,88 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
             throw OpenFoodFactsError.productNotFound
         }
 
-        let name = [product.productName, product.productNameEn, product.brands]
-            .compactMap { $0 }
-            .first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) ?? "Unknown Product"
-
-        guard let nutriments = product.nutriments else {
+        let name = Self.displayName(for: product)
+        guard let nutriments = product.nutriments,
+              let food = parsedFood(name: name, nutriments: nutriments,
+                                    servingGrams: product.servingQuantity, servingSize: product.servingSize) else {
             throw OpenFoodFactsError.missingNutriments(productName: name)
         }
-        let servingGrams = product.servingQuantity
+        return food
+    }
 
-        // 1) Per-serving — the package's own figures (explicit, or computed from
-        //    per-100g × the serving weight). This is what users expect from a scan.
+    /// Free-text search against OFF's product database. Returns branded matches
+    /// (newest/most-complete first as OFF ranks them), each mapped to a ParsedFood
+    /// with `.barcode` confidence. Products without usable nutriments are dropped.
+    /// Returns [] for blank queries; throws only on a transport error (callers
+    /// treat a throw as "no suggestions" so the type flow degrades gracefully).
+    public func search(_ query: String, units: UnitSystem) async throws -> [ParsedFood] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 3 else { return [] }
+
+        var components = URLComponents(string: "\(baseURL.absoluteString)/cgi/search.pl")
+        components?.queryItems = [
+            URLQueryItem(name: "search_terms", value: trimmed),
+            URLQueryItem(name: "search_simple", value: "1"),
+            URLQueryItem(name: "action", value: "process"),
+            URLQueryItem(name: "json", value: "1"),
+            URLQueryItem(name: "page_size", value: "12"),
+            // Only fetch the fields we map — keeps the response small.
+            URLQueryItem(name: "fields", value: "product_name,product_name_en,brands,serving_size,serving_quantity,nutriments"),
+        ]
+        guard let url = components?.url else { return [] }
+        var request = URLRequest(url: url)
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            return []
+        }
+
+        let payload = try JSONDecoder().decode(OFFSearchResponse.self, from: data)
+        return (payload.products ?? []).compactMap { product in
+            let name = Self.displayName(for: product)
+            guard name != "Unknown Product", let nutriments = product.nutriments else { return nil }
+            return parsedFood(name: name, nutriments: nutriments,
+                              servingGrams: product.servingQuantity, servingSize: product.servingSize)
+        }
+    }
+
+    /// A product's best display name (name → English name → brand).
+    private static func displayName(for product: OFFResponse.Product) -> String {
+        [product.productName, product.productNameEn, product.brands]
+            .compactMap { $0 }
+            .first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) ?? "Unknown Product"
+    }
+
+    /// Build a ParsedFood from a product's nutriments, preferring per-serving over
+    /// per-100g. Returns nil when there's no usable energy value.
+    private func parsedFood(name: String, nutriments: Nutriments, servingGrams: Double?, servingSize: String?) -> ParsedFood? {
+        // 1) Per-serving — the package's own figures (what users expect from a scan).
         if let kcal = perServing(nutriments.energyKcalServing, nutriments.energyKcal100g, servingGrams) {
             return ParsedFood(
-                food: name, quantity: 1, unit: "serving",
-                kcal: kcal,
+                food: name, quantity: 1, unit: "serving", kcal: kcal,
                 fat: perServing(nutriments.fatServing, nutriments.fat100g, servingGrams) ?? 0,
                 carbs: perServing(nutriments.carbsServing, nutriments.carbs100g, servingGrams) ?? 0,
                 protein: perServing(nutriments.proteinServing, nutriments.protein100g, servingGrams) ?? 0,
-                notes: servingNote(size: product.servingSize, grams: servingGrams),
+                notes: servingNote(size: servingSize, grams: servingGrams),
                 fiber: perServing(nutriments.fiberServing, nutriments.fiber100g, servingGrams),
                 sodium: sodiumMilligrams(nutriments, servingGrams),
                 sugar: perServing(nutriments.sugarsServing, nutriments.sugars100g, servingGrams),
                 nutritionConfidence: .barcode
             )
         }
-
         // 2) Per-100g fallback.
         if let kcal = nutriments.energyKcal100g {
             return ParsedFood(
-                food: name, quantity: 100, unit: "g",
-                kcal: kcal,
-                fat: nutriments.fat100g ?? 0,
-                carbs: nutriments.carbs100g ?? 0,
-                protein: nutriments.protein100g ?? 0,
+                food: name, quantity: 100, unit: "g", kcal: kcal,
+                fat: nutriments.fat100g ?? 0, carbs: nutriments.carbs100g ?? 0, protein: nutriments.protein100g ?? 0,
                 fiber: nutriments.fiber100g,
-                sodium: nutriments.sodium100g.map { $0 * 1000 }
-                    ?? nutriments.salt100g.map { $0 / 2.5 * 1000 },
+                sodium: nutriments.sodium100g.map { $0 * 1000 } ?? nutriments.salt100g.map { $0 / 2.5 * 1000 },
                 sugar: nutriments.sugars100g,
                 nutritionConfidence: .barcode
             )
         }
-
-        throw OpenFoodFactsError.missingNutriments(productName: name)
+        return nil
     }
 
     /// A per-serving value: the explicit one if present, else per-100g scaled by
@@ -117,6 +156,12 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
 }
 
 // MARK: - OFF response decoding
+
+/// The `/cgi/search.pl` response: a list of products (same shape as a single
+/// product lookup), reusing `OFFResponse.Product` for decoding.
+private struct OFFSearchResponse: Decodable {
+    let products: [OFFResponse.Product]?
+}
 
 private struct OFFResponse: Decodable {
     let status: Int?

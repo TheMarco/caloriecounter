@@ -9,8 +9,11 @@ import NutritionCore
 public enum Prompts {
 
     /// System instructions for parsing a free-text/voice food description into a
-    /// `NutritionInfo`. `units` switches the measurement-unit guidance.
-    public static func foodInstructions(units: UnitSystem) -> String {
+    /// `NutritionInfo`. `units` switches the measurement-unit guidance. `references`
+    /// are USDA per-100g densities for foods that look like the user's input —
+    /// injected as authoritative grounding so the model scales real numbers to a
+    /// realistic portion instead of guessing the density.
+    public static func foodInstructions(units: UnitSystem, references: [DBFood] = []) -> String {
         let unitsInstruction = units == .metric
             ? "The user prefers metric units. Use grams for solids and ml for liquids when possible (e.g., 44ml for a shot of tequila)."
             : "The user prefers imperial units. Use oz, lb, cups, tbsp, tsp as appropriate (e.g., 1.5oz for a shot of tequila)."
@@ -57,7 +60,43 @@ public enum Prompts {
         - "slice of bread" -> quantity 1, unit slice, kcal ~80.
         - "slice of Dave's Killer Bread" -> quantity 1, unit slice, kcal ~120.
         - "2 eggs" -> quantity 2, unit piece, kcal ~140.
+        \(referenceBlock(references))
         """
+    }
+
+    /// USDA per-100g grounding. When the retriever finds generic foods resembling
+    /// the user's input, we list their REAL densities and tell the model to scale
+    /// them to whatever realistic portion it decides — keeping its portion judgment
+    /// while replacing guessed densities with measured ones. Empty when no match.
+    static func referenceBlock(_ references: [DBFood]) -> String {
+        guard !references.isEmpty else { return "" }
+        let lines = references.map { f -> String in
+            var parts = [
+                "\(Int(f.kcal.rounded())) kcal",
+                "\(fmt(f.protein))g protein",
+                "\(fmt(f.fat))g fat",
+                "\(fmt(f.carbs))g carbs",
+            ]
+            if let fi = f.fiber { parts.append("\(fmt(fi))g fiber") }
+            if let su = f.sugar { parts.append("\(fmt(su))g sugar") }
+            if let so = f.sodium { parts.append("\(Int(so.rounded()))mg sodium") }
+            return "- \(f.name) (per 100g): \(parts.joined(separator: ", "))"
+        }
+        return """
+
+
+        REFERENCE NUTRITION DATA (USDA, per 100 g) — authoritative densities for \
+        generic foods similar to the user's input. If one clearly matches what the \
+        user means, base your macros on its density and scale it to the realistic \
+        serving size you choose (do NOT just copy the per-100g numbers unless the \
+        serving really is 100 g). If none match, rely on your own knowledge.
+        \(lines.joined(separator: "\n"))
+        """
+    }
+
+    /// Trim trailing ".0" so "20.0" reads as "20" but "2.1" stays "2.1".
+    private static func fmt(_ value: Double) -> String {
+        value == value.rounded() ? String(Int(value)) : String(format: "%.1f", value)
     }
 
     /// System instructions for estimating nutrition from a barcode product name

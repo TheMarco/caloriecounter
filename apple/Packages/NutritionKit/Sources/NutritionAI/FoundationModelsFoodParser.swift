@@ -15,7 +15,12 @@ public enum FoundationModelsError: Error, Sendable, Equatable {
 }
 
 public struct FoundationModelsFoodParser: FoodParsing {
-    public init() {}
+    /// Generic-food density knowledge used to ground the model (see FoodDatabase).
+    private let database: FoodDatabase
+
+    public init(database: FoodDatabase = .shared) {
+        self.database = database
+    }
 
     /// Whether on-device generation is currently usable.
     public static var isAvailable: Bool {
@@ -25,7 +30,10 @@ public struct FoundationModelsFoodParser: FoodParsing {
 
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
         guard Self.isAvailable else { throw FoundationModelsError.unavailable }
-        let session = LanguageModelSession(instructions: Prompts.foodInstructions(units: units))
+        // Retrieve generic foods resembling the input and hand the model their real
+        // per-100g densities; it still decides the realistic portion and scales.
+        let references = database.referenceFoods(text)
+        let session = LanguageModelSession(instructions: Prompts.foodInstructions(units: units, references: references))
         let response = try await session.respond(to: text, generating: NutritionInfo.self)
         return response.content.toParsedFood()
     }

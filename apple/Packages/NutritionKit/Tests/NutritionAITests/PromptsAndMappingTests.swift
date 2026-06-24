@@ -26,6 +26,27 @@ struct PromptsAndMappingTests {
         #expect(metric != imperial)
     }
 
+    @Test("no USDA references → the instructions carry no reference block")
+    func noReferenceBlock() {
+        let text = Prompts.foodInstructions(units: .metric)
+        #expect(!text.contains("REFERENCE NUTRITION DATA"))
+    }
+
+    @Test("USDA references are injected as authoritative per-100g grounding")
+    func referenceBlockGrounding() {
+        let refs = [
+            DBFood(name: "Apples, fuji, with skin, raw", kcal: 58, protein: 0.1, fat: 0.2, carbs: 15.7, fiber: 2.1, sodium: 1, sugar: 13.3),
+            DBFood(name: "Salmon, Atlantic, farmed, cooked", kcal: 206, protein: 22, fat: 12, carbs: 0, fiber: nil, sodium: 61, sugar: nil),
+        ]
+        let text = Prompts.foodInstructions(units: .metric, references: refs)
+        #expect(text.contains("REFERENCE NUTRITION DATA"))
+        #expect(text.contains("Apples, fuji, with skin, raw"))
+        #expect(text.contains("58 kcal"))
+        #expect(text.contains("scale"))                 // tells the model to scale, not copy
+        // Unknown nutrients are simply omitted, never printed as a fake 0.
+        #expect(text.contains("Salmon, Atlantic, farmed, cooked"))
+    }
+
     @Test("barcode estimate instructions reference the product name and realistic servings")
     func barcodeInstructions() {
         let text = Prompts.barcodeInstructions

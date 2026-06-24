@@ -72,6 +72,20 @@ public protocol BarcodeResolving: Sendable {
     func resolve(code: String, units: UnitSystem) async throws -> ParsedFood
 }
 
+/// Free-text product name → branded matches from a nutrition database (OpenFoodFacts).
+/// Surfaced as optional, tappable suggestions in the type-food flow — generic/homemade
+/// foods still fall through to the on-device estimate. Returns [] on no match or offline.
+public protocol FoodSearching: Sendable {
+    func search(_ query: String, units: UnitSystem) async throws -> [ParsedFood]
+}
+
+/// Free-text description → generic-food matches from the bundled on-device USDA
+/// database (dishes + ingredients), each resolved to a portioned `ParsedFood` with,
+/// for dishes, an editable recipe breakdown. Local, synchronous, always available.
+public protocol FoodDatabaseQuerying: Sendable {
+    func suggestions(_ query: String, units: UnitSystem, limit: Int) -> [ParsedFood]
+}
+
 /// Nutrition-label photo → structured food (on-device Vision OCR + normalization).
 public protocol LabelReading: Sendable {
     func readNutritionLabel(imageData: Data, units: UnitSystem) async throws -> ParsedFood

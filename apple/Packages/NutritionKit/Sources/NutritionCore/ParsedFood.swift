@@ -23,6 +23,9 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
     public var sodium: Double?     // milligrams
     public var sugar: Double?      // grams
     public var nutritionConfidence: NutritionConfidence?
+    /// Optional ingredient breakdown for compound foods (a matched dish's recipe
+    /// or the model's itemization). Transient — flattened to totals on save.
+    public var components: [FoodComponent]?
 
     public init(
         food: String,
@@ -37,7 +40,8 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         fiber: Double? = nil,
         sodium: Double? = nil,
         sugar: Double? = nil,
-        nutritionConfidence: NutritionConfidence? = nil
+        nutritionConfidence: NutritionConfidence? = nil,
+        components: [FoodComponent]? = nil
     ) {
         self.food = food
         self.quantity = quantity
@@ -52,6 +56,23 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         self.sodium = sodium
         self.sugar = sugar
         self.nutritionConfidence = nutritionConfidence
+        self.components = components
+    }
+
+    /// A copy whose top-line macros equal the sum of its components (used after a
+    /// component is edited/removed). Unknown context nutrients stay unknown unless
+    /// at least one component reports them. No-op when there are no components.
+    public func totaledFromComponents() -> ParsedFood {
+        guard let components, !components.isEmpty else { return self }
+        var copy = self
+        copy.kcal = components.reduce(0) { $0 + $1.kcal }
+        copy.fat = components.reduce(0) { $0 + $1.fat }
+        copy.carbs = components.reduce(0) { $0 + $1.carbs }
+        copy.protein = components.reduce(0) { $0 + $1.protein }
+        copy.fiber = components.summed(\.fiber)
+        copy.sodium = components.summed(\.sodium)
+        copy.sugar = components.summed(\.sugar)
+        return copy
     }
 
     /// Build a parse from an existing entry (e.g. re-adding from autocomplete).
