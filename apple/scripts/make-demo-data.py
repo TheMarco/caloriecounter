@@ -106,8 +106,10 @@ def main():
             value = 260 + (offset % 4) * 70
             lines.append(",".join([date, "", "Exercise & Adjustment", "", "", num(value), "", "", "", "", "", "", "offset"]))
 
-        if offset % 7 == 0:
-            kg = 81.5 + offset * 0.04 + ((offset // 7) % 3) * 0.2 - 0.2
+        # Weigh in every couple of days so the chart shows a real trend even in the
+        # default 7-day History view (gently down ~84 kg → ~81 kg over two months).
+        if offset % 2 == 0:
+            kg = 81.0 + offset * 0.05 + ((offset // 4) % 3) * 0.2
             lines.append(",".join([date, "07:30", "Weight", one_decimal(kg), "kg", "", "", "", "", "", "", "", "weight"]))
 
     with open(DST, "w") as f:
