@@ -31,6 +31,11 @@ struct NutritionChart: View {
 
     private var isEmpty: Bool { points.allSatisfy { $0.value == 0 } }
 
+    /// Show ~6 date labels at most, whatever the range — so they never crowd into
+    /// "5…" the way per-bar labels did. (Charts ignores `desiredCount` on a dense
+    /// daily scale, so stride explicitly.)
+    private var labelStride: Int { max(1, Int((Double(points.count) / 6).rounded(.up))) }
+
     var body: some View {
         Chart {
             ForEach(points) { point in
@@ -57,9 +62,10 @@ struct NutritionChart: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 5)) {
+            AxisMarks(values: .stride(by: .day, count: labelStride)) {
                 AxisGridLine()
                 AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                    .font(.caption2)
             }
         }
         .chartYAxis { AxisMarks(position: .leading) }
