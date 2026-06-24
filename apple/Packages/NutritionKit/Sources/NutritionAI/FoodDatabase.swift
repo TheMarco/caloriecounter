@@ -82,6 +82,12 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     /// `inputFoods` names usually equal a real row's name) — fast enough to run while
     /// the user types.
     private let byName: [String: DBFood]
+    /// Inverse document frequency per token: rare, specific words ("dog", "frankfurter")
+    /// weigh far more than common ones ("cheese", "sauce", "with") so a query matches on
+    /// the word that actually identifies the food, not on a shared modifier.
+    private let idf: [String: Double]
+    /// idf for a token no food contains (maximally specific).
+    private let maxIdf: Double
 
     public convenience init() {
         self.init(foods: Self.loadBundled())
@@ -90,8 +96,15 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     /// Inject a fixed list (tests/previews).
     public init(foods: [DBFood]) {
         self.foods = foods
-        self.tokenized = foods.map(Self.tokenizeEntry)
+        let tokenized = foods.map(Self.tokenizeEntry)
+        self.tokenized = tokenized
         self.byName = Dictionary(foods.map { ($0.name.lowercased(), $0) }, uniquingKeysWith: { a, _ in a })
+
+        let n = Double(max(foods.count, 1))
+        var df: [String: Int] = [:]
+        for entry in tokenized { for token in entry.tokens { df[token, default: 0] += 1 } }
+        self.idf = df.mapValues { log(n / Double($0)) }
+        self.maxIdf = log(n)
     }
 
     public var count: Int { foods.count }
@@ -111,6 +124,9 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         let joinedQuery = q.joined(separator: " ")
         let multiWord = qSet.count >= 2
 
+        // Total query weight (denominator), weighting each word by its specificity.
+        let totalWeight = qSet.reduce(0.0) { $0 + (idf[$1] ?? maxIdf) }
+
         var scored: [DBMatch] = []
         scored.reserveCapacity(foods.count)
         for (i, food) in foods.enumerated() {
@@ -118,15 +134,30 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
             let overlap = qSet.intersection(entry.tokens)
             guard !overlap.isEmpty else { continue }
 
-            var score = Double(overlap.count) / Double(qSet.count)           // fraction of query found
+            // Fraction of the query's SPECIFICITY found, not just its word count — so
+            // matching "dog" (rare) beats matching "cheese" (common).
+            let matchedWeight = overlap.reduce(0.0) { $0 + (idf[$1] ?? maxIdf) }
+            var score = totalWeight > 0 ? matchedWeight / totalWeight : 0
             if qSet.contains(entry.primary) { score += 0.6 }                 // primary-word hit
             score += 0.2 * Double(overlap.count) / Double(entry.tokens.count) // prefer concise names
             if entry.joined.contains(joinedQuery) { score += 0.4 }           // whole-phrase containment
+            // USDA's "not further specified" generic form ("Milk, NFS") — the canonical
+            // as-eaten entry. Only a BRIEF name counts (so "Milk, NFS" qualifies but the
+            // composite "Egg foo yung, NFS" doesn't); a small boost so it wins ties
+            // without overriding a match that covers MORE of the query.
+            let hasNFS = entry.tokens.contains("nfs") || entry.tokens.contains("ns")
+            let isGenericNFS = hasNFS && entry.tokens.count <= qSet.count + 2
+            if isGenericNFS { score += 0.2 }
             // Dish-vs-ingredient bias: a dish that genuinely covers ≥2 of the query's
             // words is likely what a multi-word description means; a single-word query
-            // leans to the concise ingredient.
+            // leans to the concise ingredient (or the generic NFS form).
             if multiWord && food.kind == .dish && overlap.count >= 2 { score += 0.3 }
-            else if !multiWord && food.kind == .food { score += 0.2 }
+            else if !multiWord && (food.kind == .food || isGenericNFS) { score += 0.2 }
+            // Penalize non-prototypical/processed forms the user DIDN'T ask for, so a
+            // bare "apple" prefers the raw fruit over "Apples, dried, sulfured" and
+            // "chicken" prefers the meat over "Chicken spread".
+            let processed = entry.tokens.subtracting(qSet).intersection(Self.processedQualifiers)
+            score -= 0.45 * Double(min(processed.count, 3))
 
             scored.append(DBMatch(food: food, score: score))
         }
@@ -226,6 +257,8 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     }
 
     /// Keys are in STEMMED form (expansion runs after `tokenize`): "veggies"→"veggy".
+    /// Also splits closed compounds the USDA names write as two words ("hotdog" →
+    /// "hot dog") so they still overlap.
     static let aliases: [String: String] = [
         "blt": "bacon lettuce tomato sandwich",
         "pbj": "peanut butter jelly sandwich",
@@ -233,6 +266,9 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         "mac": "macaroni",
         "veggie": "vegetable",
         "veggy": "vegetable",
+        "hotdog": "hot dog",
+        "cheeseburger": "cheese burger",
+        "milkshake": "milk shake",
     ]
 
     /// Symmetric light stemmer (applied to both query and food tokens).
@@ -244,6 +280,21 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         }
         return token
     }
+
+    /// Tokens marking a non-prototypical / processed / derived form. A bare query
+    /// ("apple", "chicken") is penalized for these when it didn't ask for them, so
+    /// the everyday form wins over dried/powdered/spread/juice/etc. variants. Cooking
+    /// methods (raw, cooked, roasted…) are deliberately NOT here.
+    static let processedQualifiers: Set<String> = [
+        "dried", "dehydrated", "powder", "powdered", "substitute", "concentrate",
+        "concentrated", "canned", "juice", "peel", "spread", "paste", "cracker",
+        "chip", "sulfured", "imitation", "infant", "instant", "candied", "pickled",
+        "freeze", "frozen", "flavored", "mix", "baby", "drink", "meatless", "nugget",
+        "breaded", "bran", "crude", "soup", "sheep", "goat", "buffalo", "puff", "stick",
+        "flour", "feet", "leaves", "leaf", "bar",
+        // Exclusion variants ("…, no bun", "…, no salt") — not the standard form.
+        "no",
+    ]
 
     /// Portion/grammar words — never the food itself.
     static let fillerWords: Set<String> = [

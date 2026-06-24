@@ -96,4 +96,36 @@ struct FoodDatabaseTests {
         let db = FoodDatabase.shared
         for _ in 0..<1_000 { _ = db.match("grilled chicken breast") }
     }
+
+    // MARK: - Real-world query quality (against the shipped DB)
+
+    @Test("compound 'chili cheese dog' / 'hotdog…' queries resolve to a chili hot dog WITH a bun")
+    func chiliDogQueries() {
+        for q in ["chili cheese dog", "chili dog", "hotdog with chili and cheese", "chili cheese hot dog"] {
+            let name = FoodDatabase.shared.bestConfidentMatch(q)?.name.lowercased() ?? ""
+            #expect(name.contains("hot dog"), "‘\(q)’ → ‘\(name)’ should be a hot dog")
+            #expect(name.contains("chili"), "‘\(q)’ → ‘\(name)’ should include chili")
+            #expect(name.contains("bun") || name.contains("bread"), "‘\(q)’ → ‘\(name)’ should include a bun")
+            #expect(!name.contains("no bun"), "‘\(q)’ shouldn't pick the bun-less variant")
+            #expect(!name.contains("cheese dip"), "‘\(q)’ shouldn't pick cheese dip")
+        }
+    }
+
+    @Test("'hotdog' (one word) resolves to a hot dog, not a bun/roll")
+    func hotdogCompoundWord() {
+        let name = FoodDatabase.shared.bestConfidentMatch("hotdog")?.name.lowercased() ?? ""
+        #expect(name.contains("hot dog"))
+        #expect(!name.contains("roll"))
+    }
+
+    @Test("bare single-food words resolve to the everyday form, not a processed variant")
+    func bareSingleFoods() {
+        func name(_ q: String) -> String { FoodDatabase.shared.bestConfidentMatch(q)?.name.lowercased() ?? "" }
+        // The query word leads the result, and obvious processed/derived forms are avoided.
+        #expect(name("apple").contains("apple") && !name("apple").contains("dried"))
+        #expect(name("rice").contains("rice") && !name("rice").contains("flour") && !name("rice").contains("cracker"))
+        #expect(name("milk").hasPrefix("milk"))
+        #expect(name("cheese").hasPrefix("cheese") && !name("cheese").contains("spread"))
+        #expect(name("chicken").contains("chicken") && !name("chicken").contains("spread") && !name("chicken").contains("feet"))
+    }
 }
