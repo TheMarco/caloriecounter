@@ -32,6 +32,10 @@ public final class AppContainer {
     public let photoParser: any PhotoParsing
     public let labelReader: any LabelReading
     public let barcodeResolver: any BarcodeResolving
+    /// Free-text product search (OFF) surfacing branded matches in the type flow.
+    public let foodSearch: any FoodSearching
+    /// On-device USDA generic-food database surfacing tappable matches in the type flow.
+    public let foodDatabase: any FoodDatabaseQuerying
     public let settings: SettingsStore
     /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
     public let healthSync: any HealthSyncing
@@ -132,6 +136,8 @@ public final class AppContainer {
         photoParser: any PhotoParsing,
         labelReader: any LabelReading,
         barcodeResolver: any BarcodeResolving,
+        foodSearch: any FoodSearching,
+        foodDatabase: any FoodDatabaseQuerying,
         settings: SettingsStore,
         healthSync: any HealthSyncing
     ) {
@@ -142,6 +148,8 @@ public final class AppContainer {
         self.photoParser = photoParser
         self.labelReader = labelReader
         self.barcodeResolver = barcodeResolver
+        self.foodSearch = foodSearch
+        self.foodDatabase = foodDatabase
         self.settings = settings
         self.healthSync = healthSync
         self.isHealthAvailable = healthSync.isAvailable()
@@ -176,10 +184,19 @@ public final class AppContainer {
             store: store,
             keychain: keychain,
             apiClient: client,
-            foodParser: AppContainer.makeFoodParser(),
+            // "Analyze" tries the on-device USDA database first, then FM/heuristic.
+            foodParser: CompositeFoodParser(
+                database: DatabaseFoodParser(),
+                fallback: AppContainer.makeFoodParser()
+            ),
             photoParser: APIPhotoParser(client: client),
             labelReader: VisionLabelReader(),
             barcodeResolver: barcode,
+            // Real product search online; an empty stub in tests/demo (no network).
+            foodSearch: (AppContainer.isUITest || AppContainer.isDemo)
+                ? StaticFoodSearch()
+                : OpenFoodFactsResolver(),
+            foodDatabase: FoodDatabase.shared,
             settings: SettingsStore(defaultUnits: .deviceDefault),
             healthSync: (AppContainer.isUITest || AppContainer.isDemo)
                 ? MockHealthSyncService()

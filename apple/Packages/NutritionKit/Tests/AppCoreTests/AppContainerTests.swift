@@ -48,6 +48,8 @@ struct AppContainerTests {
             photoParser: StubPhotoParser(),
             labelReader: StubLabelReader(),
             barcodeResolver: StubBarcode(),
+            foodSearch: StaticFoodSearch(),
+            foodDatabase: FoodDatabase(foods: []),
             settings: settings,
             healthSync: MockHealthSyncService()
         )

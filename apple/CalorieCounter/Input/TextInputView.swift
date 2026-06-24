@@ -30,6 +30,8 @@ struct TextInputView: View {
             if model == nil {
                 model = TextInputModel(store: container.store,
                                        parser: container.foodParser,
+                                       foodSearch: container.foodSearch,
+                                       foodDatabase: container.foodDatabase,
                                        units: container.settings.units)
             }
         }
@@ -45,6 +47,8 @@ struct TextInputView: View {
                     .onSubmit { submit(model) }
                     .onChange(of: model.query) { _, _ in
                         Task { await model.updateSuggestions() }
+                        Task { await model.searchProducts() }
+                        Task { await model.searchDatabase() }
                     }
                 Button {
                     submit(model)
@@ -56,6 +60,40 @@ struct TextInputView: View {
                     }
                 }
                 .disabled(model.query.trimmingCharacters(in: .whitespaces).isEmpty || model.isParsing)
+            }
+
+            if !model.dbMatches.isEmpty {
+                Section {
+                    ForEach(Array(model.dbMatches.enumerated()), id: \.offset) { _, match in
+                        Button {
+                            onParsed(match)
+                        } label: {
+                            matchRow(match, icon: "fork.knife")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Foods")
+                } footer: {
+                    Text("From the on-device USDA database. Tap to use measured nutrition.")
+                }
+            }
+
+            if !model.productMatches.isEmpty {
+                Section {
+                    ForEach(Array(model.productMatches.enumerated()), id: \.offset) { _, match in
+                        Button {
+                            onParsed(match)
+                        } label: {
+                            matchRow(match, icon: "barcode.viewfinder")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Product matches")
+                } footer: {
+                    Text("From the OpenFoodFacts database. Tap to use the label values.")
+                }
             }
 
             if !model.suggestions.isEmpty {
@@ -76,6 +114,42 @@ struct TextInputView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+    }
+
+    @ViewBuilder
+    private func matchRow(_ match: ParsedFood, icon: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.secondary)
+                .font(.body)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(match.food)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Text(matchSubtitle(match))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text("\(Int(match.kcal.rounded())) kcal")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+        }
+    }
+
+    /// "1 serving · 4 items · P 12 · C 30 · F 8" — a compact line for a match (the
+    /// item count appears when the match carries a recipe breakdown).
+    private func matchSubtitle(_ match: ParsedFood) -> String {
+        let qty = match.quantity == match.quantity.rounded()
+            ? String(Int(match.quantity)) : String(format: "%.1f", match.quantity)
+        var parts = ["\(qty) \(match.unit)"]
+        if let n = match.components?.count, n > 1 { parts.append("\(n) items") }
+        parts.append("P \(Int(match.protein.rounded()))")
+        parts.append("C \(Int(match.carbs.rounded()))")
+        parts.append("F \(Int(match.fat.rounded()))")
+        return parts.joined(separator: " · ")
     }
 
     private func submit(_ model: TextInputModel) {
