@@ -317,10 +317,13 @@ public final class AppContainer {
             if offset % 2 == 0 { await log(snacks[offset % snacks.count], hour: 16) }
             if offset % 3 == 0 { try? await store.setOffset(Double(260 + (offset % 4) * 70), on: key) }
 
-            // Weigh in every couple of days (trending gently down ~84 kg → ~81 kg over
-            // 2 months) so the weight chart shows a real trend even in the 7-day view.
-            if offset % 2 == 0 {
-                let kg = 81.0 + Double(offset) * 0.05 + Double((offset / 4) % 3) * 0.2
+            // ~3 weigh-ins a week (uneven 2–3 day gaps), jagging day-to-day around a
+            // slow downward trend (~83.5 kg → ~80.6 kg over 2 months) — like real data.
+            if offset % 7 == 0 || offset % 7 == 2 || offset % 7 == 5 {
+                let o = Double(offset)
+                let trend = 80.6 + o * 0.048
+                let noise = 0.6 * sin(o * 1.3) + 0.35 * sin(o * 0.7 + 1) + 0.2 * sin(o * 2.9)
+                let kg = ((trend + noise) * 10).rounded() / 10
                 try? await store.addWeight(WeightEntry(id: WeightEntry.id(for: key), date: key, timestamp: day, weightKg: kg))
             }
         }

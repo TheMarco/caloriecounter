@@ -4,7 +4,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-06-23,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-06-23,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
 2026-06-23,,Exercise & Adjustment,,,260,,,,,,,offset
-2026-06-23,07:30,Weight,81.0,kg,,,,,,,,weight
+2026-06-23,07:30,Weight,80.9,kg,,,,,,,,weight
 2026-06-22,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-06-22,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-06-22,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
@@ -21,33 +21,32 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-06-19,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-06-19,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
 2026-06-19,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-06-19,07:30,Weight,81.4,kg,,,,,,,,weight
 2026-06-18,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-06-18,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-06-18,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
+2026-06-18,07:30,Weight,80.8,kg,,,,,,,,weight
 2026-06-17,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-06-17,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-06-17,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-06-17,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
 2026-06-17,,Exercise & Adjustment,,,400,,,,,,,offset
-2026-06-17,07:30,Weight,81.5,kg,,,,,,,,weight
 2026-06-16,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-06-16,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-06-16,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
+2026-06-16,07:30,Weight,81.2,kg,,,,,,,,weight
 2026-06-15,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-06-15,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-06-15,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-06-15,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-06-15,07:30,Weight,81.8,kg,,,,,,,,weight
 2026-06-14,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-06-14,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-06-14,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
 2026-06-14,,Exercise & Adjustment,,,330,,,,,,,offset
+2026-06-14,07:30,Weight,81.0,kg,,,,,,,,weight
 2026-06-13,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-06-13,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-06-13,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-06-13,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-06-13,07:30,Weight,81.9,kg,,,,,,,,weight
 2026-06-12,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-06-12,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-06-12,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
@@ -56,7 +55,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-06-11,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
 2026-06-11,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
 2026-06-11,,Exercise & Adjustment,,,260,,,,,,,offset
-2026-06-11,07:30,Weight,81.6,kg,,,,,,,,weight
+2026-06-11,07:30,Weight,81.2,kg,,,,,,,,weight
 2026-06-10,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-06-10,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-06-10,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
@@ -64,7 +63,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-06-09,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-06-09,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
 2026-06-09,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-06-09,07:30,Weight,81.7,kg,,,,,,,,weight
+2026-06-09,07:30,Weight,80.6,kg,,,,,,,,weight
 2026-06-08,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-06-08,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-06-08,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
@@ -73,7 +72,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-06-07,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-06-07,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-06-07,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-06-07,07:30,Weight,82.0,kg,,,,,,,,weight
+2026-06-07,07:30,Weight,81.9,kg,,,,,,,,weight
 2026-06-06,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-06-06,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-06-06,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
@@ -82,33 +81,32 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-06-05,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-06-05,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
 2026-06-05,,Exercise & Adjustment,,,400,,,,,,,offset
-2026-06-05,07:30,Weight,82.1,kg,,,,,,,,weight
 2026-06-04,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-06-04,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-06-04,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
+2026-06-04,07:30,Weight,81.4,kg,,,,,,,,weight
 2026-06-03,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-06-03,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-06-03,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-06-03,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-06-03,07:30,Weight,82.4,kg,,,,,,,,weight
 2026-06-02,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-06-02,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-06-02,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-06-02,,Exercise & Adjustment,,,330,,,,,,,offset
+2026-06-02,07:30,Weight,81.9,kg,,,,,,,,weight
 2026-06-01,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-06-01,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-06-01,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
 2026-06-01,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-06-01,07:30,Weight,82.5,kg,,,,,,,,weight
 2026-05-31,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-05-31,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-31,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
+2026-05-31,07:30,Weight,80.6,kg,,,,,,,,weight
 2026-05-30,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-05-30,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-05-30,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
 2026-05-30,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
 2026-05-30,,Exercise & Adjustment,,,260,,,,,,,offset
-2026-05-30,07:30,Weight,82.2,kg,,,,,,,,weight
 2026-05-29,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-05-29,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-05-29,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
@@ -116,7 +114,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-28,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-05-28,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-05-28,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-05-28,07:30,Weight,82.3,kg,,,,,,,,weight
+2026-05-28,07:30,Weight,82.4,kg,,,,,,,,weight
 2026-05-27,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-05-27,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-05-27,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
@@ -125,7 +123,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-26,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-26,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-05-26,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-05-26,07:30,Weight,82.6,kg,,,,,,,,weight
+2026-05-26,07:30,Weight,81.6,kg,,,,,,,,weight
 2026-05-25,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-05-25,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-05-25,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
@@ -134,7 +132,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-24,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-05-24,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
 2026-05-24,,Exercise & Adjustment,,,400,,,,,,,offset
-2026-05-24,07:30,Weight,82.7,kg,,,,,,,,weight
+2026-05-24,07:30,Weight,82.5,kg,,,,,,,,weight
 2026-05-23,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-05-23,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-05-23,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
@@ -142,33 +140,32 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-22,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-05-22,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
 2026-05-22,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-05-22,07:30,Weight,83.0,kg,,,,,,,,weight
 2026-05-21,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-05-21,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-21,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-05-21,,Exercise & Adjustment,,,330,,,,,,,offset
+2026-05-21,07:30,Weight,81.6,kg,,,,,,,,weight
 2026-05-20,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-05-20,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-05-20,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
 2026-05-20,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-05-20,07:30,Weight,83.1,kg,,,,,,,,weight
 2026-05-19,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-05-19,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-05-19,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
+2026-05-19,07:30,Weight,83.2,kg,,,,,,,,weight
 2026-05-18,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-05-18,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-05-18,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-05-18,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
 2026-05-18,,Exercise & Adjustment,,,260,,,,,,,offset
-2026-05-18,07:30,Weight,82.8,kg,,,,,,,,weight
 2026-05-17,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-05-17,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-05-17,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
+2026-05-17,07:30,Weight,82.3,kg,,,,,,,,weight
 2026-05-16,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-05-16,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-16,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-05-16,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-05-16,07:30,Weight,82.9,kg,,,,,,,,weight
 2026-05-15,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-05-15,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-05-15,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
@@ -177,7 +174,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-14,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-05-14,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-05-14,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-05-14,07:30,Weight,83.2,kg,,,,,,,,weight
+2026-05-14,07:30,Weight,82.9,kg,,,,,,,,weight
 2026-05-13,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-05-13,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-05-13,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
@@ -186,7 +183,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-12,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
 2026-05-12,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
 2026-05-12,,Exercise & Adjustment,,,400,,,,,,,offset
-2026-05-12,07:30,Weight,83.3,kg,,,,,,,,weight
+2026-05-12,07:30,Weight,81.9,kg,,,,,,,,weight
 2026-05-11,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-05-11,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-11,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
@@ -194,7 +191,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-10,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-05-10,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
 2026-05-10,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-05-10,07:30,Weight,83.6,kg,,,,,,,,weight
+2026-05-10,07:30,Weight,83.4,kg,,,,,,,,weight
 2026-05-09,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-05-09,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-05-09,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
@@ -203,33 +200,32 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-05-08,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-05-08,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-05-08,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-05-08,07:30,Weight,83.7,kg,,,,,,,,weight
 2026-05-07,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-05-07,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-05-07,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
+2026-05-07,07:30,Weight,82.3,kg,,,,,,,,weight
 2026-05-06,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-05-06,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-06,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-05-06,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
 2026-05-06,,Exercise & Adjustment,,,260,,,,,,,offset
-2026-05-06,07:30,Weight,83.4,kg,,,,,,,,weight
 2026-05-05,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-05-05,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-05-05,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
+2026-05-05,07:30,Weight,83.0,kg,,,,,,,,weight
 2026-05-04,08:00,Greek Yogurt & Berries,1,bowl,220,5.0,28.0,18.0,3.0,80,18.0,label
 2026-05-04,13:11,Turkey Sandwich,1,piece,380,12.0,42.0,28.0,4.0,920,6.0,barcode
 2026-05-04,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-05-04,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-05-04,07:30,Weight,83.5,kg,,,,,,,,weight
 2026-05-03,08:00,Oatmeal with Banana,1,bowl,310,6.0,54.0,10.0,6.0,120,14.0,text
 2026-05-03,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-05-03,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-05-03,,Exercise & Adjustment,,,470,,,,,,,offset
+2026-05-03,07:30,Weight,82.5,kg,,,,,,,,weight
 2026-05-02,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-05-02,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-05-02,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
 2026-05-02,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-05-02,07:30,Weight,83.8,kg,,,,,,,,weight
 2026-05-01,08:00,Avocado Toast,1,piece,290,17.0,28.0,8.0,7.0,380,3.0,label
 2026-05-01,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-05-01,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
@@ -246,7 +242,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-04-28,13:11,Chicken Burrito Bowl,1,bowl,620,20.0,68.0,38.0,12.0,1100,8.0,voice
 2026-04-28,19:22,Chicken Stir-fry,1,plate,520,18.0,48.0,38.0,6.0,1200,10.0,text
 2026-04-28,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
-2026-04-28,07:30,Weight,84.2,kg,,,,,,,,weight
+2026-04-28,07:30,Weight,83.0,kg,,,,,,,,weight
 2026-04-27,08:00,Scrambled Eggs & Toast,1,plate,340,18.0,24.0,20.0,2.0,520,4.0,text
 2026-04-27,13:11,Tuna Wrap,1,piece,400,14.0,40.0,30.0,4.0,850,4.0,label
 2026-04-27,19:22,Takeout Pad Thai,1,plate,720,26.0,92.0,26.0,4.0,1900,18.0,voice
@@ -255,7 +251,7 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-04-26,13:11,Quinoa & Veggie Bowl,1,bowl,480,16.0,62.0,18.0,10.0,420,7.0,text
 2026-04-26,19:22,"Salmon, Rice & Greens",1,plate,560,22.0,50.0,38.0,6.0,380,4.0,text
 2026-04-26,16:33,Protein Bar,1,piece,200,7.0,22.0,20.0,6.0,200,14.0,barcode
-2026-04-26,07:30,Weight,84.3,kg,,,,,,,,weight
+2026-04-26,07:30,Weight,82.9,kg,,,,,,,,weight
 2026-04-25,08:00,Protein Smoothie,1,cup,250,4.0,30.0,25.0,4.0,150,22.0,voice
 2026-04-25,13:11,Grilled Chicken Salad,1,bowl,420,18.0,22.0,40.0,5.0,480,6.0,text
 2026-04-25,19:22,Spaghetti Bolognese,1,plate,650,22.0,78.0,32.0,7.0,980,12.0,voice
@@ -264,4 +260,3 @@ date,time,food,quantity,unit,calories,fat,carbs,protein,fiber,sodium,sugar,metho
 2026-04-24,19:22,Grilled Steak & Potatoes,1,plate,700,30.0,45.0,50.0,5.0,650,3.0,text
 2026-04-24,16:33,Almonds,30,g,174,15.0,6.0,6.0,4.0,0,1.0,label
 2026-04-24,,Exercise & Adjustment,,,260,,,,,,,offset
-2026-04-24,07:30,Weight,84.0,kg,,,,,,,,weight

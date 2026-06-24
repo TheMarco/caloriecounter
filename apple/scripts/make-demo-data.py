@@ -11,6 +11,7 @@ Format matches CSVExporter exactly (date,time,food,…,method), incl. weight row
 """
 
 import datetime
+import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -65,6 +66,14 @@ def opt_one_decimal(v):
     return "" if v is None else one_decimal(v)
 
 
+def weight_for(offset):
+    """A jagged but deterministic weight (kg) for `offset` days ago: a slow downward
+    trend plus a few out-of-phase sine waves for natural day-to-day water-weight wobble."""
+    trend = 80.6 + offset * 0.048
+    noise = 0.6 * math.sin(offset * 1.3) + 0.35 * math.sin(offset * 0.7 + 1) + 0.2 * math.sin(offset * 2.9)
+    return round(trend + noise, 1)
+
+
 def escape(field):
     s = str(field)
     if any(c in s for c in (",", '"', "\n")):
@@ -106,10 +115,10 @@ def main():
             value = 260 + (offset % 4) * 70
             lines.append(",".join([date, "", "Exercise & Adjustment", "", "", num(value), "", "", "", "", "", "", "offset"]))
 
-        # Weigh in every couple of days so the chart shows a real trend even in the
-        # default 7-day History view (gently down ~84 kg → ~81 kg over two months).
-        if offset % 2 == 0:
-            kg = 81.0 + offset * 0.05 + ((offset // 4) % 3) * 0.2
+        # ~3 weigh-ins a week (uneven 2–3 day gaps), jagging day-to-day around a slow
+        # downward trend (~83.5 kg two months ago → ~80.6 kg now) — like real scale data.
+        if offset % 7 in (0, 2, 5):
+            kg = weight_for(offset)
             lines.append(",".join([date, "07:30", "Weight", one_decimal(kg), "kg", "", "", "", "", "", "", "", "weight"]))
 
     with open(DST, "w") as f:
