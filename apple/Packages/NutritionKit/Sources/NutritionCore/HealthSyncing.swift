@@ -53,6 +53,9 @@ public protocol HealthSyncing: Sendable {
     func requestNutritionWriteAccess() async throws
     /// Request read/write access for body mass.
     func requestWeightAccess() async throws
+    /// Request READ access for workouts + active energy (the app never writes these;
+    /// it only reads completed workouts to suggest a calorie offset).
+    func requestWorkoutAccess() async throws
 
     /// Write (or rewrite) a food entry as a `.food` correlation tagged with the
     /// entry id. Safe to call repeatedly — it replaces this app's prior data for
@@ -66,6 +69,17 @@ public protocol HealthSyncing: Sendable {
     /// Body-mass samples from the last `daysBack` days, reduced to one per local
     /// day (newest), oldest-first.
     func importWeights(daysBack: Int) async throws -> [WeightEntry]
+
+    /// Completed workouts since `start`, filtered to "real" ones (duration + energy
+    /// floor) and sorted newest-first. Read-only; returns `[]` when unavailable or
+    /// unauthorized. Each carries its active-energy burn for offsetting.
+    func recentWorkouts(since start: Date) async throws -> [WorkoutSample]
+
+    /// Enable HealthKit background delivery for workouts and observe new ones,
+    /// invoking `onUpdate` when the system wakes the app for a new workout (so a
+    /// notification can be posted even while the app is closed). Best-effort; a no-op
+    /// when unavailable. Registers at most once per process.
+    func startWorkoutBackgroundDelivery(onUpdate: @escaping @Sendable () async -> Void) async
 
     /// Delete everything this app has ever written to Apple Health (matched by the
     /// app's source metadata). Does not touch other apps' data.

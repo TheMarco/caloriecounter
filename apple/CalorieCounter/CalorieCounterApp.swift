@@ -20,6 +20,7 @@ struct CalorieCounterApp: App {
         WindowGroup {
             RootView()
                 .environment(container)
+                .task { await container.startWorkoutObservation() }
         }
     }
 }

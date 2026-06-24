@@ -43,7 +43,7 @@ struct AboutView: View {
             Section {
                 Label("Apple Health is optional and off until you turn it on.", systemImage: "heart.text.square")
             } footer: {
-                Text("When enabled, the app can save nutrition and weigh-ins to Apple Health and import weight you already have there. Your food entries, targets, weights, and settings stay on this device — nothing is uploaded to a server.")
+                Text("When enabled, the app can save nutrition and weigh-ins to Apple Health, import weight you already have there, and read completed workouts to offer a calorie offset. Workouts are read only — never written. Your food entries, targets, weights, and settings stay on this device — nothing is uploaded to a server.")
             }
             .font(.subheadline)
 

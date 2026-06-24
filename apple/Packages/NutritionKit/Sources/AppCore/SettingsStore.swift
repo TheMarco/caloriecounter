@@ -28,6 +28,8 @@ public final class SettingsStore {
     public var healthWeightSyncEnabled: Bool { didSet { defaults.set(healthWeightSyncEnabled, forKey: Keys.healthWeight) } }
     /// Import body-mass samples from Apple Health into the app.
     public var healthWeightImportEnabled: Bool { didSet { defaults.set(healthWeightImportEnabled, forKey: Keys.healthWeightImport) } }
+    /// Read completed workouts from Apple Health and offer to offset their calories.
+    public var healthWorkoutOffsetEnabled: Bool { didSet { defaults.set(healthWorkoutOffsetEnabled, forKey: Keys.healthWorkoutOffset) } }
     /// Timestamp of the last successful sync, shown in Settings.
     public var healthLastSyncAt: Date? {
         didSet { defaults.set(healthLastSyncAt?.timeIntervalSince1970 ?? 0, forKey: Keys.healthLastSync) }
@@ -68,6 +70,7 @@ public final class SettingsStore {
         self.healthNutritionSyncEnabled = defaults.bool(forKey: Keys.healthNutrition)
         self.healthWeightSyncEnabled = defaults.bool(forKey: Keys.healthWeight)
         self.healthWeightImportEnabled = defaults.bool(forKey: Keys.healthWeightImport)
+        self.healthWorkoutOffsetEnabled = defaults.bool(forKey: Keys.healthWorkoutOffset)
         let lastSync = defaults.double(forKey: Keys.healthLastSync)
         self.healthLastSyncAt = lastSync > 0 ? Date(timeIntervalSince1970: lastSync) : nil
         self.savedProfile = defaults.data(forKey: Keys.profile)
@@ -77,6 +80,35 @@ public final class SettingsStore {
     /// The domain settings snapshot (targets + units); lock is an app concern.
     public var appSettings: AppSettings {
         AppSettings(targets: targets, units: units)
+    }
+
+    // MARK: - Workout ledgers
+    // Per-workout state keyed by HKWorkout UUID, stored as [uuid: YYYY-MM-DD] and
+    // pruned on write so they can't grow without bound. Kept off the @Observable
+    // surface (not UI state) — read/written straight through UserDefaults.
+    //  • "handled"  — offered-and-resolved (accepted or dismissed); never suggest again.
+    //  • "notified" — a background notification was already posted; never re-notify.
+
+    public func isWorkoutHandled(_ id: String) -> Bool { ledger(Keys.workoutHandledLedger)[id] != nil }
+    public func markWorkoutHandled(id: String, date: String) { mark(id: id, date: date, key: Keys.workoutHandledLedger) }
+
+    public func isWorkoutNotified(_ id: String) -> Bool { ledger(Keys.workoutNotifiedLedger)[id] != nil }
+    public func markWorkoutNotified(id: String, date: String) { mark(id: id, date: date, key: Keys.workoutNotifiedLedger) }
+
+    private func ledger(_ key: String) -> [String: String] {
+        defaults.data(forKey: key)
+            .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
+    }
+
+    private func mark(id: String, date: String, key: String) {
+        var entries = ledger(key)
+        let cutoff = LocalDate.key(for: Date().addingTimeInterval(
+            -Double(Constants.workoutLedgerRetentionDays) * 86_400))
+        entries = entries.filter { $0.value >= cutoff }   // prune stale entries
+        entries[id] = date
+        if let data = try? JSONEncoder().encode(entries) {
+            defaults.set(data, forKey: key)
+        }
     }
 
     private func persistTargets() {
@@ -100,7 +132,10 @@ public final class SettingsStore {
         static let healthNutrition = "settings.healthNutritionSync"
         static let healthWeight = "settings.healthWeightSync"
         static let healthWeightImport = "settings.healthWeightImport"
+        static let healthWorkoutOffset = "settings.healthWorkoutOffset"
         static let healthLastSync = "settings.healthLastSyncAt"
+        static let workoutHandledLedger = "settings.handledWorkoutLedger"
+        static let workoutNotifiedLedger = "settings.notifiedWorkoutLedger"
         static let profile = "settings.savedProfile"
     }
 }

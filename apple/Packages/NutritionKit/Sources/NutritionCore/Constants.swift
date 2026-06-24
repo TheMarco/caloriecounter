@@ -46,6 +46,17 @@ public enum Constants {
     public static let minCalories: Double = 0
     public static let maxCalories: Double = 10000
 
+    // MARK: - Workout offsets (Apple Health)
+    /// A workout must run at least this long to be offered as a calorie offset —
+    /// keeps brief incidental movement (a few flights of stairs) out.
+    public static let minWorkoutMinutes = 10
+    /// …and must have burned at least this much active energy.
+    public static let minWorkoutKcal: Double = 80
+    /// How far back to look for un-offered workouts when the app comes forward.
+    public static let workoutLookbackHours = 24
+    /// Drop handled-workout ledger entries older than this (keeps it from growing).
+    public static let workoutLedgerRetentionDays = 35
+
     // MARK: - Target clamping
     public static func clamp(_ value: Double, min lower: Double, max upper: Double) -> Double {
         Swift.min(Swift.max(value, lower), upper)

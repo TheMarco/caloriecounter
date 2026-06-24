@@ -8,6 +8,8 @@ public actor MockHealthSyncService: HealthSyncing {
     private let available: Bool
     /// Stored weights to hand back from `importWeights` (configurable for tests).
     private var weightStore: [WeightEntry]
+    /// Workouts to hand back from `recentWorkouts` (configurable for tests).
+    private var workoutStore: [WorkoutSample]
 
     public private(set) var syncedFoodIDs: Set<String> = []
     public private(set) var syncFoodCallCount = 0
@@ -15,17 +17,21 @@ public actor MockHealthSyncService: HealthSyncing {
     public private(set) var syncedWeightDates: Set<String> = []
     public private(set) var nutritionAccessRequested = false
     public private(set) var weightAccessRequested = false
+    public private(set) var workoutAccessRequested = false
     public private(set) var removeAllCalled = false
 
-    public init(available: Bool = true, seededWeights: [WeightEntry] = []) {
+    public init(available: Bool = true, seededWeights: [WeightEntry] = [],
+                seededWorkouts: [WorkoutSample] = []) {
         self.available = available
         self.weightStore = seededWeights
+        self.workoutStore = seededWorkouts
     }
 
     nonisolated public func isAvailable() -> Bool { available }
 
     public func requestNutritionWriteAccess() async throws { nutritionAccessRequested = true }
     public func requestWeightAccess() async throws { weightAccessRequested = true }
+    public func requestWorkoutAccess() async throws { workoutAccessRequested = true }
 
     public func syncFoodEntry(_ entry: Entry) async throws {
         syncFoodCallCount += 1
@@ -43,6 +49,15 @@ public actor MockHealthSyncService: HealthSyncing {
     }
     public func importWeights(daysBack: Int) async throws -> [WeightEntry] {
         weightStore.sorted { $0.date < $1.date }
+    }
+
+    public func recentWorkouts(since start: Date) async throws -> [WorkoutSample] {
+        workoutStore.filter { $0.end >= start }.sorted { $0.end > $1.end }
+    }
+
+    public private(set) var workoutObservationStarted = false
+    public func startWorkoutBackgroundDelivery(onUpdate: @escaping @Sendable () async -> Void) async {
+        workoutObservationStarted = true
     }
 
     public func removeAllAppData() async throws {

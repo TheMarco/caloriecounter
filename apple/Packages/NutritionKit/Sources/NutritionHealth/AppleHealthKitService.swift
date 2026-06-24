@@ -44,6 +44,8 @@ public actor AppleHealthKitService: HealthSyncing {
     }
     private var foodType: HKCorrelationType { HKCorrelationType(.food) }
     private var weightType: HKQuantityType { HKQuantityType(.bodyMass) }
+    private var workoutType: HKWorkoutType { HKWorkoutType.workoutType() }
+    private var activeEnergyType: HKQuantityType { HKQuantityType(.activeEnergyBurned) }
 
     // NB: authorization can only be requested for the individual quantity samples,
     // NOT for the `.food` correlation type (HealthKit rejects that with
@@ -65,6 +67,12 @@ public actor AppleHealthKitService: HealthSyncing {
     public func requestWeightAccess() async throws {
         guard isAvailable() else { return }
         try await store.requestAuthorization(toShare: [weightType], read: [weightType])
+    }
+
+    public func requestWorkoutAccess() async throws {
+        guard isAvailable() else { return }
+        // Read-only: workouts + their active energy. The app never writes either.
+        try await store.requestAuthorization(toShare: [], read: [workoutType, activeEnergyType])
     }
 
     public func authorizationSummary() async -> HealthAuthorizationSummary {
@@ -155,6 +163,71 @@ public actor AppleHealthKitService: HealthSyncing {
             byDay[day] = WeightEntry(id: WeightEntry.id(for: day), date: day, timestamp: s.startDate, weightKg: kg)
         }
         return byDay.values.sorted { $0.date < $1.date }
+    }
+
+    // MARK: - Workouts (read-only, for calorie offsets)
+
+    public func recentWorkouts(since start: Date) async throws -> [WorkoutSample] {
+        guard isAvailable() else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: nil)
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.workout(predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)])
+        let workouts = try await descriptor.result(for: store)
+
+        return workouts.compactMap { w -> WorkoutSample? in
+            // Active energy burned. Without it we can't offset, so skip the workout.
+            guard let kcal = w.statistics(for: activeEnergyType)?
+                .sumQuantity()?.doubleValue(for: .kilocalorie()), kcal > 0 else { return nil }
+            let minutes = Int((w.duration / 60).rounded())
+            guard WorkoutSample.qualifiesAsRealWorkout(durationMinutes: minutes, kcal: kcal) else { return nil }
+            return WorkoutSample(
+                id: w.uuid.uuidString,
+                date: LocalDate.key(for: w.endDate),
+                activityName: Self.activityName(for: w.workoutActivityType),
+                start: w.startDate, end: w.endDate,
+                durationMinutes: minutes, kcal: kcal.rounded())
+        }
+    }
+
+    private var workoutObserver: HKObserverQuery?
+
+    public func startWorkoutBackgroundDelivery(onUpdate: @escaping @Sendable () async -> Void) async {
+        guard isAvailable(), workoutObserver == nil else { return }   // register once per process
+        // Ask iOS to wake us when a new workout is saved (best-effort; throttled).
+        try? await store.enableBackgroundDelivery(for: workoutType, frequency: .immediate)
+        let query = HKObserverQuery(sampleType: workoutType, predicate: nil) { _, completion, _ in
+            // Kick off the app-level check, then acknowledge immediately. (The HK
+            // completion handler isn't Sendable, so it can't be captured into the
+            // Task — calling it synchronously here both satisfies that and keeps our
+            // background budget intact; posting a local notification is quick.)
+            Task { await onUpdate() }
+            completion()
+        }
+        store.execute(query)
+        workoutObserver = query
+    }
+
+    /// A short, friendly label for the prompt. Covers the common types; anything
+    /// else falls back to a generic "Workout".
+    static func activityName(for type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .walking: return "Walk"
+        case .running: return "Run"
+        case .hiking: return "Hike"
+        case .cycling: return "Ride"
+        case .swimming: return "Swim"
+        case .rowing: return "Row"
+        case .elliptical: return "Elliptical"
+        case .stairClimbing, .stairs: return "Stair Climb"
+        case .traditionalStrengthTraining, .functionalStrengthTraining: return "Strength Training"
+        case .highIntensityIntervalTraining: return "HIIT"
+        case .yoga: return "Yoga"
+        case .pilates: return "Pilates"
+        case .coreTraining: return "Core Training"
+        case .dance, .cardioDance: return "Dance"
+        default: return "Workout"
+        }
     }
 
     // MARK: - Bulk remove

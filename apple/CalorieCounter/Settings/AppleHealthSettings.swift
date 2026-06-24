@@ -36,6 +36,17 @@ struct AppleHealthSettings: View {
                     .onChange(of: settings.healthWeightImportEnabled) { _, on in
                         if on { requestAfterAnimation { try? await container.healthSync.requestWeightAccess(); await runImport() } }
                     }
+                Toggle("Offset calories from workouts", isOn: $settings.healthWorkoutOffsetEnabled)
+                    .onChange(of: settings.healthWorkoutOffsetEnabled) { _, on in
+                        if on { requestAfterAnimation {
+                            await container.requestWorkoutAccess()
+                            await container.startWorkoutObservation()
+                        } }
+                    }
+                if settings.healthWorkoutOffsetEnabled {
+                    Text("After a longer walk or workout, we’ll offer to add its calories to that day’s offset. Reads workouts only — never written back. If your goal already assumes an activity level, offsetting can double-count.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
 
                 if settings.healthNutritionSyncEnabled || settings.healthWeightSyncEnabled {
                     LabeledContent("Synced fields", value: "Calories, protein, carbs, fat")
@@ -54,7 +65,8 @@ struct AppleHealthSettings: View {
                         Label("Repair sync", systemImage: "arrow.triangle.2.circlepath")
                     }.disabled(working)
                 }
-                if settings.healthNutritionSyncEnabled || settings.healthWeightSyncEnabled || settings.healthWeightImportEnabled {
+                if settings.healthNutritionSyncEnabled || settings.healthWeightSyncEnabled
+                    || settings.healthWeightImportEnabled || settings.healthWorkoutOffsetEnabled {
                     Button("Disconnect Apple Health") { container.disconnectHealth() }
                 }
                 Button(role: .destructive) { showRemoveConfirm = true } label: {

@@ -123,11 +123,69 @@ public final class AppContainer {
         dataDidChange()
     }
 
+    // MARK: - Workout offsets (read-only; opt-in)
+
+    /// Ask Health for READ access to workouts + active energy (called when the user
+    /// flips the toggle on). The app never writes either type.
+    public func requestWorkoutAccess() async {
+        guard healthSync.isAvailable() else { return }
+        try? await healthSync.requestWorkoutAccess()
+    }
+
+    /// Recent completed workouts not yet offered, newest-first. Empty unless the
+    /// toggle is on AND HealthKit is available; already-handled workouts (accepted
+    /// or dismissed) are filtered out so nothing is suggested twice.
+    public func pendingWorkoutOffers() async -> [WorkoutSample] {
+        guard settings.healthWorkoutOffsetEnabled, healthSync.isAvailable() else { return [] }
+        let since = Date().addingTimeInterval(-Double(Constants.workoutLookbackHours) * 3600)
+        let workouts = (try? await healthSync.recentWorkouts(since: since)) ?? []
+        return workouts.filter { !settings.isWorkoutHandled($0.id) }
+    }
+
+    /// Accept an offer: add the workout's calories to its day's offset and mark it
+    /// handled. Stacks on any existing offset for that day.
+    public func applyWorkoutOffset(_ workout: WorkoutSample) async {
+        let current = (try? await store.offset(on: workout.date)) ?? 0
+        try? await store.setOffset(current + workout.kcal, on: workout.date)
+        settings.markWorkoutHandled(id: workout.id, date: workout.date)
+        dataDidChange()
+    }
+
+    /// Decline an offer: mark it handled (so it's never suggested again) without
+    /// touching the day's offset.
+    public func dismissWorkoutOffer(_ workout: WorkoutSample) {
+        settings.markWorkoutHandled(id: workout.id, date: workout.date)
+    }
+
+    /// Begin watching Apple Health for newly completed workouts in the background, so
+    /// we can post a notification even while the app is closed. No-op unless the
+    /// toggle is on and HealthKit is available; registers at most once per process.
+    public func startWorkoutObservation() async {
+        guard settings.healthWorkoutOffsetEnabled, healthSync.isAvailable() else { return }
+        await healthSync.startWorkoutBackgroundDelivery {
+            await AppContainer.shared.handleWorkoutBackgroundUpdate()
+        }
+    }
+
+    /// Called when HealthKit wakes us for a new workout: notify (once) for any pending,
+    /// not-yet-announced workout. The Today banner still handles in-app offering, so a
+    /// notification is purely the proactive nudge.
+    public func handleWorkoutBackgroundUpdate() async {
+        let fresh = await pendingWorkoutOffers().filter { !settings.isWorkoutNotified($0.id) }
+        guard !fresh.isEmpty,
+              await WorkoutNotificationScheduler.requestAuthorizationIfNeeded() else { return }
+        for offer in fresh {
+            await WorkoutNotificationScheduler.post(offer)
+            settings.markWorkoutNotified(id: offer.id, date: offer.date)
+        }
+    }
+
     /// Stop all future sync without deleting anything already in Apple Health.
     public func disconnectHealth() {
         settings.healthNutritionSyncEnabled = false
         settings.healthWeightSyncEnabled = false
         settings.healthWeightImportEnabled = false
+        settings.healthWorkoutOffsetEnabled = false
     }
 
     /// Delete everything this app previously wrote to Apple Health.

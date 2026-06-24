@@ -18,6 +18,7 @@ struct TodayView: View {
     @State private var latestWeightKg: Double?
     @State private var showWizard = false
     @State private var nudgeDismissed = false
+    @State private var workoutOffers: [WorkoutSample] = []
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,7 @@ struct TodayView: View {
                 await container.bootstrap()   // seeds demo data in -demo mode (idempotent)
                 await m.load()
                 latestWeightKg = (try? await container.store.latestWeight())?.weightKg
+                workoutOffers = await container.pendingWorkoutOffers()
             }
             .fullScreenCover(isPresented: $showWizard) {
                 SetupWizardView(allowsCancel: true) {}
@@ -79,6 +81,11 @@ struct TodayView: View {
                 OffsetChip(offset: model.offset) { editingOffset = true }
                     .clearRow()
             }
+            ForEach(workoutOffers) { offer in
+                Section {
+                    workoutOfferBanner(offer).clearRow()
+                }
+            }
             Section {
                 if model.entries.isEmpty {
                     EmptyDayCard().clearRow()
@@ -111,6 +118,32 @@ struct TodayView: View {
         .scrollContentBackground(.hidden)
         .scrollEdgeEffectStyle(.soft, for: .top)
         .refreshable { await model.load() }
+    }
+
+    // MARK: - Workout offset offer
+
+    private func workoutOfferBanner(_ offer: WorkoutSample) -> some View {
+        SoftCard {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("Workout detected", systemImage: "figure.run")
+                    .font(.subheadline.weight(.semibold))
+                Text("You burned about \(Int(offer.kcal)) kcal in a \(offer.durationMinutes)-min \(offer.activityName). Add it to your calorie offset?")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 10) {
+                    Button("Add \(Int(offer.kcal)) kcal") {
+                        Task { await container.applyWorkoutOffset(offer); container.dataDidChange() }
+                    }
+                    .buttonStyle(.glass).tint(DS.Macro.calories.tint)
+                    Button("Not now") {
+                        container.dismissWorkoutOffer(offer)
+                        workoutOffers.removeAll { $0.id == offer.id }
+                    }
+                    .buttonStyle(.glass)
+                }
+                .font(.subheadline)
+            }
+        }
     }
 
     // MARK: - Weight-drift nudge
