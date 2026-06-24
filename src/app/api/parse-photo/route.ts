@@ -158,8 +158,9 @@ Remember: Only proceed if you can clearly see and identify food. When in doubt, 
     }
 
     let completion;
-    // Try multiple models in order of preference (GPT-5 mini first)
-    const models = ['gpt-5-mini', 'gpt-4o-mini', 'gpt-4o'];
+    // gpt-5.4-nano (vision) primary; gpt-4o-mini as the reliability fallback.
+    // Images are sent at detail:'high' (below) over a 1024×1024 square from the app.
+    const models = ['gpt-5.4-nano', 'gpt-4o-mini'];
     let lastError: unknown;
 
     for (const model of models) {
