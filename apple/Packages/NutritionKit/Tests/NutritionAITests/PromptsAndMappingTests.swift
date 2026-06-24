@@ -64,6 +64,19 @@ struct PromptsAndMappingTests {
                                                   nutritionConfidence: .estimated))
     }
 
+    @Test("calories are raised to the macro floor when the model lowballs below its own macros")
+    func atwaterFloorReconciliation() {
+        // "toast with butter and jelly" came back at 110 kcal despite 10g fat + 12g carbs
+        // + 4g protein (~152) — physically impossible. The floor corrects it upward.
+        let lowball = NutritionInfo(food: "toast with butter and jelly", quantity: 1, unit: "slice",
+                                    kcal: 110, fat: 10, carbs: 12, protein: 4, fiber: 1, sodium: 100, sugar: 4)
+        #expect(lowball.toParsedFood().kcal >= 150)
+        // A self-consistent estimate is never lowered or nudged.
+        let consistent = NutritionInfo(food: "Oatmeal", quantity: 1, unit: "bowl",
+                                       kcal: 300, fat: 6, carbs: 54, protein: 10)
+        #expect(consistent.toParsedFood().kcal == 300)
+    }
+
     @Test("toParsedFood rounds fiber/sodium/sugar estimates (no false precision)")
     func nutritionInfoRounding() {
         let info = NutritionInfo(food: "Lentil Soup", quantity: 1, unit: "bowl",

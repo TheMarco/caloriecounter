@@ -54,11 +54,22 @@ public struct NutritionInfo: Sendable {
     public func toParsedFood() -> ParsedFood {
         let naturalUnit = FoodUnitNormalizer.normalizedUnit(food: food, unit: unit, quantity: quantity)
         return ParsedFood(food: food, quantity: quantity, unit: naturalUnit,
-                          kcal: kcal, fat: fat, carbs: carbs, protein: protein,
+                          kcal: Self.reconciledKcal(kcal, fat: fat, carbs: carbs, protein: protein, fiber: fiber),
+                          fat: fat, carbs: carbs, protein: protein,
                           fiber: Self.round(fiber, toNearest: 1),
                           sodium: Self.round(sodium, toNearest: 50),
                           sugar: Self.round(sugar, toNearest: 1),
                           nutritionConfidence: .estimated)
+    }
+
+    /// Calories can't be meaningfully lower than the macros physically imply
+    /// (Atwater: 9·fat + 4·carbs + 4·protein, with fiber at ~2 kcal/g). The on-device
+    /// model sometimes lowballs the total below its OWN macros ("110 kcal" with 10 g
+    /// fat + 12 g carbs ⇒ ≥ ~150). Raise it to the floor in that case (with a 10% grace
+    /// for fiber/rounding noise); never lower a self-consistent estimate.
+    static func reconciledKcal(_ kcal: Double, fat: Double, carbs: Double, protein: Double, fiber: Double) -> Double {
+        let floor = 9 * fat + 4 * carbs + 4 * protein - 2 * max(0, fiber)
+        return kcal < floor * 0.9 ? floor.rounded() : kcal
     }
 
     private static func round(_ value: Double, toNearest step: Double) -> Double {

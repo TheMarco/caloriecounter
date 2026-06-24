@@ -48,6 +48,12 @@ public enum Prompts {
         whole item, not per ingredient.
         - kcal is the TOTAL calories for the quantity specified, NOT per 100g.
         - Be generous with calorie estimates for restaurant/prepared foods.
+        - SPREADS & TOPPINGS ADD UP: when the food lists extras (butter, jam/jelly, \
+        mayo, oil, dressing, cheese, peanut butter, sour cream), ADD their calories \
+        on top of the base. A plain toast slice is ~90 kcal, but "toast with butter \
+        and jelly" is ~200-220 kcal (butter ~70, jelly ~50). Don't report the base alone.
+        - kcal MUST be consistent with your macros: total kcal ≈ 9×(fat g) + 4×(carb g) \
+        + 4×(protein g). Never report fewer calories than the fat alone implies (fat×9).
         - Also estimate dietary fiber (grams), sodium (milligrams), and total sugars \
         (grams) for the serving. Round fiber and sugar to whole grams and sodium to \
         the nearest 50 mg — these are approximate, so don't imply false precision.
@@ -58,6 +64,7 @@ public enum Prompts {
         - "chili dog with cheese" -> quantity 1, unit piece, kcal ~550.
         - "slice of pepperoni pizza" -> quantity 1, unit slice, kcal ~298.
         - "slice of bread" -> quantity 1, unit slice, kcal ~80.
+        - "toast with butter and jelly" -> quantity 1, unit slice, kcal ~210.
         - "slice of Dave's Killer Bread" -> quantity 1, unit slice, kcal ~120.
         - "2 eggs" -> quantity 2, unit piece, kcal ~140.
         \(referenceBlock(references))
