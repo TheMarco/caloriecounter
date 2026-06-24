@@ -90,8 +90,11 @@ REALISTIC PORTION EXAMPLES:
   * "tablespoon of mayo" → quantity: 1, unit: "tbsp", kcal: 90 (total for 1 tbsp)
   * "shot of tequila" → ${units === 'metric' ? 'quantity: 44, unit: "ml", kcal: 97' : 'quantity: 1.5, unit: "oz", kcal: 97'} (standard shot size)`;
 
-    // Try multiple models in order of preference (GPT-5 mini first)
-    const models = ['gpt-5-mini', 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+    // gpt-5.4-nano is cheap and tested well on the hard cases (toast w/ spreads,
+    // fettuccine alfredo with the pasta, mac & cheese as a serving, chili dog parts).
+    // gpt-4o-mini is the reliability fallback if nano errors. (Confirm the exact nano
+    // model id against your account; the loop just tries them in order.)
+    const models = ['gpt-5.4-nano', 'gpt-4o-mini'];
     let completion;
     let lastError;
 
@@ -151,7 +154,7 @@ REALISTIC PORTION EXAMPLES:
       }
 
       const round1 = (v: unknown) => v != null ? Math.round(Number(v) * 10) / 10 : undefined;
-      const components = Array.isArray(parsed.components)
+      let components = Array.isArray(parsed.components)
         ? parsed.components
             .filter((c: { name?: string; grams?: number }) => c && c.name && Number(c.grams) > 0)
             .map((c: { name: string; grams: number; kcal?: number; fat?: number; carbs?: number; protein?: number }) => ({
@@ -164,17 +167,41 @@ REALISTIC PORTION EXAMPLES:
             }))
         : undefined;
 
+      let kcal = parsed.kcal != null ? Math.round(Number(parsed.kcal)) : undefined;
+      const fat = round1(parsed.fat);
+      const carbs = round1(parsed.carbs);
+      const protein = round1(parsed.protein);
+      const fiber = parsed.fiber != null ? Math.round(Number(parsed.fiber)) : undefined;
+
+      // Atwater floor: calories can't read below what the macros physically imply
+      // (9·fat + 4·carbs + 4·protein, fiber at ~2 kcal/g). A small model sometimes
+      // lowballs the total a few % under its own macros — raise it to the floor, and
+      // scale the breakdown's kcal to match so the app's component sum stays consistent
+      // with the (corrected) total. A self-consistent estimate is left alone.
+      if (kcal != null && fat != null && carbs != null && protein != null) {
+        const floor = Math.round(9 * fat + 4 * carbs + 4 * protein - 2 * (fiber ?? 0));
+        if (floor > 0 && kcal < floor * 0.97) {
+          const scale = floor / kcal;
+          kcal = floor;
+          if (components) {
+            components = components.map((c: { kcal?: number }) => ({
+              ...c, kcal: c.kcal != null ? Math.round(c.kcal * scale) : c.kcal,
+            }));
+          }
+        }
+      }
+
       return NextResponse.json<ParseFoodResponse>({
         success: true,
         data: {
           food: parsed.food,
           quantity: Number(parsed.quantity),
           unit: parsed.unit,
-          kcal: parsed.kcal != null ? Math.round(Number(parsed.kcal)) : undefined,
-          fat: round1(parsed.fat),
-          carbs: round1(parsed.carbs),
-          protein: round1(parsed.protein),
-          fiber: parsed.fiber != null ? Math.round(Number(parsed.fiber)) : undefined,
+          kcal,
+          fat,
+          carbs,
+          protein,
+          fiber,
           sodium: parsed.sodium != null ? Math.round(Number(parsed.sodium) / 10) * 10 : undefined,
           sugar: parsed.sugar != null ? Math.round(Number(parsed.sugar)) : undefined,
           notes: parsed.notes,
