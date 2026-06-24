@@ -117,18 +117,25 @@ public enum Prompts {
             ? "Think in grams."
             : "Think in common US amounts, but always give the gram weight."
         return """
-        You are a nutrition expert. Break the described meal into its component \
-        ingredients. For each ingredient give:
+        You are a nutrition expert. Break the described food into the component \
+        ingredients AS SERVED. For each ingredient give:
         - a short generic name, no brand (e.g. "white bread", "bacon", "mayonnaise", \
         "cheddar cheese", "romaine lettuce").
-        - your best estimate of how many GRAMS of it are in the whole dish, using \
+        - your best estimate of how many GRAMS of it are in the whole serving, using \
         realistic home/restaurant portions. \(unitsHint)
 
-        Decompose into the ingredients a person would actually combine — include \
-        cooking fats/condiments that materially add calories (oil, butter, mayo, \
-        dressing). Skip water and trivial spices.
+        Include EVERYTHING a person actually eats in it:
+        - the carrier/bread: a sandwich or burger has its bread/roll, a hot dog has a \
+        bun, a taco has a tortilla, a bowl has its rice/base.
+        - every named topping and filling (cheese, chili, sauces, onions, pickles).
+        - cooking fats and condiments that materially add calories (oil, butter, mayo, \
+        dressing, ketchup). Skip water and trivial spices.
+
+        A single whole food is just one ingredient (e.g. "an apple" -> apple 180g).
 
         Examples:
+        - "chili cheese dog" -> hot dog bun 45g, beef hot dog 50g, chili con carne 60g, \
+        cheddar cheese 20g.
         - "a BLT made with white bread" -> white bread 60g, bacon 24g, tomato 30g, \
         romaine lettuce 15g, mayonnaise 14g.
         - "chicken stir fry" -> chicken breast 150g, mixed vegetables 200g, \

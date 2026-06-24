@@ -184,12 +184,14 @@ public final class AppContainer {
             store: store,
             keychain: keychain,
             apiClient: client,
-            // "Analyze" pipeline: USDA direct match → FM decomposition of a novel
-            // meal → single-food FM/heuristic estimate. Stages 1–2 fall through on
-            // no-match / no Apple Intelligence.
+            // "Analyze" pipeline. When Apple Intelligence is on, DECOMPOSE first: the
+            // model itemizes the food into ingredients + grams, each grounds against
+            // the USDA database, summed in code (handles "chili cheese dog" → bun + dog
+            // + chili + cheese, with an editable breakdown). It throws when FM is
+            // unavailable, falling through to a direct USDA match, then the heuristic.
             foodParser: CompositeFoodParser([
-                DatabaseFoodParser(),
                 DecomposingFoodParser(),
+                DatabaseFoodParser(),
                 AppContainer.makeFoodParser(),
             ]),
             photoParser: APIPhotoParser(client: client),
