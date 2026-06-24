@@ -48,7 +48,21 @@ export type ParseFoodResponse = {
     fat?: number;
     carbs?: number;
     protein?: number;
+    fiber?: number;     // grams, for the serving
+    sodium?: number;    // milligrams, for the serving
+    sugar?: number;     // grams, for the serving
     notes?: string;
+    // Editable ingredient breakdown for compound/assembled dishes (chili cheese dog
+    // → frank, bun, chili, cheese). Omitted/empty for single foods. Component kcal +
+    // macros should sum to the dish totals above.
+    components?: Array<{
+      name: string;
+      grams: number;
+      kcal?: number;
+      fat?: number;
+      carbs?: number;
+      protein?: number;
+    }>;
   };
   error?: string;
 };
