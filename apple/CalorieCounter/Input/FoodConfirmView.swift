@@ -101,7 +101,11 @@ private struct ConfirmForm: View {
             }
             if model.hasBreakdown {
                 breakdownSection
-            } else if model.fiber != nil || model.sodium != nil || model.sugar != nil {
+            }
+            // Show fiber/sodium/sugar whenever we have them — independent of the
+            // breakdown. (They used to be in an `else if`, so a breakdown hid them,
+            // and the cloud returns a breakdown for almost everything.)
+            if model.fiber != nil || model.sodium != nil || model.sugar != nil {
                 Section {
                     if let f = model.fiber { nutritionRow("Fiber", f, "g") }
                     if let s = model.sodium { nutritionRow("Sodium", s, "mg") }
