@@ -121,11 +121,17 @@ private struct ConfirmForm: View {
                 }
                 .font(.subheadline.weight(.medium))
             }
-            Section("Nutrition (recalculated)") {
+            Section {
                 nutritionRow("Calories", model.kcal, "kcal")
                 nutritionRow("Fat", model.fat, "g")
                 nutritionRow("Carbs", model.carbs, "g")
                 nutritionRow("Protein", model.protein, "g")
+            } header: {
+                Text("Nutrition (recalculated)")
+            } footer: {
+                if model.method == .photo {
+                    Text("Estimated from your photo by AI — it won't always be exact. Tweak the amount above, or the ingredients below, until it matches what you ate.")
+                }
             }
             if model.hasBreakdown {
                 breakdownSection
