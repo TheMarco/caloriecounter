@@ -15,14 +15,17 @@ public enum DatabaseLookupError: Error, Sendable, Equatable {
 }
 
 public struct DatabaseFoodParser: FoodParsing {
-    private let database: FoodDatabase
+    /// nil → the shared bundled database, accessed LAZILY inside `parse` (an async,
+    /// off-main context) so constructing this parser never triggers the cold load.
+    private let injected: FoodDatabase?
 
-    public init(database: FoodDatabase = .shared) {
-        self.database = database
+    public init(database: FoodDatabase? = nil) {
+        self.injected = database
     }
 
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
         let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let database = injected ?? .shared
         guard !query.isEmpty, let resolved = database.resolve(query, units: units, keepingName: query) else {
             throw DatabaseLookupError.noMatch
         }

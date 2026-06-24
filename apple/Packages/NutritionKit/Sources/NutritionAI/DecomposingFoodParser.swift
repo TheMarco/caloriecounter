@@ -13,10 +13,11 @@ import FoundationModels
 import NutritionCore
 
 public struct DecomposingFoodParser: FoodParsing {
-    private let database: FoodDatabase
+    /// nil → the shared bundled database, accessed lazily (off the launch path).
+    private let injected: FoodDatabase?
 
-    public init(database: FoodDatabase = .shared) {
-        self.database = database
+    public init(database: FoodDatabase? = nil) {
+        self.injected = database
     }
 
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
@@ -36,6 +37,7 @@ public struct DecomposingFoodParser: FoodParsing {
     /// (density × grams); unresolved ingredients become grams-only lines (0 macros,
     /// never fabricated). The top-line is the sum of the components. Unit-tested.
     func assemble(_ composed: ComposedFood, name: String) -> ParsedFood {
+        let database = injected ?? .shared
         let components = composed.ingredients
             .filter { $0.grams > 0 }
             .map { ingredient -> FoodComponent in

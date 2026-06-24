@@ -199,7 +199,11 @@ public final class AppContainer {
             foodSearch: (AppContainer.isUITest || AppContainer.isDemo)
                 ? StaticFoodSearch()
                 : OpenFoodFactsResolver(),
-            foodDatabase: FoodDatabase.shared,
+            // Lazy seam: the bundled DB cold-loads only on the first off-main query,
+            // never during this synchronous (main-actor) launch init.
+            foodDatabase: (AppContainer.isUITest || AppContainer.isDemo)
+                ? StaticFoodDatabase()
+                : LazySharedFoodDatabase(),
             settings: SettingsStore(defaultUnits: .deviceDefault),
             healthSync: (AppContainer.isUITest || AppContainer.isDemo)
                 ? MockHealthSyncService()
@@ -217,9 +221,13 @@ public final class AppContainer {
     // MARK: - Lifecycle
     /// Preflight hook called from the root view's `.task`. Seeds demo data in
     /// `-demo` mode; otherwise the store is ready and FM availability is resolved
-    /// at wiring time.
+    /// at wiring time. Also warms the bundled food database off-main so the first
+    /// type-flow query doesn't pay the ~380 ms cold load.
     public func bootstrap() async {
         if AppContainer.isDemo { await seedDemoData() }
+        if !AppContainer.isUITest {
+            Task.detached(priority: .utility) { _ = FoodDatabase.shared.count }
+        }
     }
 
     /// Seed ~2 months of realistic, individually-named meals (breakfast / lunch /
