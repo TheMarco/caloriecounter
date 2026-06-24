@@ -19,6 +19,7 @@ struct FoodConfirmView: View {
     @State private var searchText = ""
     @State private var reanalyzing = false
     @State private var currentNotes: String?
+    @State private var reanalyzeError: String?
 
     /// Typed/spoken entries can be re-analyzed in place; a scan can't be re-typed.
     private var canResearch: Bool { method == .text || method == .voice }
@@ -41,6 +42,11 @@ struct FoodConfirmView: View {
                 currentNotes = parsed.notes
             }
         }
+        .alert("Couldn’t analyze", isPresented: .constant(reanalyzeError != nil)) {
+            Button("OK") { reanalyzeError = nil }
+        } message: {
+            Text(reanalyzeError ?? "")
+        }
     }
 
     /// Re-run the parser on an edited search term and replace the result in place,
@@ -50,11 +56,14 @@ struct FoodConfirmView: View {
         guard !q.isEmpty, !reanalyzing else { return }
         reanalyzing = true
         Task {
-            let result = try? await container.foodParser.parse(text: q, units: container.settings.units)
-            reanalyzing = false
-            if let result {
+            defer { reanalyzing = false }
+            do {
+                let result = try await container.foodParser.parse(text: q, units: container.settings.units)
                 model = FoodConfirmModel(parsed: result, method: method, store: container.store)
                 currentNotes = result.notes
+            } catch {
+                // Don't fail silently — that's why editing the term "did nothing".
+                reanalyzeError = "We couldn’t analyze “\(q)”. Try rephrasing the food."
             }
         }
     }

@@ -256,15 +256,21 @@ public final class AppContainer {
             store: store,
             keychain: keychain,
             apiClient: client,
-            // "Analyze" pipeline. Try a direct USDA match FIRST — it's correct for
-            // simple foods/drinks (coffee, an apple) and for the thousands of composite
-            // dishes that carry their own recipe. Only when nothing matches do we ask
-            // the model to decompose a novel meal (avoids it shredding "coffee" into
-            // coffee beans + water). Finally, a single-food FM/heuristic estimate.
+            // "Analyze" pipeline. Try a direct USDA match FIRST — correct for simple
+            // foods/drinks (coffee, an apple) and the thousands of composite dishes that
+            // carry their OWN reliable recipe breakdown. Otherwise a single whole-dish
+            // estimate (Foundation Models on a capable device, else the heuristic), with
+            // a deterministic heuristic backstop so a parse practically never fails.
+            //
+            // NB: the on-device *ingredient decomposition* (DecomposingFoodParser) is
+            // intentionally NOT in this chain — the small model omits main ingredients
+            // and hallucinates ("fettuccine alfredo" → cream + "Beverages" + no pasta),
+            // which we can't detect deterministically. A whole-dish estimate is far more
+            // robust than a broken itemized breakdown.
             foodParser: CompositeFoodParser([
                 DatabaseFoodParser(),
-                DecomposingFoodParser(),
                 AppContainer.makeFoodParser(),
+                HeuristicFoodParser(),
             ]),
             photoParser: APIPhotoParser(client: client),
             labelReader: VisionLabelReader(),
