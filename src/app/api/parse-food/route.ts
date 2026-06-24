@@ -23,72 +23,80 @@ export async function POST(request: NextRequest) {
       return fallbackParsing(text, units);
     }
 
-    const unitsInstruction = units === 'metric'
-      ? 'Use metric units when possible (grams, ml, liters). For liquids like shots, use ml (e.g., 44ml for a shot of tequila).'
-      : 'Use imperial units when appropriate (oz, lb, cups, tbsp, tsp). For liquids like shots, use oz (e.g., 1.5oz for a shot of tequila).';
-
-    const prompt = `You are a nutrition expert. Parse this food description and provide accurate nutritional information:
+    const prompt = `Estimate nutrition for this food description:
 
 "${text}"
 
-IMPORTANT: The user prefers ${units} units. ${unitsInstruction}
+User unit preference: ${units}.
 
-Respond with this exact JSON structure:
+Task:
+Parse the food description into a realistic single serving. Estimate total nutrition for the described serving, not per 100g. Use typical serving sizes unless the user specified a quantity or weight.
+
+Unit rules:
+- ${units === 'metric' ? 'Prefer grams for solid foods and ml for liquids when practical.' : 'Prefer oz and lb for solid foods, and cups / fl oz for liquids, when practical.'}
+- For countable foods, use piece, slice, bowl, plate, serving, tbsp, tsp, or cup when more natural.
+- For alcohol shots, use ${units === 'metric' ? '44ml' : '1.5oz'} unless specified otherwise.
+
+Return this JSON structure exactly:
 {
   "food": "standardized food name",
   "quantity": number,
   "unit": "g|ml|cup|tbsp|tsp|piece|slice|oz|lb|bowl|plate|serving",
-  "kcal": total_calories_for_this_serving,
-  "fat": total_fat_grams_for_this_serving,
-  "carbs": total_carbs_grams_for_this_serving,
-  "protein": total_protein_grams_for_this_serving,
-  "fiber": total_dietary_fiber_grams_for_this_serving,
-  "sodium": total_sodium_milligrams_for_this_serving,
-  "sugar": total_sugars_grams_for_this_serving,
-  "notes": "any_additional_info",
-  "components": [ { "name": "ingredient name", "grams": number, "kcal": number, "fat": number, "carbs": number, "protein": number } ]
+  "estimated_total_grams": number,
+  "kcal": number,
+  "fat": number,
+  "carbs": number,
+  "protein": number,
+  "fiber": number,
+  "sodium": number,
+  "sugar": number,
+  "confidence": "low|medium|high",
+  "assumptions": ["assumption 1", "assumption 2"],
+  "notes": "brief note about uncertainty or portion basis",
+  "components": [
+    { "name": "ingredient name", "grams": number, "kcal": number, "fat": number, "carbs": number, "protein": number, "fiber": number, "sodium": number, "sugar": number }
+  ]
 }
 
-CRITICAL PORTION SIZE RULES:
-- NEVER use unrealistic tiny portions (like 1g for a plate of food)
-- For pasta dishes: "plate/bowl of pasta" = 300-400g cooked pasta + sauce
-- For rice dishes: "plate/bowl of rice" = 200-300g cooked rice + toppings
-- For salads: "bowl/plate of salad" = 150-250g depending on ingredients
-- For sandwiches/burgers: use "piece" unit, estimate total weight 150-300g
-- For pizza: use "slice" unit, typical slice = 100-150g
-- For soups: use "bowl" unit, typical serving = 250-300ml
-- For meat portions: restaurant serving = 150-200g, home serving = 100-150g
+Portion rules:
+- Never use unrealistic tiny portions like 1g unless the user explicitly says so.
+- If quantity is unspecified, estimate one normal serving.
+- For pasta dishes, a plate/bowl is usually 300-400g total.
+- For rice dishes, a plate/bowl is usually 250-400g total including toppings.
+- For salads, a bowl/plate is usually 150-300g depending on toppings and dressing.
+- For sandwiches, burgers, hot dogs, and wraps, use piece and estimate realistic total weight.
+- For pizza, use slice unless the user specifies a whole pizza.
+- For soup, use bowl, usually 250-350ml.
+- For meat portions, use 100-200g depending on context.
+- For restaurant/prepared foods, use the higher end of typical serving sizes.
+- For simple home foods, use ordinary default portions.
 
-IMPORTANT RULES:
-- For compound foods (like "chili dog with cheese"), calculate the TOTAL calories for the complete item
-- Use realistic portion sizes based on how food is typically served
-- The "kcal" field should be the TOTAL calories for the quantity specified, NOT per 100g
-- For complex dishes, consider ALL ingredients and typical serving sizes
-- Be generous with calorie estimates for restaurant/prepared foods
-- Use appropriate units based on user preference: ${units === 'metric' ? 'prefer grams for solids, ml for liquids' : 'use oz, lb, cups, tbsp, tsp as appropriate'}
+Compound food rules:
+- For assembled foods such as burgers, sandwiches, hot dogs, tacos, burritos, stir fry, pasta with sauce, and salads with toppings, include recognizable components.
+- Use natural named parts, not a from-scratch recipe.
+- Do not break sauces into flour, water, spices, oil, salt, etc.
+- Do not list tiny incidental ingredients unless they materially affect nutrition.
+- For single foods or drinks such as apple, coffee, milk, plain bread, eggs, or chicken breast, return components as [].
+- For compound foods, calculate top-level kcal, fat, carbs, protein, fiber, sodium, and sugar by summing components after rounding.
 
-MICRONUTRIENTS:
-- Also estimate dietary fiber (grams), sodium (milligrams), and total sugars (grams) for the whole serving.
-- Round fiber and sugar to whole grams, sodium to the nearest 10 mg. These are approximate.
+Rounding rules:
+- kcal: nearest 5 calories
+- fat/carbs/protein: nearest 1g
+- fiber/sugar: nearest 1g
+- sodium: nearest 10mg
+- grams/ml: nearest 5g or 5ml when estimated
 
-COMPONENTS (ingredient breakdown):
-- For a COMPOUND or ASSEMBLED dish (sandwich, burger, chili dog, taco, stir fry, pasta with sauce, salad with toppings), include a "components" array of the recognizable parts a person would name. Example: "chili cheese dog" → hot dog bun, beef frank, chili, shredded cheese.
-- Use the dish's natural named parts, NOT a from-scratch recipe — never break a sauce into flour/water/spices, and never list base ingredients like oil/salt on their own.
-- Each component carries its grams and its kcal/fat/carbs/protein for THAT amount.
-- The components' kcal and macros MUST sum to the dish totals (kcal/fat/carbs/protein) above.
-- For a SINGLE food or drink (apple, coffee, a slice of bread, scrambled eggs), return an EMPTY components array []. Do not decompose it.
-
-REALISTIC PORTION EXAMPLES:
-  * "plate of fettuccine alfredo" → quantity: 350, unit: "g", kcal: 800 (typical restaurant portion)
-  * "bowl of chicken fried rice" → quantity: 300, unit: "g", kcal: 520 (typical serving)
-  * "chili dog with cheese" → quantity: 1, unit: "piece", kcal: 550 (total for whole item)
-  * "Big Mac" → quantity: 1, unit: "piece", kcal: 563 (total for whole burger)
-  * "slice of pepperoni pizza" → quantity: 1, unit: "slice", kcal: 298 (total for slice)
-  * "bowl of tomato soup" → quantity: 1, unit: "bowl", kcal: 180 (typical 250ml serving)
-  * "2 eggs" → quantity: 2, unit: "piece", kcal: 140 (total for both eggs)
-  * "100g chicken breast" → quantity: 100, unit: "g", kcal: 165 (total for 100g)
-  * "tablespoon of mayo" → quantity: 1, unit: "tbsp", kcal: 90 (total for 1 tbsp)
-  * "shot of tequila" → ${units === 'metric' ? 'quantity: 44, unit: "ml", kcal: 97' : 'quantity: 1.5, unit: "oz", kcal: 97'} (standard shot size)`;
+Examples:
+- "plate of fettuccine alfredo" -> 350g, about 800 kcal
+- "bowl of chicken fried rice" -> 300g, about 520 kcal
+- "chili dog with cheese" -> 1 piece, about 500-600 kcal
+- "Big Mac" -> 1 piece, 563 kcal
+- "slice of pepperoni pizza" -> 1 slice, about 300 kcal
+- "bowl of tomato soup" -> 1 bowl, about 250ml, about 180 kcal
+- "2 eggs" -> 2 pieces, about 140 kcal
+- "100g chicken breast" -> 100g, about 165 kcal
+- "tablespoon of mayo" -> 1 tbsp, about 90 kcal
+- "shot of tequila" -> 44ml, about 97 kcal`;
 
     // gpt-5.4-nano is cheap and tested well on the hard cases (toast w/ spreads,
     // fettuccine alfredo with the pasta, mac & cheese as a serving, chili dog parts).
@@ -106,7 +114,7 @@ REALISTIC PORTION EXAMPLES:
           messages: [
             {
               role: 'system',
-              content: 'You are a nutrition expert. Respond only with valid JSON.',
+              content: 'You are a nutrition estimation engine. Return only valid JSON matching the requested schema. Do not include markdown, explanations, or extra text.',
             },
             {
               role: 'user',
