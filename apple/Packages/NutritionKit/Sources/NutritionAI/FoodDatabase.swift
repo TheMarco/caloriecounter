@@ -346,6 +346,10 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         "cheese curd": "cheddar",                // → "Cheese, Cheddar" (not cottage dry curd)
         "laughing cow": "cheese spread",         // → a cheese spread (not "Beef, cow head")
         "english cucumber": "cucumber raw",      // → raw cucumber (not "Cucumber, cooked")
+        // Ground a decomposed "bolognese" sauce component to a meat-tomato sauce, not
+        // "Sauce, barbecue". Keyed exactly so "spaghetti bolognese" (whole) is untouched.
+        "bolognese": "meat sauce",
+        "bolognese sauce": "meat sauce",
     ]
 
     /// Symmetric light stemmer (applied to both query and food tokens).

@@ -131,14 +131,21 @@ public enum Prompts {
         - cooking fats and condiments that materially add calories (oil, butter, mayo, \
         dressing, ketchup). Skip water and trivial spices.
 
-        A single food or drink is ONE ingredient, named as it's consumed — never broken
-        into raw materials or cooking water. "coffee" is coffee (one item), NOT coffee \
-        beans + water; "an apple" is apple 180g; "orange juice" is orange juice, not \
-        oranges + water. Only break apart foods a person actually ASSEMBLES from parts \
-        (sandwiches, bowls, plates, mixed dishes).
+        Decompose only to the level a person would NAME the meal — its dishes and \
+        components — never down to a from-scratch recipe. A single food, drink, or a \
+        recognizable prepared sauce/sub-dish is ONE ingredient: "coffee" is coffee (NOT \
+        beans + water), "orange juice" is orange juice (not oranges + water), and a \
+        named sauce stays whole — "spaghetti bolognese" is spaghetti + ONE "meat sauce", \
+        NOT tomato + beef + onion + garlic + oil. Treat pesto, alfredo, curry sauce, \
+        gravy, chili con carne, hummus, and guacamole the same way. Only break apart \
+        what's genuinely ASSEMBLED on the plate (the pasta vs. its sauce vs. the cheese; \
+        the bread vs. its fillings), and aim for the few components the description \
+        implies, not a long ingredient list.
 
         Examples:
         - "coffee" -> coffee 240g.
+        - "spaghetti bolognese with parmesan" -> cooked spaghetti 200g, meat sauce 150g, \
+        parmesan cheese 15g.
         - "chili cheese dog" -> hot dog bun 45g, beef hot dog 50g, chili con carne 60g, \
         cheddar cheese 20g.
         - "a BLT made with white bread" -> white bread 60g, bacon 24g, tomato 30g, \

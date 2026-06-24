@@ -172,6 +172,7 @@ struct FoodDatabaseTests {
             ("big mac", "mac", ["macaroni"], nil),                            // was "Macaroni…" (mac alias)
             ("milk chocolate", "chocolate", ["cocoa", "beverage"], nil),     // was "…hot cocoa" beverage
             ("onion rings", "onion", ["flavored"], nil),                     // was "Onion flavored rings"
+            ("bolognese sauce", "sauce", ["barbecue", "bbq"], nil),          // decomposed component → meat sauce, not BBQ
         ]
         for (q, must, banned, maxKcal) in cases {
             let f = food(q)
