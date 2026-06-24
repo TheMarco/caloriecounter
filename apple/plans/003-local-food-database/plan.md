@@ -105,7 +105,7 @@ As the user types, **suggestions** (instant, tappable) come from OFF + FoodDatab
 | 2 | FoodDatabase index + portion-aware matching | 1 | 8 | ✅ |
 | 3 | Database/Composite parsers + type-flow wiring | 2 | 8 | ✅ |
 | 4 | Editable breakdown UI (confirm/edit sheet) | 3 | 5 | ✅ |
-| 5 | FM decomposition fallback (`ComposedFood`) | 3 | 8 | ⬜ |
+| 5 | FM decomposition fallback (`ComposedFood`) | 3 | 8 | ✅ |
 | 6 | Demo data, performance/size validation, docs | 4,5 | 3 | ⬜ |
 
 Total: 37 points. Phases are sequential (each builds on the prior); 5 may be developed in parallel with 4 since both depend only on 3.
@@ -233,23 +233,25 @@ Total: 37 points. Phases are sequential (each builds on the prior); 5 may be dev
 
 **Goal:** For a described food **not** in the DB, have the local model itemize it into components with portions; ground each component against `FoodDatabase`; sum in code. Renders in the Phase 4 component UI. This is the "describe literally any food" path.
 
+> **Deviations:** (a) `Ingredient` is `{food, grams}` (dropped quantity/unit — grams is all the grounding needs; the prompt steers gram estimates). (b) Unresolved ingredients become grams-only components (0 macros), consistent with the dish-recipe path — no per-ingredient FM fallback (untestable/expensive; the 13k-food DB grounds most common ingredients). (c) `CompositeFoodParser` refactored from a database+fallback pair to an **ordered array** of parsers tried in turn.
+
 ### Tasks
-- [ ] Task 5.1: `Sources/NutritionAI/ComposedFood.swift` — `@Generable struct ComposedFood { dishName; components: [Ingredient] }`, `@Generable struct Ingredient { food; quantity; unit; grams }` with `@Guide`s steering realistic portions and **grams per ingredient** (the model's strength). No nutrition numbers requested from the model.
-- [ ] Task 5.2: `Sources/NutritionAI/DecomposingFoodParser.swift` — `FoodParsing` that: (1) one FM call → `ComposedFood`; (2) for each ingredient, `FoodDatabase.bestConfidentMatch(food)` → scale to `grams`, else fall back to an FM/heuristic single-food estimate for that ingredient; (3) build `ParsedFood` with `components` + summed top-line via `totaledFromComponents()`; `notes = "Estimated from N components"`. Guard `FoundationModelsFoodParser.isAvailable`; throw `.unavailable` otherwise so the composite skips it.
-- [ ] Task 5.3: Insert into `CompositeFoodParser`: DB direct match → **DecomposingFoodParser** (when FM available) → FM single-food estimate. Keep the chain explicit and unit-tested with stubs.
-- [ ] Task 5.4: Heuristic-only decomposition is **out of scope** (the heuristic can't itemize); when FM is unavailable the chain is DB → FM single-food (already grounded). Document this.
+- [x] Task 5.1: `Sources/NutritionAI/ComposedFood.swift` — `@Generable ComposedFood { dishName; ingredients: [Ingredient] }`, `@Generable Ingredient { food; grams (.range 0…3000) }` with `@Guide`s steering generic names + realistic gram weights; explicit inits for tests. `Prompts.decompositionInstructions(units:)` tells the model to itemize + weigh only — **never** estimate nutrition.
+- [x] Task 5.2: `Sources/NutritionAI/DecomposingFoodParser.swift` — one FM call → `ComposedFood`; pure `assemble()` grounds each ingredient via `FoodDatabase.bestConfidentMatch` (density × grams), drops 0g lines, unresolved → grams-only; top-line summed via `totaledFromComponents()`; `notes = "Estimated from N ingredients"`. Guards `isAvailable`; throws `.unavailable` (also when nothing decomposes) so the composite falls through. Keeps the user's wording as the food name.
+- [x] Task 5.3: `CompositeFoodParser([DatabaseFoodParser(), DecomposingFoodParser(), makeFoodParser()])` wired as `AppContainer.foodParser`. Explicit, stub-tested chain.
+- [x] Task 5.4: Heuristic-only decomposition out of scope — without Apple Intelligence the chain is DB → single-food (already DB-grounded). Documented in the file header.
 
 ### Tests
-- [ ] Test 5.a (`NutritionAITests`): `ComposedFood.toParsedFood`-style mapping — given a fixed `ComposedFood` (no live model) and an injected `FoodDatabase`, each ingredient grounds to DB density × grams and the total = Σ components; unknown ingredients fall back without crashing.
-- [ ] Test 5.b: `DecomposingFoodParser` throws `.unavailable` when FM is unavailable (host without Apple Intelligence — mirrors existing availability tests), so the composite falls through deterministically.
-- [ ] Test 5.c (`AppCoreTests`): `CompositeFoodParser` order — DB hit short-circuits; DB miss + FM-available routes to decomposition (stub); DB miss + FM-unavailable routes to single-food fallback.
+- [x] Test 5.a (`DecomposingFoodParserTests.assembleGroundsAndSums`): a fixed `ComposedFood` + injected DB → bread 162 + bacon 108 + unresolved sauce 0 = 270 kcal; 0g ingredient dropped; unresolved stays grams-only (never fabricated); name keeps the user's wording.
+- [x] Test 5.b (`parseGuardsUnavailable`): throws `.unavailable` when FM is unavailable (no model call), mirroring the existing availability gate.
+- [x] Test 5.c (`CompositeFoodParserTests`): first success wins; DB-miss → decomposition; DB-miss + decomposition-skip → single-food; all-skip throws.
 
 ### Definition of Done
-- [ ] Build + all package tests pass.
-- [ ] Decomposition path produces components that render in the Phase 4 UI (verified by a model test asserting `ParsedFood.components` is populated and summed).
-- [ ] No live-model calls in tests (deterministic); on-device behavior guarded by `isAvailable`.
+- [x] Build + all 228 package tests pass; app builds.
+- [x] Decomposition produces `ParsedFood.components` that render in the Phase 4 breakdown UI (asserted via `assemble`).
+- [x] No live-model calls in tests (deterministic); on-device behavior guarded by `isAvailable`.
 
-- [ ] **CHECKPOINT: Run `/compact focus on: Phase 5 complete, ComposedFood decomposition fallback grounded vs FoodDatabase and summed in code, wired into CompositeFoodParser; Phase 6 needs demo data refresh, perf/size validation, and docs/About update`**
+- [x] **CHECKPOINT: Run `/compact focus on: Phase 5 complete, DecomposingFoodParser (FM itemize → ground vs FoodDatabase → sum in code) wired as the middle stage of CompositeFoodParser; Phase 6 needs demo data refresh, perf/size validation, and docs/About update`**
 
 ---
 

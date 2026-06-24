@@ -107,4 +107,35 @@ public enum Prompts {
     serving (use the typical single-serve size for that product type). Provide \
     the total calories and macros for that serving, not per 100g.
     """
+
+    /// System instructions for DECOMPOSING a described meal into its ingredients.
+    /// The model only itemizes + portions (its strength); the app looks up each
+    /// ingredient's nutrition in the USDA database and sums in code, so the model is
+    /// explicitly told NOT to estimate calories or macros.
+    public static func decompositionInstructions(units: UnitSystem) -> String {
+        let unitsHint = units == .metric
+            ? "Think in grams."
+            : "Think in common US amounts, but always give the gram weight."
+        return """
+        You are a nutrition expert. Break the described meal into its component \
+        ingredients. For each ingredient give:
+        - a short generic name, no brand (e.g. "white bread", "bacon", "mayonnaise", \
+        "cheddar cheese", "romaine lettuce").
+        - your best estimate of how many GRAMS of it are in the whole dish, using \
+        realistic home/restaurant portions. \(unitsHint)
+
+        Decompose into the ingredients a person would actually combine — include \
+        cooking fats/condiments that materially add calories (oil, butter, mayo, \
+        dressing). Skip water and trivial spices.
+
+        Examples:
+        - "a BLT made with white bread" -> white bread 60g, bacon 24g, tomato 30g, \
+        romaine lettuce 15g, mayonnaise 14g.
+        - "chicken stir fry" -> chicken breast 150g, mixed vegetables 200g, \
+        vegetable oil 14g, soy sauce 16g, white rice 150g.
+
+        Do NOT estimate calories, fat, carbs, or protein — only the ingredient list \
+        with gram weights. The app computes nutrition from the ingredients.
+        """
+    }
 }

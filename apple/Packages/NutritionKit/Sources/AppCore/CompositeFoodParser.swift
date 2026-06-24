@@ -1,26 +1,32 @@
-// The type/voice "Analyze" pipeline: try the on-device USDA database first (real
-// measured numbers for foods/dishes that exist in it — the common case), and only
-// fall back to Foundation Models (or the heuristic) for the genuine long tail it
-// can't match. The DB resolver throws on no-match, which is the fall-through signal.
+// The type/voice "Analyze" pipeline as an ordered fall-through chain. Each parser
+// is tried in turn; the first that succeeds wins, and a throw means "I can't handle
+// this — try the next." Wired (AppContainer) as:
 //
-// Mirrors CompositeBarcodeResolver: a primary resolver with a graceful fallback.
+//   1. DatabaseFoodParser   — direct USDA match (real numbers, the common case)
+//   2. DecomposingFoodParser— FM itemizes a novel meal → grounds each part → sums
+//   3. makeFoodParser()      — single-food FM/heuristic estimate (always succeeds)
+//
+// Stages 1–2 throw on no-match / FM-unavailable, so on a device without Apple
+// Intelligence the chain is simply DB → single-food.
 
 import Foundation
 import NutritionCore
 
 public struct CompositeFoodParser: FoodParsing {
-    private let database: any FoodParsing
-    private let fallback: any FoodParsing
+    public enum CompositeError: Error, Sendable { case noParsers }
 
-    public init(database: any FoodParsing, fallback: any FoodParsing) {
-        self.database = database
-        self.fallback = fallback
+    private let parsers: [any FoodParsing]
+
+    public init(_ parsers: [any FoodParsing]) {
+        self.parsers = parsers
     }
 
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
-        if let resolved = try? await database.parse(text: text, units: units) {
-            return resolved
+        var lastError: Error?
+        for parser in parsers {
+            do { return try await parser.parse(text: text, units: units) }
+            catch { lastError = error }
         }
-        return try await fallback.parse(text: text, units: units)
+        throw lastError ?? CompositeError.noParsers
     }
 }

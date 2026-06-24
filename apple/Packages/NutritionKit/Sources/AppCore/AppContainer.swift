@@ -184,11 +184,14 @@ public final class AppContainer {
             store: store,
             keychain: keychain,
             apiClient: client,
-            // "Analyze" tries the on-device USDA database first, then FM/heuristic.
-            foodParser: CompositeFoodParser(
-                database: DatabaseFoodParser(),
-                fallback: AppContainer.makeFoodParser()
-            ),
+            // "Analyze" pipeline: USDA direct match → FM decomposition of a novel
+            // meal → single-food FM/heuristic estimate. Stages 1–2 fall through on
+            // no-match / no Apple Intelligence.
+            foodParser: CompositeFoodParser([
+                DatabaseFoodParser(),
+                DecomposingFoodParser(),
+                AppContainer.makeFoodParser(),
+            ]),
             photoParser: APIPhotoParser(client: client),
             labelReader: VisionLabelReader(),
             barcodeResolver: barcode,
