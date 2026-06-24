@@ -217,6 +217,14 @@ This software is licensed under a custom non-commercial license. See the [LICENS
 
 For commercial licensing, contact: info@ai-created.com
 
+## 📊 Data Sources
+
+This app uses nutrition data sourced in part from USDA FoodData Central. FoodData Central data is public domain / CC0. USDA does not endorse this app.
+
+> U.S. Department of Agriculture, Agricultural Research Service, Beltsville Human Nutrition Research Center. FoodData Central. Available from https://fdc.nal.usda.gov/.
+
+See [ATTRIBUTION.md](ATTRIBUTION.md) for full details.
+
 ## 👨‍💻 Author
 
 **Marco van Hylckama Vlieg**

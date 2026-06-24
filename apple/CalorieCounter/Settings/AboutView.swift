@@ -51,6 +51,30 @@ struct AboutView: View {
             .font(.subheadline)
 
             Section {
+                Text("Nutrition data source: USDA FoodData Central. Public domain / CC0. Not endorsed by USDA.")
+                    .font(.subheadline)
+                Link(destination: URL(string: "https://fdc.nal.usda.gov/")!) {
+                    Label("fdc.nal.usda.gov", systemImage: "arrow.up.right")
+                        .font(.subheadline)
+                }
+                Label("Barcode and branded-product data from Open Food Facts (Open Database License).",
+                      systemImage: "barcode")
+                    .font(.subheadline)
+            } header: {
+                Text("Data Sources")
+            } footer: {
+                Text("""
+                Food and nutrition data is sourced in part from USDA FoodData Central. \
+                FoodData Central data is in the public domain and published under CC0 1.0 \
+                Universal. USDA does not endorse this app.
+
+                U.S. Department of Agriculture, Agricultural Research Service, Beltsville \
+                Human Nutrition Research Center. FoodData Central. Available from \
+                https://fdc.nal.usda.gov/.
+                """)
+            }
+
+            Section {
                 LabeledContent("Built by", value: "Marco van Hylckama Vlieg")
             } footer: {
                 Text("© 2026 Unthinking AI, LLC. All rights reserved.")
