@@ -65,11 +65,28 @@ struct FoodDatabaseTests {
         #expect(p?.kcal == 243)
         #expect(p?.sodium == 550)                       // 521 × 1.05 = 547 → nearest 10
         #expect(p?.notes?.contains("105 g") == true)
-        // Recipe → components, each grounded against the DB (bread 270/100g × 60g ≈ 162).
-        let bread = p?.components?.first { $0.name == "Bread" }
-        #expect(bread?.grams == 60)
-        #expect(bread?.kcal == 162)
-        #expect(p?.components?.count == 4)
+        // The breakdown is scaled to sum to the dish's AUTHORITATIVE total, so the
+        // confirm screen (which totals the components) can never save more than the row.
+        let comps = p?.components ?? []
+        #expect(comps.count == 4)
+        let compSum = comps.reduce(0.0) { $0 + $1.kcal }
+        #expect(abs(compSum - (p?.kcal ?? 0)) <= 2)
+        #expect((comps.first { $0.name == "Bread" }?.kcal ?? 0) > 100)   // bread dominates
+    }
+
+    /// Regression for the "save 6× the calories" bug: a dish whose FNDDS recipe is the
+    /// full batch (mac & cheese: 1614 g / ~3242 kcal) must have its breakdown scaled to
+    /// the per-serving row total (~513 kcal), since the confirm screen totals components.
+    @Test("a dish breakdown sums to its authoritative total, not the recipe batch")
+    func breakdownSumsToRowTotal() {
+        let p = FoodDatabase.shared.resolve("mac and cheese", units: .metric)
+        #expect(p != nil)
+        #expect((p?.kcal ?? 9999) < 900, "a serving of mac & cheese isn't 3000+ kcal")
+        if let comps = p?.components, !comps.isEmpty {
+            let sum = comps.reduce(0.0) { $0 + $1.kcal }
+            #expect(abs(sum - (p?.kcal ?? 0)) <= 3,
+                    "breakdown (\(Int(sum))) must equal the row total (\(Int(p?.kcal ?? 0)))")
+        }
     }
 
     @Test("an ingredient resolves with its portion; unknown nutrients stay nil")
@@ -209,12 +226,22 @@ struct FoodDatabaseTests {
         #expect(db.confidentWholeMatch("fettuccine alfredo") == nil)
         #expect(db.confidentWholeMatch("fettucine alfredo with parmesan") == nil)
         #expect(db.confidentWholeMatch("chicken alfredo") == nil)
+        // Even when the user TYPED "sauce", a sauce row missing the rest of the dish defers.
+        #expect(db.confidentWholeMatch("spaghetti with meat sauce and parmesan") == nil)
         // …but the condiment ITSELF, or a match that covers the whole query, stays.
         #expect(name("alfredo sauce")?.contains("alfredo") == true)
         #expect(name("pesto")?.contains("pesto") == true)
         #expect(name("black coffee")?.contains("coffee") == true)   // dropped modifier, not a component
         #expect(name("caesar salad")?.contains("caesar") == true)   // covers the whole query
         #expect(name("chicken curry")?.contains("chicken") == true)
+    }
+
+    @Test("the visible suggestions don't surface a condiment stand-in for a described dish")
+    func suggestionsHideComponentStandIns() {
+        let names = FoodDatabase.shared.suggestions("penne alfredo with parmesan", units: .metric)
+            .map { $0.food.lowercased() }
+        #expect(!names.contains { $0.contains("alfredo sauce") },
+                "‘penne alfredo’ suggestions \(names) shouldn't surface Alfredo sauce")
     }
 
     @Test("base staples and enrichment lines are classified as non-food ingredients")

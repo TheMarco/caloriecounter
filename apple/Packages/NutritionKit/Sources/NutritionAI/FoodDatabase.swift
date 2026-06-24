@@ -216,16 +216,26 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     /// "Dressing, ranch", "alfredo" → "Alfredo sauce" — the user asked for just that).
     func confidentWholeMatch(_ query: String, minScore: Double = 1.1) -> DBFood? {
         guard let top = match(query, limit: 1).first, top.score >= minScore else { return nil }
-        let base = Self.tokenize(query)
-        let rawTokens = Self.phraseAliases[base.joined(separator: " ")].map(Self.tokenize) ?? Self.expandAliases(base)
-        let qSet = Set(rawTokens.filter { !Self.fillerWords.contains($0) })
-        let matchTokens = Set(Self.tokenize(top.food.name))
-        // Does the match introduce a condiment/component word the user didn't type?
-        let introducesComponent = !matchTokens.intersection(Self.componentWords).isSubset(of: qSet)
-        // Does it cover every word the user DID type?
-        let coversWholeQuery = qSet.isSubset(of: matchTokens)
-        if introducesComponent && !coversWholeQuery { return nil }   // a sauce posing as the dish → defer
+        if isComponentStandIn(top.food, forQuerySet: querySet(query)) { return nil }
         return top.food
+    }
+
+    /// The query tokens the matcher scores against (alias/phrase expanded, fillers removed).
+    private func querySet(_ query: String) -> Set<String> {
+        let base = Self.tokenize(query)
+        let raw = Self.phraseAliases[base.joined(separator: " ")].map(Self.tokenize) ?? Self.expandAliases(base)
+        return Set(raw.filter { !Self.fillerWords.contains($0) })
+    }
+
+    /// Whether a row is a condiment/component standing in for the described dish: its
+    /// name carries a component word ("sauce", "dressing"…) AND it doesn't cover the
+    /// whole query — "Alfredo sauce" for "fettuccine alfredo", or "Spaghetti sauce with
+    /// meat" for "spaghetti with meat sauce and parmesan". Such a row is fine for
+    /// grounding, but a trap as a final answer OR a visible top suggestion.
+    private func isComponentStandIn(_ food: DBFood, forQuerySet qSet: Set<String>) -> Bool {
+        let tokens = Set(Self.tokenize(food.name))
+        guard !tokens.isDisjoint(with: Self.componentWords) else { return false }
+        return !qSet.isSubset(of: tokens)
     }
 
     /// Top foods as grounding references for the AI parsers (per-100g densities).
@@ -247,7 +257,14 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     /// Top suggestions for a query, each resolved to a portioned ParsedFood (with
     /// dish breakdowns). Local + fast — safe to call on every keystroke.
     public func suggestions(_ query: String, units: UnitSystem, limit: Int = 5) -> [ParsedFood] {
-        match(query, limit: limit).map { parsedFood(for: $0.food, units: units) }
+        // Filter out condiment stand-ins ("Alfredo sauce" for "penne alfredo") so the
+        // visible "Foods" list can't trap the user into logging just the sauce — the
+        // same guard Analyze applies. Fetch a few extra to backfill what's dropped.
+        let qSet = querySet(query)
+        return match(query, limit: limit + 5)
+            .filter { !isComponentStandIn($0.food, forQuerySet: qSet) }
+            .prefix(limit)
+            .map { parsedFood(for: $0.food, units: units) }
     }
 
     /// Build a ParsedFood for a specific row: scale its density to the best portion
@@ -275,7 +292,18 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         // so suppress it and let the food's own macros stand. Needs ≥2 components that
         // are actual foods, not staples/enrichment.
         let realFoodCount = rawComponents.filter { !Self.isBaseOrEnrichment($0.name) }.count
-        let components: [FoodComponent]? = realFoodCount >= 2 ? rawComponents : nil
+        // FNDDS recipe grams are often the full BATCH (mac & cheese: 1614 g / 3242 kcal)
+        // while the row total is per serving (513 kcal). Scale every component so the
+        // breakdown sums to the AUTHORITATIVE row total — the confirm screen totals the
+        // components, so without this it would save 3242 kcal instead of 513.
+        let rawKcalSum = rawComponents.reduce(0.0) { $0 + $1.kcal }
+        let components: [FoodComponent]?
+        if realFoodCount >= 2, rawKcalSum > 0 {
+            let ratio = s.kcal / rawKcalSum
+            components = rawComponents.map { $0.scaled(toGrams: $0.grams * ratio) }
+        } else {
+            components = nil
+        }
 
         let note: String? = portion.map { "Per serving: \($0.label) (\(Int($0.grams.rounded())) g)" }
         return ParsedFood(
