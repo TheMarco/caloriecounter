@@ -41,4 +41,26 @@ final class TextFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["apple"].waitForExistence(timeout: 5),
                       "Saved entry should appear on the Today screen")
     }
+
+    @MainActor
+    func testCompoundFoodShowsEditableBreakdown() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest"]
+        app.launch()
+
+        app.buttons["Text"].tap()
+        let field = app.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        // A composite dish that resolves to a USDA database row carrying a recipe.
+        field.typeText("bacon lettuce tomato sandwich")
+        app.buttons["Analyze"].tap()
+
+        // The confirm sheet shows a collapsed breakdown; expanding reveals ingredients.
+        let breakdown = app.staticTexts["Breakdown"]
+        XCTAssertTrue(breakdown.waitForExistence(timeout: 5), "A compound food should show a Breakdown section")
+        breakdown.tap()
+        XCTAssertTrue(app.staticTexts["Lettuce"].waitForExistence(timeout: 3),
+                      "Expanding the breakdown should reveal its ingredient rows")
+    }
 }

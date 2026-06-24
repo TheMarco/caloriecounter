@@ -83,6 +83,54 @@ struct FoodConfirmModelTests {
         #expect(model.kcal == 0 && model.fat == 0 && model.carbs == 0 && model.protein == 0)
     }
 
+    @Test("a breakdown drives the totals; editing/removing a component updates them and marks user-edited")
+    func breakdownDrivesTotals() throws {
+        let parsed = ParsedFood(food: "BLT", quantity: 1, unit: "serving", kcal: 240, fat: 9, carbs: 30, protein: 11,
+                                nutritionConfidence: .estimated,
+                                components: [
+                                    FoodComponent(name: "Bacon", grams: 16, kcal: 80, fat: 7, carbs: 0, protein: 5, sodium: 200),
+                                    FoodComponent(name: "Bread", grams: 60, kcal: 160, fat: 2, carbs: 30, protein: 6, fiber: 2, sodium: 300),
+                                ])
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())
+        #expect(model.hasBreakdown)
+        #expect(model.kcal == 240)                 // Σ components, not the (stale) top-line
+        #expect(model.protein == 11)
+        #expect(model.sodium == 500)
+        #expect(model.makeEntry().nutritionConfidence == .estimated)   // untouched → keeps the source
+
+        // Double the bacon (16 → 32 g): its 80 kcal doubles, total 240 → 320.
+        model.setComponentGrams(at: 0, to: 32)
+        #expect(model.kcal == 320)
+        #expect(model.makeEntry().nutritionConfidence == .userEdited)
+
+        // Remove the bacon ("no bacon"): total drops to the bread alone.
+        model.removeComponent(at: 0)
+        #expect(model.kcal == 160)
+        #expect(model.components.count == 1)
+    }
+
+    @Test("changing the serving count scales a breakdown's total")
+    func breakdownScalesWithServings() throws {
+        let parsed = ParsedFood(food: "BLT", quantity: 1, unit: "serving", kcal: 240,
+                                components: [FoodComponent(name: "Bacon", grams: 16, kcal: 80, fat: 7, carbs: 0, protein: 5),
+                                             FoodComponent(name: "Bread", grams: 60, kcal: 160, fat: 2, carbs: 30, protein: 6)])
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())
+        #expect(model.kcal == 240)
+        model.quantityText = "2"
+        #expect(model.kcal == 480)                 // two servings
+    }
+
+    @Test("no breakdown → advanced fields and original-scaling behave exactly as before")
+    func noBreakdownUnchanged() throws {
+        let p = ParsedFood(food: "Brown Rice", quantity: 100, unit: "g", kcal: 111, fat: 0.9, carbs: 23, protein: 2.6, fiber: 1)
+        let model = FoodConfirmModel(parsed: p, method: .text, store: try makeStore())
+        #expect(!model.hasBreakdown)
+        #expect(model.kcal == 111)
+        model.quantityText = "200"
+        #expect(model.kcal == 222)                 // original-scaling path, unchanged
+        #expect(model.fiber == 1)                  // from the advanced text field, not a breakdown
+    }
+
     @Test("save persists an Entry with the edited values and chosen method")
     func savePersists() async throws {
         let store = try makeStore()

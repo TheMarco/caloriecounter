@@ -24,6 +24,15 @@ public final class FoodConfirmModel {
     public var sodiumText: String
     public var sugarText: String
 
+    // Editable ingredient breakdown for compound foods (a matched dish's recipe or
+    // the model's itemization). Empty for simple foods. When present, the breakdown
+    // is the SINGLE SOURCE OF TRUTH for the saved nutrition (Σ components × servings),
+    // and the Advanced Nutrition fields are hidden in favor of it.
+    public private(set) var components: [FoodComponent]
+    /// Whether the breakdown disclosure is expanded (collapsed by default).
+    public var componentsExpanded = false
+    @ObservationIgnored private var userBreakdownEdited = false
+
     public let method: InputMethod
     @ObservationIgnored private let original: ParsedFood
     @ObservationIgnored private let store: any NutritionStoring
@@ -36,22 +45,69 @@ public final class FoodConfirmModel {
         self.fiberText = parsed.fiber.map(FoodConfirmModel.format) ?? ""
         self.sodiumText = parsed.sodium.map(FoodConfirmModel.format) ?? ""
         self.sugarText = parsed.sugar.map(FoodConfirmModel.format) ?? ""
+        self.components = parsed.components ?? []
         self.method = method
         self.store = store
     }
 
     public var quantity: Double { Double(quantityText) ?? 0 }
-    public var fiber: Double? { parseOptional(fiberText) }
-    public var sodium: Double? { parseOptional(sodiumText) }
-    public var sugar: Double? { parseOptional(sugarText) }
+    /// True when this food carries an editable ingredient breakdown.
+    public var hasBreakdown: Bool { !components.isEmpty }
+
+    public var fiber: Double? {
+        hasBreakdown ? components.summed(\.fiber).map { round1($0 * quantityRatio) } : parseOptional(fiberText)
+    }
+    public var sodium: Double? {
+        hasBreakdown ? components.summed(\.sodium).map { ($0 * quantityRatio).rounded() } : parseOptional(sodiumText)
+    }
+    public var sugar: Double? {
+        hasBreakdown ? components.summed(\.sugar).map { round1($0 * quantityRatio) } : parseOptional(sugarText)
+    }
 
     private func parseOptional(_ text: String) -> Double? {
         let t = text.trimmingCharacters(in: .whitespaces)
         return t.isEmpty ? nil : Double(t)
     }
-    /// True once the user has typed/changed any advanced-nutrition value.
+    /// True once the user has typed/changed any advanced-nutrition TEXT value. (Uses
+    /// the raw fields, not the computed nutrition, so a breakdown-derived value never
+    /// looks "edited" on its own.)
     private var advancedEdited: Bool {
-        fiber != original.fiber || sodium != original.sodium || sugar != original.sugar
+        parseOptional(fiberText) != original.fiber
+            || parseOptional(sodiumText) != original.sodium
+            || parseOptional(sugarText) != original.sugar
+    }
+
+    // MARK: - Breakdown editing (flips the source to .userEdited)
+
+    /// Rescale one component to a new gram weight (its macros scale proportionally);
+    /// the top-line nutrition recomputes from the breakdown.
+    public func setComponentGrams(at index: Int, to grams: Double) {
+        guard components.indices.contains(index), grams >= 0 else { return }
+        components[index] = components[index].scaled(toGrams: grams)
+        userBreakdownEdited = true
+    }
+
+    /// Drop a component (e.g. "no mayo"); the total drops by its contribution.
+    public func removeComponent(at index: Int) {
+        guard components.indices.contains(index) else { return }
+        components.remove(at: index)
+        userBreakdownEdited = true
+    }
+
+    /// Append a custom ingredient line.
+    public func addComponent(_ component: FoodComponent) {
+        components.append(component)
+        userBreakdownEdited = true
+    }
+
+    private func componentSum(_ keyPath: KeyPath<FoodComponent, Double>) -> Double {
+        components.reduce(0) { $0 + $1[keyPath: keyPath] }
+    }
+    private func round1(_ v: Double) -> Double { (v * 10).rounded() / 10 }
+    /// How many "servings" the current amount is, relative to the original parse.
+    private var quantityRatio: Double {
+        guard original.quantity > 0 else { return amountInOriginalUnit }
+        return amountInOriginalUnit / original.quantity
     }
 
     /// The current amount expressed in the ORIGINAL parse's unit, so nutrition is
@@ -63,13 +119,15 @@ public final class FoodConfirmModel {
 
     // MARK: - Derived nutrition (scales from the original parse with the quantity)
 
-    /// Calories for the current amount, rounded (web EditEntryDialog rule).
+    /// Calories for the current amount, rounded. From the breakdown (Σ components ×
+    /// servings) when present, else scaled from the original parse (web rule).
     public var kcal: Double {
-        MacroMath.recalculatedCalories(forQuantity: amountInOriginalUnit, originalKcal: original.kcal, originalQuantity: original.quantity)
+        hasBreakdown ? (componentSum(\.kcal) * quantityRatio).rounded()
+                     : MacroMath.recalculatedCalories(forQuantity: amountInOriginalUnit, originalKcal: original.kcal, originalQuantity: original.quantity)
     }
-    public var fat: Double { scaled(original.fat) }
-    public var carbs: Double { scaled(original.carbs) }
-    public var protein: Double { scaled(original.protein) }
+    public var fat: Double { hasBreakdown ? round1(componentSum(\.fat) * quantityRatio) : scaled(original.fat) }
+    public var carbs: Double { hasBreakdown ? round1(componentSum(\.carbs) * quantityRatio) : scaled(original.carbs) }
+    public var protein: Double { hasBreakdown ? round1(componentSum(\.protein) * quantityRatio) : scaled(original.protein) }
 
     private func scaled(_ base: Double) -> Double {
         let amount = amountInOriginalUnit
@@ -85,7 +143,7 @@ public final class FoodConfirmModel {
             kcal: kcal, fat: fat, carbs: carbs, protein: protein,
             method: method, confidence: original.confidence,
             fiber: fiber, sodium: sodium, sugar: sugar,
-            nutritionConfidence: advancedEdited ? .userEdited : original.nutritionConfidence
+            nutritionConfidence: (advancedEdited || userBreakdownEdited) ? .userEdited : original.nutritionConfidence
         )
     }
 

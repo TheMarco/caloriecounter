@@ -56,7 +56,7 @@ public struct FoodComponent: Codable, Sendable, Equatable, Hashable {
 extension Array where Element == FoodComponent {
     /// Sum an optional nutrient across components: nil only when every component is
     /// nil (so "unknown" never silently becomes a fabricated 0).
-    func summed(_ keyPath: KeyPath<FoodComponent, Double?>) -> Double? {
+    public func summed(_ keyPath: KeyPath<FoodComponent, Double?>) -> Double? {
         let known = compactMap { $0[keyPath: keyPath] }
         return known.isEmpty ? nil : known.reduce(0, +)
     }

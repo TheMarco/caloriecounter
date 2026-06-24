@@ -70,14 +70,18 @@ private struct ConfirmForm: View {
                 nutritionRow("Carbs", model.carbs, "g")
                 nutritionRow("Protein", model.protein, "g")
             }
-            Section {
-                advancedRow("Fiber", $model.fiberText, "g")
-                advancedRow("Sodium", $model.sodiumText, "mg")
-                advancedRow("Sugar", $model.sugarText, "g")
-            } header: {
-                Text("Advanced Nutrition").font(.footnote)
-            } footer: {
-                Text("Optional — leave blank if unknown.").font(.caption2)
+            if model.hasBreakdown {
+                breakdownSection
+            } else {
+                Section {
+                    advancedRow("Fiber", $model.fiberText, "g")
+                    advancedRow("Sodium", $model.sodiumText, "mg")
+                    advancedRow("Sugar", $model.sugarText, "g")
+                } header: {
+                    Text("Advanced Nutrition").font(.footnote)
+                } footer: {
+                    Text("Optional — leave blank if unknown.").font(.caption2)
+                }
             }
             if let notes, !notes.isEmpty {
                 Section("Notes") {
@@ -102,6 +106,66 @@ private struct ConfirmForm: View {
                 .disabled(model.food.trimmingCharacters(in: .whitespaces).isEmpty || model.quantity <= 0 || saving)
             }
         }
+    }
+
+    /// A collapsed, editable ingredient breakdown for compound foods. Tap the header
+    /// to expand; tap an amount to adjust or swipe to remove — the totals above follow.
+    @ViewBuilder
+    private var breakdownSection: some View {
+        Section {
+            Button {
+                withAnimation { model.componentsExpanded.toggle() }
+            } label: {
+                HStack {
+                    Text("Breakdown").font(.subheadline)
+                    Spacer()
+                    Text("^[\(model.components.count) item](inflect: true)")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Image(systemName: model.componentsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if model.componentsExpanded {
+                ForEach(model.components.indices, id: \.self) { index in
+                    componentRow(index)
+                }
+                .onDelete { offsets in
+                    for i in offsets.sorted(by: >) { model.removeComponent(at: i) }
+                }
+            }
+        } footer: {
+            if model.componentsExpanded {
+                Text("Tap an amount to adjust, or swipe to remove. The totals above update to match.")
+                    .font(.caption2)
+            }
+        }
+    }
+
+    private func componentRow(_ index: Int) -> some View {
+        HStack {
+            Text(model.components[index].name)
+                .font(.subheadline)
+                .lineLimit(1)
+            Spacer()
+            TextField("g", text: Binding(
+                get: { gramText(model.components[index].grams) },
+                set: { model.setComponentGrams(at: index, to: Double($0) ?? model.components[index].grams) }
+            ))
+            .keyboardType(.decimalPad)
+            .multilineTextAlignment(.trailing)
+            .font(.subheadline)
+            .frame(maxWidth: 56)
+            Text("g").font(.subheadline).foregroundStyle(.secondary)
+            Text("\(Int(model.components[index].kcal.rounded())) kcal")
+                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                .frame(minWidth: 60, alignment: .trailing)
+        }
+    }
+
+    private func gramText(_ grams: Double) -> String {
+        grams == grams.rounded() ? String(Int(grams)) : String(format: "%.1f", grams)
     }
 
     private func nutritionRow(_ label: String, _ value: Double, _ unit: String) -> some View {

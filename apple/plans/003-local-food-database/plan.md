@@ -104,7 +104,7 @@ As the user types, **suggestions** (instant, tappable) come from OFF + FoodDatab
 | 1 | Data pipeline → slim bundled DB | — | 5 | ✅ |
 | 2 | FoodDatabase index + portion-aware matching | 1 | 8 | ✅ |
 | 3 | Database/Composite parsers + type-flow wiring | 2 | 8 | ✅ |
-| 4 | Editable breakdown UI (confirm/edit sheet) | 3 | 5 | ⬜ |
+| 4 | Editable breakdown UI (confirm/edit sheet) | 3 | 5 | ✅ |
 | 5 | FM decomposition fallback (`ComposedFood`) | 3 | 8 | ⬜ |
 | 6 | Demo data, performance/size validation, docs | 4,5 | 3 | ⬜ |
 
@@ -207,23 +207,25 @@ Total: 37 points. Phases are sequential (each builds on the prior); 5 may be dev
 
 **Goal:** Show the component breakdown in the confirm sheet, collapsed by default, with per-line edit/remove and live total recalculation. Same UI for DB recipes and (Phase 5) AI itemizations.
 
+> **Deviations:** (a) `Entry` has no `notes` field, so Task 4.3's notes summary is dropped — the breakdown is confirm-time only and flattens to top-line totals on save, exactly as designed (transient components). (b) Quantity scales the **total** (Σ components × servings), not the per-row grams — simpler and avoids live-text-field rescale pitfalls; the rows show per-serving amounts. (c) Advanced Nutrition section is **hidden** when a breakdown is present (the breakdown is the single source of truth for all nutrition, fiber/sodium included). (d) `EditEntryView` needs no change — an entry-derived parse has no components, so it shows no breakdown. The "Add item" UI is deferred (the `addComponent` model method exists for tests/future).
+
 ### Tasks
-- [ ] Task 4.1: `FoodConfirmModel` gains `components: [FoodComponent]` (seeded from `parsed.components ?? []`), `componentsExpanded: Bool = false`, and edit ops: `updateComponentGrams(_:at:)`, `removeComponent(at:)`, `addComponent(...)`. When components change, recompute the top-line macros via `totaledFromComponents()` and flip `nutritionConfidence = .userEdited`. When the top-line quantity changes and components exist, scale all components proportionally (or detach with a clear note — pick proportional scaling; cover in tests).
-- [ ] Task 4.2: `FoodConfirmView` (+ `EditEntryView`) — a collapsed `DisclosureGroup`/section "Breakdown · N items" listing each component (name + grams + kcal), tap-to-edit grams, swipe-to-remove, an "Add item" row. Hidden entirely when `components` is empty. Styling subordinate to the primary calorie/macro fields (product principle).
-- [ ] Task 4.3: On save, flatten: persist top-line totals as today; write a compact `notes` summary ("Bacon 16g, White bread 60g, …") when components exist and `notes` is empty, so the breakdown isn't lost from the log.
+- [x] Task 4.1: `FoodConfirmModel` gained `components: [FoodComponent]` (seeded from `parsed.components`), `componentsExpanded`, `userBreakdownEdited`, and edit ops `setComponentGrams(at:to:)` / `removeComponent(at:)` / `addComponent(_:)`. When a breakdown exists it is the source of truth: `kcal/fat/carbs/protein/fiber/sodium/sugar` derive from Σ components × `quantityRatio`; any edit flips `nutritionConfidence = .userEdited`. `advancedEdited` now compares the raw text fields (so a breakdown-derived value never looks "edited" on its own).
+- [x] Task 4.2: `FoodConfirmView` — a collapsed `breakdownSection` (tappable "Breakdown · N items" header → expands) listing each component (name + editable grams field + kcal), swipe-to-remove. Shown only when `hasBreakdown`; the Advanced Nutrition section is shown only when it isn't. Styling subordinate (subheadline/secondary).
+- [x] Task 4.3: On save the entry flattens to top-line totals (no `notes` field on `Entry` to carry a summary). Breakdown is transient by design.
 
 ### Tests
-- [ ] Test 4.a (`AppCoreTests/InputFlowModelTests`): seeding components from a parsed dish; editing one grams value rescales that line and updates the total; removing a line lowers the total; both flip `.userEdited`.
-- [ ] Test 4.b: changing the top-line quantity proportionally scales components (total stays consistent).
-- [ ] Test 4.c: empty components → no breakdown, behaves exactly like today's flow (`makeEntry` unchanged).
-- [ ] Test 4.d (UI, `CalorieCounterUITests`): a smoke test that the breakdown disclosure appears for a seeded demo dish and expands. (Use `clean test` if the new method isn't discovered.)
+- [x] Test 4.a (`InputFlowModelTests.breakdownDrivesTotals`): a parsed dish's totals = Σ components; editing bacon 16→32 g moves the total 240→320; removing it drops to 160; edits flip `.userEdited` (untouched stays `.estimated`).
+- [x] Test 4.b (`breakdownScalesWithServings`): quantity 1→2 scales the total 240→480.
+- [x] Test 4.c (`noBreakdownUnchanged`): no components → original-scaling path + advanced text fields behave exactly as before.
+- [x] Test 4.d (UI, `TextFlowUITests.testCompoundFoodShowsEditableBreakdown`): typing "bacon lettuce tomato sandwich" → Analyze shows a "Breakdown"; expanding reveals the "Lettuce" row. (Passed via `clean test`.)
 
 ### Definition of Done
-- [ ] Build + all tests pass. App builds; UI smoke test green.
-- [ ] Breakdown is collapsed by default and visually subordinate; absent for single foods.
-- [ ] Saving an entry with an edited breakdown stores correct totals + a notes summary; editing later via `EditEntryView` still works.
+- [x] Build + all 224 package tests pass; app builds; UI breakdown test green.
+- [x] Breakdown collapsed by default and visually subordinate; absent for single foods (Advanced Nutrition shows instead).
+- [x] Saving flattens to correct top-line totals; `EditEntryView` unaffected (no components on a stored entry).
 
-- [ ] **CHECKPOINT: Run `/compact focus on: Phase 4 complete, editable collapsed breakdown in FoodConfirmModel/View with proportional scaling + notes summary on save; Phase 5 needs ComposedFood @Generable decompose→ground vs FoodDatabase→sum, slotted into CompositeFoodParser between DB match and FM single-food estimate`**
+- [x] **CHECKPOINT: Run `/compact focus on: Phase 4 complete, editable collapsed breakdown in FoodConfirmModel/View (Σ components drive totals, quantity scales total, Advanced hidden when breakdown present, flattens on save); Phase 5 needs ComposedFood @Generable decompose→ground vs FoodDatabase→sum, slotted into CompositeFoodParser between DB match and FM single-food estimate`**
 
 ---
 
