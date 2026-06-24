@@ -11,26 +11,24 @@ import NutritionCore
 
 struct FoodConfirmView: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.dismiss) private var dismiss
     let parsed: ParsedFood
     let method: InputMethod
     let onSaved: () -> Void
 
     @State private var model: FoodConfirmModel?
-    @State private var searchText = ""
-    @State private var reanalyzing = false
-    @State private var currentNotes: String?
-    @State private var reanalyzeError: String?
 
-    /// Typed/spoken entries can be re-analyzed in place; a scan can't be re-typed.
+    /// Typed/spoken entries show a "change your search" shortcut that goes BACK to the
+    /// search form (with its live suggestions, recent foods, and Analyze). A scan has
+    /// no search form to return to.
     private var canResearch: Bool { method == .text || method == .voice }
 
     var body: some View {
         Group {
             if let model {
-                ConfirmForm(model: model, notes: currentNotes, onSaved: onSaved,
-                            searchTerm: canResearch ? $searchText : nil,
-                            reanalyzing: reanalyzing,
-                            onReanalyze: reanalyze)
+                ConfirmForm(model: model, notes: parsed.notes, onSaved: onSaved,
+                            searchTerm: canResearch ? parsed.food : nil,
+                            onEditSearch: { dismiss() })   // pop back to the search form
             } else {
                 ProgressView()
             }
@@ -38,32 +36,6 @@ struct FoodConfirmView: View {
         .task {
             if model == nil {
                 model = FoodConfirmModel(parsed: parsed, method: method, store: container.store)
-                searchText = parsed.food
-                currentNotes = parsed.notes
-            }
-        }
-        .alert("Couldn’t analyze", isPresented: .constant(reanalyzeError != nil)) {
-            Button("OK") { reanalyzeError = nil }
-        } message: {
-            Text(reanalyzeError ?? "")
-        }
-    }
-
-    /// Re-run the parser on an edited search term and replace the result in place,
-    /// so you don't have to go back to the search screen.
-    private func reanalyze() {
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty, !reanalyzing else { return }
-        reanalyzing = true
-        Task {
-            defer { reanalyzing = false }
-            do {
-                let result = try await container.foodParser.parse(text: q, units: container.settings.units)
-                model = FoodConfirmModel(parsed: result, method: method, store: container.store)
-                currentNotes = result.notes
-            } catch {
-                // Don't fail silently — that's why editing the term "did nothing".
-                reanalyzeError = "We couldn’t analyze “\(q)”. Try rephrasing the food."
             }
         }
     }
@@ -74,9 +46,10 @@ private struct ConfirmForm: View {
     @Bindable var model: FoodConfirmModel
     let notes: String?
     let onSaved: () -> Void
-    var searchTerm: Binding<String>? = nil
-    var reanalyzing: Bool = false
-    var onReanalyze: () -> Void = {}
+    /// The original search term; when non-nil, a tappable shortcut back to the search
+    /// form is shown. `onEditSearch` performs the navigation.
+    var searchTerm: String? = nil
+    var onEditSearch: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
     @State private var saving = false
@@ -85,25 +58,19 @@ private struct ConfirmForm: View {
         Form {
             if let searchTerm {
                 Section {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                        TextField("Edit search…", text: searchTerm)
-                            .submitLabel(.search)
-                            .onSubmit(onReanalyze)
-                        if reanalyzing {
-                            ProgressView()
-                        } else {
-                            // An explicit tap target — the keyboard's Search key works,
-                            // but most people dismiss with the green-check toolbar, which
-                            // doesn't submit. This always re-runs the parser.
-                            Button("Re-analyze", action: onReanalyze)
-                                .font(.subheadline.weight(.semibold))
-                                .buttonStyle(.borderless)
-                                .disabled(searchTerm.wrappedValue.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button(action: onEditSearch) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                            Text(searchTerm).foregroundStyle(.primary).lineLimit(1)
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary)
                         }
+                        .contentShape(.rect)
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("EditSearch")
                 } footer: {
-                    Text("Edit what you typed, then tap Re-analyze.")
+                    Text("Not what you meant? Tap to change your search.")
                 }
             }
             Section("Food") {

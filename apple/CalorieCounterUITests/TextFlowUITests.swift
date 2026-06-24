@@ -66,7 +66,7 @@ final class TextFlowUITests: XCTestCase {
     }
 
     @MainActor
-    func testReanalyzingFromConfirmReprocessesTheFood() {
+    func testEditingSearchFromConfirmReturnsToSearchForm() {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest"]
         app.launch()
@@ -78,26 +78,15 @@ final class TextFlowUITests: XCTestCase {
         field.typeText("apple")
         app.buttons["Analyze"].tap()
 
-        // The confirm sheet has an editable search field, pre-filled with "apple".
-        let search = app.textFields["Edit search…"]
-        XCTAssertTrue(search.waitForExistence(timeout: 5), "The editable search field should appear")
+        // On the confirm sheet, tapping the search shortcut goes BACK to the search form
+        // (rather than re-analyzing in place), so suggestions/Analyze are available again.
+        let editSearch = app.buttons["EditSearch"]
+        XCTAssertTrue(editSearch.waitForExistence(timeout: 5), "Confirm should show a tappable search shortcut")
+        editSearch.tap()
 
-        // Replace it with a composite dish and re-analyze in place (via the button —
-        // dismissing the keyboard with the green check must NOT be required).
-        search.tap()
-        let existing = (search.value as? String) ?? ""
-        search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
-        search.typeText("bacon lettuce tomato sandwich")
-        app.buttons["Re-analyze"].tap()
-
-        // Re-processing replaced the result: the BLT's breakdown (with Lettuce) appears,
-        // which "apple" never has — proof the edited term was actually reprocessed.
-        let breakdown = app.staticTexts["Breakdown"]
-        XCTAssertTrue(breakdown.waitForExistence(timeout: 6),
-                      "Re-analyze should reprocess the edited term into the new food")
-        breakdown.tap()
-        app.swipeUp()
-        XCTAssertTrue(app.staticTexts["Lettuce"].waitForExistence(timeout: 3),
-                      "The reprocessed BLT should reveal its ingredient rows")
+        XCTAssertTrue(app.buttons["Analyze"].waitForExistence(timeout: 5),
+                      "Tapping the search shortcut should return to the search form")
+        // …with the typed query preserved so it can be edited.
+        XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3))
     }
 }
