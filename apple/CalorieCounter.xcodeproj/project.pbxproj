@@ -18,11 +18,13 @@
 		3CAFC351BE6D1FDD1FE8D3DF /* CalorieOffsetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802482394DF8F98400A488D /* CalorieOffsetView.swift */; };
 		4306649DECE14DECF673344A /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA79A0510AA6F1BE192D2CD /* TodayView.swift */; };
 		4A86D49DDE36C82806BA2727 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637C47D228C9D45E809A840B /* SettingsView.swift */; };
+		4ABE8178062C62F7527F38F9 /* AppleHealthSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7895DEB8085C5E8D0717534C /* AppleHealthSettings.swift */; };
 		4E7E099335EC69BB628C05B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A98C554F7A317C8F684DFC1A /* Assets.xcassets */; };
 		53A06130F5CBAD9F8ADA10DD /* VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */; };
 		596CFE8080187FA3ABCD69D7 /* LabelCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C482D1FCE43D1EA26C9AC8 /* LabelCaptureView.swift */; };
 		5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E9485996765BF65226D3DA /* RootView.swift */; };
 		5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */; };
+		87C0F7CD667BADEC1257684F /* WeightConflictSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 141F83104F5F734B31527E9E /* WeightConflictSheet.swift */; };
 		88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9712F7B63B8E377089201042 /* NutritionChart.swift */; };
 		935CD8303DD3B941E9411CD5 /* FoodConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5EE82E36D5B3AF1C6410A1 /* FoodConfirmView.swift */; };
 		995199EE02AB7604CA1A9C3A /* EditEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */; };
@@ -60,6 +62,7 @@
 		11C5697DE6B2C053E73E22A8 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		11E9485996765BF65226D3DA /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieCounterApp.swift; sourceTree = "<group>"; };
+		141F83104F5F734B31527E9E /* WeightConflictSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightConflictSheet.swift; sourceTree = "<group>"; };
 		2C21FB4F72C0E5857473CCE1 /* LogWeightSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWeightSheet.swift; sourceTree = "<group>"; };
 		2D40788EDBEB586B5F670A2F /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
 		31FEF4F62F3154FF83305493 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
@@ -73,6 +76,7 @@
 		6D408ED847960B3129EF3A94 /* SetupWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizardView.swift; sourceTree = "<group>"; };
 		7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
 		7802482394DF8F98400A488D /* CalorieOffsetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieOffsetView.swift; sourceTree = "<group>"; };
+		7895DEB8085C5E8D0717534C /* AppleHealthSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleHealthSettings.swift; sourceTree = "<group>"; };
 		7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		90AF669C8138357F7FAFF8B2 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		9712F7B63B8E377089201042 /* NutritionChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionChart.swift; sourceTree = "<group>"; };
@@ -116,7 +120,9 @@
 			isa = PBXGroup;
 			children = (
 				669EEFDFC8D9324904A67FC0 /* AboutView.swift */,
+				7895DEB8085C5E8D0717534C /* AppleHealthSettings.swift */,
 				637C47D228C9D45E809A840B /* SettingsView.swift */,
+				141F83104F5F734B31527E9E /* WeightConflictSheet.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -348,6 +354,7 @@
 			files = (
 				C0CDDE4C105133F6DEC3FFBF /* AboutView.swift in Sources */,
 				1805A24C296B4827BF45360D /* AppLockView.swift in Sources */,
+				4ABE8178062C62F7527F38F9 /* AppleHealthSettings.swift in Sources */,
 				5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */,
 				E2AC3CEB3E726EAC21EED75B /* CalendarView.swift in Sources */,
 				F163CA28FC6C67E84FA480E6 /* CalorieCounterApp.swift in Sources */,
@@ -373,6 +380,7 @@
 				4306649DECE14DECF673344A /* TodayView.swift in Sources */,
 				A12A420D891564464675F02D /* VoiceInputView.swift in Sources */,
 				245493F5A9608E5A61CF0A6E /* WeightChart.swift in Sources */,
+				87C0F7CD667BADEC1257684F /* WeightConflictSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
