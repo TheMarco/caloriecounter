@@ -2,7 +2,9 @@
 //  PhotoCaptureView.swift
 //  Snap or pick a photo of a meal and send it to OpenAI (via the /api/parse-photo
 //  proxy) for a calorie + macro estimate. Replaces the on-device nutrition-label
-//  OCR — a quick "what's roughly in this?" is more useful than scanning panels.
+//  OCR. The image is center-cropped to a 1024×1024 square before upload so only the
+//  food goes up (the camera also offers a square crop), and the proxy sends it to
+//  the vision model at detail:"high".
 //
 
 import SwiftUI
@@ -36,7 +38,7 @@ struct PhotoCaptureView: View {
             } header: {
                 Text("Food Photo")
             } footer: {
-                Text("Snap your plate and we’ll estimate the calories and macros. You can adjust the amount on the next screen.")
+                Text("Frame just your food in the square. We’ll estimate the calories and macros — you can adjust the amount on the next screen.")
             }
 
             if let image {
@@ -55,12 +57,12 @@ struct PhotoCaptureView: View {
         .navigationTitle("Photo")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pickerItem) { _, item in
-            Task { await loadAndAnalyze(item) }
+            Task { await loadFromLibrary(item) }
         }
         .sheet(isPresented: $showCamera) {
-            ImagePicker(sourceType: .camera) { uiImage in
-                image = uiImage
-                Task { await analyze(uiImage.jpegData(compressionQuality: 0.85)) }
+            // allowsEditing gives a square crop after capture, so only the food is sent.
+            ImagePicker(sourceType: .camera, allowsEditing: true) { ui in
+                Task { await analyze(ui) }
             }
             .ignoresSafeArea()
         }
@@ -71,38 +73,58 @@ struct PhotoCaptureView: View {
         }
     }
 
-    private func loadAndAnalyze(_ item: PhotosPickerItem?) async {
+    private func loadFromLibrary(_ item: PhotosPickerItem?) async {
         guard let item else { return }
         guard let data = try? await item.loadTransferable(type: Data.self), let ui = UIImage(data: data) else {
             errorMessage = "We couldn’t load that image."
             return
         }
-        image = ui
-        await analyze(data)
+        await analyze(ui)
     }
 
-    private func analyze(_ data: Data?) async {
-        guard let data, !processing else { return }
+    /// Center-crop to a 1024×1024 square (keeps the relevant middle, bounds the
+    /// upload), preview it, and send it to the vision model for an estimate.
+    private func analyze(_ ui: UIImage) async {
+        guard !processing else { return }
+        let square = ui.squareCropped(side: 1024)
+        image = square
+        guard let data = square.jpegData(compressionQuality: 0.85) else { return }
         processing = true
         defer { processing = false }
         do {
             onParsed(try await container.photoParser.parse(
                 imageData: data, units: container.settings.units, details: .default))
         } catch {
-            errorMessage = "We couldn’t estimate that photo. Try a clearer shot of the whole plate."
+            errorMessage = "We couldn’t estimate that photo. Try a clearer shot of just the food."
         }
     }
 }
 
-/// Minimal UIKit camera/library bridge (used by the photo capture flow).
+extension UIImage {
+    /// A center-cropped `side`×`side` square (aspect-fill), at 1× scale so the output
+    /// is exactly `side` pixels. Respects image orientation.
+    func squareCropped(side: CGFloat) -> UIImage {
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: side, height: side), format: format).image { _ in
+            let scale = side / min(size.width, size.height)
+            let w = size.width * scale, h = size.height * scale
+            draw(in: CGRect(x: (side - w) / 2, y: (side - h) / 2, width: w, height: h))
+        }
+    }
+}
+
+/// Minimal UIKit camera/library bridge, with optional square-crop editing.
 struct ImagePicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType
+    var allowsEditing: Bool = false
     let onImage: (UIImage) -> Void
     @Environment(\.dismiss) private var dismiss
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.sourceType = sourceType
+        picker.allowsEditing = allowsEditing
         picker.delegate = context.coordinator
         return picker
     }
@@ -116,7 +138,8 @@ struct ImagePicker: UIViewControllerRepresentable {
             self.onImage = onImage; self.dismiss = dismiss
         }
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage { onImage(image) }
+            let img = (info[.editedImage] as? UIImage) ?? (info[.originalImage] as? UIImage)
+            if let img { onImage(img) }
             dismiss()
         }
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { dismiss() }
