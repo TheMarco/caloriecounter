@@ -14,7 +14,8 @@ struct DatabaseFoodParserTests {
             DBFood(name: "Bacon, lettuce, tomato sandwich on white", kind: .dish,
                    kcal: 231, protein: 10.9, fat: 7.5, carbs: 29.7, sodium: 521,
                    portions: [DBPortion(label: "1 sandwich", grams: 105)],
-                   recipe: [DBIngredient(name: "Bread, white", grams: 60)]),
+                   recipe: [DBIngredient(name: "Bread, white", grams: 60),
+                            DBIngredient(name: "Bacon", grams: 16)]),
             DBFood(name: "Bread, white", kind: .food, kcal: 270, protein: 9, fat: 3.6, carbs: 49),
         ])
     }

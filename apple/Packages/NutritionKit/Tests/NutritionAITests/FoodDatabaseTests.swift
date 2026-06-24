@@ -181,4 +181,30 @@ struct FoodDatabaseTests {
             if let maxKcal { #expect(f.kcal <= maxKcal, "‘\(q)’ → ‘\(f.name)’ \(Int(f.kcal)) kcal/100g exceeds \(Int(maxKcal))") }
         }
     }
+
+    /// A single prepared food must NOT surface its raw FNDDS recipe as a breakdown:
+    /// "cinnamon toast" was decomposing into flour + oil + sugar + "Iron as
+    /// ingredient", and "english cucumber" into cucumber + oil + salt. Only genuine
+    /// multi-food dishes (BLT) keep a breakdown.
+    @Test("simple foods don't show a raw-ingredient breakdown; real dishes still do")
+    func noBreakdownForSingleFoods() {
+        let db = FoodDatabase.shared
+        #expect(db.resolve("cinnamon toast", units: .metric)?.components?.isEmpty ?? true,
+                "‘cinnamon toast’ shouldn't show a flour/enrichment breakdown")
+        #expect(db.resolve("english cucumber", units: .metric)?.components?.isEmpty ?? true,
+                "‘english cucumber’ shouldn't show an oil/salt breakdown")
+        // …but a genuine composite dish still decomposes.
+        #expect(db.resolve("bacon lettuce tomato sandwich", units: .metric)?.components?.isEmpty == false)
+    }
+
+    @Test("base staples and enrichment lines are classified as non-food ingredients")
+    func baseOrEnrichmentClassifier() {
+        for n in ["Flour", "Oil", "Sugars", "Salt", "Vegetable oil", "Table fat",
+                  "Iron as ingredient", "Vitamin B composite", "Folic acid as ingredient", "Fiber"] {
+            #expect(FoodDatabase.isBaseOrEnrichment(n), "‘\(n)’ should be base/enrichment")
+        }
+        for n in ["Bacon", "Lettuce", "Tomato", "Cucumber", "Peanut butter", "Cheese"] {
+            #expect(!FoodDatabase.isBaseOrEnrichment(n), "‘\(n)’ is a real food")
+        }
+    }
 }

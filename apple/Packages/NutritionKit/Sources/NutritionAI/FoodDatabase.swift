@@ -236,7 +236,7 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         let grams = portion?.grams ?? 100
         let s = food.scaled(toGrams: grams)
 
-        let components: [FoodComponent]? = food.recipe.isEmpty ? nil : food.recipe.map { ing in
+        let rawComponents: [FoodComponent] = food.recipe.map { ing in
             // Ground each ingredient via the O(1) exact-name index; else grams-only.
             if let match = byName[ing.name.lowercased()] {
                 let m = match.scaled(toGrams: ing.grams)
@@ -247,6 +247,14 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
             }
             return FoodComponent(name: Self.cleanIngredientName(ing.name), grams: ing.grams, kcal: 0)
         }
+        // Only show an editable breakdown for a GENUINE multi-food dish (BLT →
+        // bacon/bread/tomato/lettuce). A single prepared food's FNDDS recipe is just
+        // base ingredients + enrichment (flour, oil, sugar, "Iron as ingredient"…) —
+        // useless and alarming as a breakdown ("cinnamon toast" / "english cucumber"),
+        // so suppress it and let the food's own macros stand. Needs ≥2 components that
+        // are actual foods, not staples/enrichment.
+        let realFoodCount = rawComponents.filter { !Self.isBaseOrEnrichment($0.name) }.count
+        let components: [FoodComponent]? = realFoodCount >= 2 ? rawComponents : nil
 
         let note: String? = portion.map { "Per serving: \($0.label) (\(Int($0.grams.rounded())) g)" }
         return ParsedFood(
@@ -271,6 +279,29 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         let head = name.split(separator: ",").first.map(String.init) ?? name
         return head.trimmingCharacters(in: .whitespaces)
     }
+
+    /// Whether a recipe ingredient is a base staple or an FNDDS enrichment line
+    /// rather than a distinct food — i.e. noise that shouldn't drive a breakdown.
+    /// Catches "Flour"/"Oil"/"Sugar", "Vegetable oil"/"Table fat", "Vitamin …",
+    /// and the "… as ingredient" enrichment markers ("Iron as ingredient").
+    static func isBaseOrEnrichment(_ cleanedName: String) -> Bool {
+        let lower = cleanedName.lowercased()
+        if lower.contains("as ingredient") { return true }
+        let words = lower.split(separator: " ").map(String.init)
+        if let last = words.last, last == "oil" || last == "fat" { return true }   // "Vegetable oil", "Table fat"
+        if let first = words.first, enrichmentFirstWords.contains(first) { return true }  // "Vitamin …", "Niacin"
+        let singular = lower.hasSuffix("s") ? String(lower.dropLast()) : lower      // "Sugars" → "sugar"
+        return baseIngredientNames.contains(singular)
+    }
+
+    private static let enrichmentFirstWords: Set<String> = [
+        "vitamin", "niacin", "riboflavin", "thiamin", "thiamine", "folate", "folic",
+    ]
+    private static let baseIngredientNames: Set<String> = [
+        "flour", "sugar", "oil", "salt", "water", "yeast", "shortening", "starch",
+        "cornstarch", "leavening", "butter", "margarine", "lard", "syrup",
+        "iron", "calcium", "zinc", "fiber", "fibre",
+    ]
 
     /// Lowercase, split on non-alphanumerics, drop 1-char tokens, light plural stem.
     static func tokenize(_ text: String) -> [String] {
@@ -314,6 +345,7 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         "candy cane": "candies hard",            // → "Candies, hard" (not Sugar cane beverage)
         "cheese curd": "cheddar",                // → "Cheese, Cheddar" (not cottage dry curd)
         "laughing cow": "cheese spread",         // → a cheese spread (not "Beef, cow head")
+        "english cucumber": "cucumber raw",      // → raw cucumber (not "Cucumber, cooked")
     ]
 
     /// Symmetric light stemmer (applied to both query and food tokens).
