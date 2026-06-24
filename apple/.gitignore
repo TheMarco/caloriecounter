@@ -26,3 +26,5 @@ scripts/__pycache__/
 USDA.json
 FNDDS.json
 legacyfoods.json
+scripts/sweep-queries.txt
+scripts/sweep-results.tsv
