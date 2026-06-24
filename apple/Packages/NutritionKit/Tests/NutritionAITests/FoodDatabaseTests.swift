@@ -128,4 +128,39 @@ struct FoodDatabaseTests {
         #expect(name("cheese").hasPrefix("cheese") && !name("cheese").contains("spread"))
         #expect(name("chicken").contains("chicken") && !name("chicken").contains("spread") && !name("chicken").contains("feet"))
     }
+
+    /// Regression guard for the "coffee → 810 kcal" class found in the deep sweep:
+    /// a bare food/drink must resolve to ITSELF, not an accompaniment or a dish that
+    /// merely starts with the word. (Pins behavior against the shipped FoodDB.json.)
+    @Test("real-world queries don't resolve to the wrong food")
+    func noWrongFoodMatches() {
+        func food(_ q: String) -> DBFood {
+            FoodDatabase.shared.bestConfidentMatch(q) ?? DBFood(name: "NONE", kcal: -1, protein: 0, fat: 0, carbs: 0)
+        }
+        // (query, must-contain stem, banned substrings, max kcal/100g or nil)
+        let cases: [(String, String, [String], Double?)] = [
+            ("coffee", "coffee", ["creamer", "cake", "liqueur", "beans"], 20),
+            ("black coffee", "coffee", ["bean", "russian", "dip"], 20),
+            ("tea", "tea", ["cake"], 30),
+            ("water", "water", [], 5),
+            ("milk", "milk", ["shake", "chocolate"], 80),
+            ("almond milk", "almond milk", ["chocolate"], 60),
+            ("grapes", "grape", ["leave", "leaf", "juice"], 90),
+            ("strawberries", "strawberr", ["milk"], 70),
+            ("honey", "honey", ["sausage", "roll"], nil),
+            ("tuna", "tuna", ["sandwich", "salad", "wrap"], nil),
+            ("apple", "apple", ["pie", "juice", "dried", "sauce"], 90),
+            ("banana", "banana", ["bread", "chip"], 120),
+            ("egg", "egg", ["white sandwich", "substitute"], nil),
+            ("orange juice", "orange juice", [], 70),
+            ("sweet potato", "sweet potato", ["tot", "chip", "fries"], 130),
+        ]
+        for (q, must, banned, maxKcal) in cases {
+            let f = food(q)
+            let n = f.name.lowercased()
+            #expect(n.contains(must), "‘\(q)’ → ‘\(f.name)’ should contain ‘\(must)’")
+            for b in banned { #expect(!n.contains(b), "‘\(q)’ → ‘\(f.name)’ shouldn't be a ‘\(b)’") }
+            if let maxKcal { #expect(f.kcal <= maxKcal, "‘\(q)’ → ‘\(f.name)’ \(Int(f.kcal)) kcal/100g exceeds \(Int(maxKcal))") }
+        }
+    }
 }

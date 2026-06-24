@@ -131,9 +131,14 @@ public enum Prompts {
         - cooking fats and condiments that materially add calories (oil, butter, mayo, \
         dressing, ketchup). Skip water and trivial spices.
 
-        A single whole food is just one ingredient (e.g. "an apple" -> apple 180g).
+        A single food or drink is ONE ingredient, named as it's consumed — never broken
+        into raw materials or cooking water. "coffee" is coffee (one item), NOT coffee \
+        beans + water; "an apple" is apple 180g; "orange juice" is orange juice, not \
+        oranges + water. Only break apart foods a person actually ASSEMBLES from parts \
+        (sandwiches, bowls, plates, mixed dishes).
 
         Examples:
+        - "coffee" -> coffee 240g.
         - "chili cheese dog" -> hot dog bun 45g, beef hot dog 50g, chili con carne 60g, \
         cheddar cheese 20g.
         - "a BLT made with white bread" -> white bread 60g, bacon 24g, tomato 30g, \

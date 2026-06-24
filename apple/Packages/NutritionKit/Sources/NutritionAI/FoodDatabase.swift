@@ -118,11 +118,15 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
 
     /// Best matches for a free-text query, strongest first (≤ `limit`, above a floor).
     public func match(_ query: String, limit: Int = 5) -> [DBMatch] {
-        let q = Self.expandAliases(Self.tokenize(query)).filter { !Self.fillerWords.contains($0) }
+        let rawTokens = Self.expandAliases(Self.tokenize(query))
+        let q = rawTokens.filter { !Self.fillerWords.contains($0) }
         guard !q.isEmpty else { return [] }
         let qSet = Set(q)
         let joinedQuery = q.joined(separator: " ")
         let multiWord = qSet.count >= 2
+        // The head noun: "X with Y and Z" → X (first); plain "A B C" → C (last).
+        let hasConnector = rawTokens.contains { Self.connectors.contains($0) }
+        let head = hasConnector ? q.first : q.last
 
         // Total query weight (denominator), weighting each word by its specificity.
         let totalWeight = qSet.reduce(0.0) { $0 + (idf[$1] ?? maxIdf) }
@@ -139,14 +143,22 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
             let matchedWeight = overlap.reduce(0.0) { $0 + (idf[$1] ?? maxIdf) }
             var score = totalWeight > 0 ? matchedWeight / totalWeight : 0
             if qSet.contains(entry.primary) { score += 0.6 }                 // primary-word hit
+            // Head-noun hit: the food the user actually means (see `head`) — weighted
+            // like the primary, so it beats a food that only matched a modifier.
+            if let head, entry.tokens.contains(head) { score += 0.6 }
             score += 0.2 * Double(overlap.count) / Double(entry.tokens.count) // prefer concise names
             if entry.joined.contains(joinedQuery) { score += 0.4 }           // whole-phrase containment
             // USDA's "not further specified" generic form ("Milk, NFS") — the canonical
             // as-eaten entry. Only a BRIEF name counts (so "Milk, NFS" qualifies but the
             // composite "Egg foo yung, NFS" doesn't); a small boost so it wins ties
             // without overriding a match that covers MORE of the query.
+            // Generic-form boost ("Milk, NFS"), single-word queries only, and ONLY when
+            // the row's real words are all in the query — so "Milk, NFS" boosts for
+            // "milk" but "Strawberry milk, NFS"/"Coffee creamer, NFS" don't for
+            // "strawberries"/"coffee" (they carry an extra food noun the user didn't ask).
             let hasNFS = entry.tokens.contains("nfs") || entry.tokens.contains("ns")
-            let isGenericNFS = hasNFS && entry.tokens.count <= qSet.count + 2
+            let isGenericNFS = !multiWord && hasNFS
+                && entry.tokens.subtracting(Self.genericMarkers).isSubset(of: qSet)
             if isGenericNFS { score += 0.2 }
             // Dish-vs-ingredient bias: a dish that genuinely covers ≥2 of the query's
             // words is likely what a multi-word description means; a single-word query
@@ -291,9 +303,28 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         "chip", "sulfured", "imitation", "infant", "instant", "candied", "pickled",
         "freeze", "frozen", "flavored", "mix", "baby", "drink", "meatless", "nugget",
         "breaded", "bran", "crude", "soup", "sheep", "goat", "buffalo", "puff", "stick",
-        "flour", "feet", "leaves", "leaf", "bar",
+        "flour", "feet", "leave", "leaf", "bar",
+        // Identity-changing accompaniments/forms — a "coffee creamer", "grape leaves",
+        // "honey sausage", "tuna salad", "fish broth", "sweet potato tots" aren't the
+        // base food. (Penalized only when the user DIDN'T type them; stemmed forms.)
+        "creamer", "liqueur", "cake", "syrup", "sauce", "sausage", "broth", "tot",
+        "wrap", "salad", "dip",
+        // Flavor/variant qualifiers — a bare "egg"/"almond milk" should prefer the
+        // plain form over "egg white"/"almond milk, chocolate". (Only when not typed.)
+        "white", "chocolate",
         // Exclusion variants ("…, no bun", "…, no salt") — not the standard form.
         "no",
+    ]
+
+    /// Words that signal an "X with Y and Z" structure, where the head noun is the
+    /// FIRST food word, not the last (so "hotdog with chili and cheese" → hotdog).
+    static let connectors: Set<String> = ["with", "and", "plus", "topped", "made", "over", "of", "in", "on"]
+
+    /// Generic state/marker words that don't change a food's identity — allowed in an
+    /// "X, …, NFS" row when deciding whether it's the plain generic form of the query.
+    static let genericMarkers: Set<String> = [
+        "nfs", "ns", "as", "to", "type", "cooked", "raw", "brewed", "prepared",
+        "reconstituted", "fresh", "or",
     ]
 
     /// Portion/grammar words — never the food itself.
