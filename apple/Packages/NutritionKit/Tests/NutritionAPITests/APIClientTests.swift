@@ -99,6 +99,54 @@ struct APIClientTests {
         #expect(await tokens.rejections == 1)
     }
 
+    // MARK: - cloud food parse flow (/api/parse-food)
+
+    @Test("parseFood posts {text, units} and maps nutrition + the ingredient breakdown")
+    func cloudFoodParseSuccess() async throws {
+        StubURLProtocol.stub { _ in
+            .json(200, #"{"success":true,"data":{"food":"chili cheese dog","quantity":1,"unit":"piece","kcal":550,"fat":32,"carbs":40,"protein":22,"fiber":3,"sodium":1200,"sugar":6,"notes":"with cheese","components":[{"name":"hot dog bun","grams":45,"kcal":120,"fat":2,"carbs":22,"protein":4},{"name":"beef frank","grams":50,"kcal":150,"fat":13,"carbs":2,"protein":6},{"name":"chili","grams":60,"kcal":110,"fat":6,"carbs":8,"protein":7},{"name":"cheese","grams":20,"kcal":80,"fat":7,"carbs":1,"protein":5}]}}"#)
+        }
+        let parser = CloudFoodParser(client: makeClient(tokens: RecordingTokenStore("tok-1")))
+        let food = try await parser.parse(text: "chili cheese dog", units: .metric)
+
+        #expect(food.food == "chili cheese dog")
+        #expect(food.kcal == 550)
+        #expect(food.fiber == 3)
+        #expect(food.sodium == 1200)
+        #expect(food.sugar == 6)
+        #expect(food.components?.count == 4)
+        #expect(food.components?.first?.name == "hot dog bun")
+        #expect(food.nutritionConfidence == .estimated)
+
+        let cap = try #require(StubURLProtocol.captured())
+        #expect(cap.method == "POST")
+        #expect(cap.url?.path == "/api/parse-food")
+        #expect(cap.header("Cookie") == "calorie-auth=tok-1")
+        #expect(cap.bodyJSON?["text"] as? String == "chili cheese dog")
+        #expect(cap.bodyJSON?["units"] as? String == "metric")
+    }
+
+    @Test("a single food returns no breakdown but keeps fiber/sodium/sugar from the total")
+    func cloudFoodNoComponents() async throws {
+        StubURLProtocol.stub { _ in
+            .json(200, #"{"success":true,"data":{"food":"apple","quantity":1,"unit":"piece","kcal":95,"fat":0.3,"carbs":25,"protein":0.5,"fiber":4,"sodium":2,"sugar":19,"components":[]}}"#)
+        }
+        let parser = CloudFoodParser(client: makeClient(tokens: RecordingTokenStore("t")))
+        let food = try await parser.parse(text: "an apple", units: .metric)
+        #expect(food.components == nil)
+        #expect(food.fiber == 4)
+        #expect(food.sugar == 19)
+    }
+
+    @Test("an unsuccessful parse throws — online-only, no silent fallback")
+    func cloudFoodFailureThrows() async throws {
+        StubURLProtocol.stub { _ in .json(200, #"{"success":false,"error":"Invalid food description"}"#) }
+        let parser = CloudFoodParser(client: makeClient(tokens: RecordingTokenStore("t")))
+        await #expect(throws: (any Error).self) {
+            _ = try await parser.parse(text: "qz", units: .metric)
+        }
+    }
+
     // MARK: - plate photo parse flow
 
     @Test("parse encodes a data-URL image + units + details and maps the response to ParsedFood")
@@ -113,7 +161,8 @@ struct APIClientTests {
         let food = try await parser.parse(imageData: Data([0xFF, 0xD8, 0xFF]), units: .imperial, details: details)
 
         #expect(food == ParsedFood(food: "Pasta with sauce", quantity: 1, unit: "plate",
-                                   kcal: 700, fat: 20, carbs: 90, protein: 25, notes: "large plate"))
+                                   kcal: 700, fat: 20, carbs: 90, protein: 25, notes: "large plate",
+                                   nutritionConfidence: .estimated))
 
         // Wire body: imageData is a base64 data URL; units + web-faithful detail raw values.
         let cap = try #require(StubURLProtocol.captured())
@@ -131,7 +180,8 @@ struct APIClientTests {
         StubURLProtocol.stub { _ in .json(200, #"{"success":true,"data":{"food":"Apple","quantity":1,"unit":"piece","kcal":95}}"#) }
         let parser = APIPhotoParser(client: makeClient(tokens: RecordingTokenStore("tok")))
         let food = try await parser.parse(imageData: Data([0xFF]), units: .metric, details: .default)
-        #expect(food == ParsedFood(food: "Apple", quantity: 1, unit: "piece", kcal: 95, fat: 0, carbs: 0, protein: 0))
+        #expect(food == ParsedFood(food: "Apple", quantity: 1, unit: "piece", kcal: 95, fat: 0, carbs: 0, protein: 0,
+                                   nutritionConfidence: .estimated))
     }
 
     @Test("parse throws when the server reports no food (success:false)")

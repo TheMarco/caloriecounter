@@ -47,19 +47,18 @@ public final class FoodConfirmModel {
     /// True when this food carries an editable ingredient breakdown.
     public var hasBreakdown: Bool { !components.isEmpty }
 
-    // Context nutrients are DERIVED like the macros: from the breakdown when present,
-    // else scaled from the parse with the quantity. Read-only (nil stays unknown).
+    // Context nutrients are DERIVED like the macros: from the breakdown when its
+    // components carry them, else from the parse's own value (cloud components only
+    // carry kcal+macros, so fiber/sodium/sugar come from the serving total). Scaled
+    // by the quantity. Read-only (nil stays unknown).
     public var fiber: Double? {
-        hasBreakdown ? components.summed(\.fiber).map { round1($0 * quantityRatio) }
-                     : original.fiber.map { round1($0 * quantityRatio) }
+        ((hasBreakdown ? components.summed(\.fiber) : nil) ?? original.fiber).map { round1($0 * quantityRatio) }
     }
     public var sodium: Double? {
-        hasBreakdown ? components.summed(\.sodium).map { ($0 * quantityRatio).rounded() }
-                     : original.sodium.map { ($0 * quantityRatio).rounded() }
+        ((hasBreakdown ? components.summed(\.sodium) : nil) ?? original.sodium).map { ($0 * quantityRatio).rounded() }
     }
     public var sugar: Double? {
-        hasBreakdown ? components.summed(\.sugar).map { round1($0 * quantityRatio) }
-                     : original.sugar.map { round1($0 * quantityRatio) }
+        ((hasBreakdown ? components.summed(\.sugar) : nil) ?? original.sugar).map { round1($0 * quantityRatio) }
     }
 
     // MARK: - Breakdown editing (flips the source to .userEdited)

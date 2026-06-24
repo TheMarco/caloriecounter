@@ -256,22 +256,16 @@ public final class AppContainer {
             store: store,
             keychain: keychain,
             apiClient: client,
-            // "Analyze" pipeline. Try a direct USDA match FIRST — correct for simple
-            // foods/drinks (coffee, an apple) and the thousands of composite dishes that
-            // carry their OWN reliable recipe breakdown. Otherwise a single whole-dish
-            // estimate (Foundation Models on a capable device, else the heuristic), with
-            // a deterministic heuristic backstop so a parse practically never fails.
-            //
-            // NB: the on-device *ingredient decomposition* (DecomposingFoodParser) is
-            // intentionally NOT in this chain — the small model omits main ingredients
-            // and hallucinates ("fettuccine alfredo" → cream + "Beverages" + no pasta),
-            // which we can't detect deterministically. A whole-dish estimate is far more
-            // robust than a broken itemized breakdown.
-            foodParser: CompositeFoodParser([
-                DatabaseFoodParser(),
-                AppContainer.makeFoodParser(),
-                HeuristicFoodParser(),
-            ]),
+            // "Analyze" pipeline. Production routes text/voice to the OpenAI proxy
+            // (/api/parse-food) — a strong cloud model returns the nutrition estimate
+            // and an editable breakdown, like the original web app. Online-only by
+            // design; a network failure surfaces as "couldn't analyze". UI tests/demos
+            // stay on the deterministic on-device chain (no network).
+            // (The on-device USDA/Foundation-Models system is archived — see the
+            // `food-ai-on-device-v1` tag — pending removal.)
+            foodParser: (AppContainer.isUITest || AppContainer.isDemo)
+                ? CompositeFoodParser([DatabaseFoodParser(), AppContainer.makeFoodParser(), HeuristicFoodParser()])
+                : CloudFoodParser(client: client),
             photoParser: APIPhotoParser(client: client),
             labelReader: VisionLabelReader(),
             barcodeResolver: barcode,

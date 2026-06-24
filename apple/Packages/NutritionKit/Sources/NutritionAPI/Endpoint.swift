@@ -20,8 +20,10 @@ public struct Endpoint: Sendable {
         self.requiresAuth = requiresAuth
     }
 
-    /// Plate-photo analysis (the only cloud AI call). Cookie-authenticated.
+    /// Plate-photo analysis. Cookie-authenticated.
     public static let parsePhoto = Endpoint(.post, "/api/parse-photo")
+    /// Text/voice food description → OpenAI nutrition + breakdown. Cookie-authenticated.
+    public static let parseFood = Endpoint(.post, "/api/parse-food")
     /// Exchange the shared password for the `calorie-auth` cookie token. Public.
     public static let authLogin = Endpoint(.post, "/api/auth", requiresAuth: false)
 }
