@@ -17,13 +17,19 @@ public actor APIClient {
     private let environment: APIEnvironment
     private let session: URLSession
     private let tokens: TokenProviding
+    /// When set, a request that comes back unauthorized (no token yet, or the 24h
+    /// token expired) transparently logs in with this shared password and retries
+    /// once — so there's no login screen to present or babysit.
+    private let autoLoginPassword: String?
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    public init(environment: APIEnvironment = .production, session: URLSession? = nil, tokens: TokenProviding) {
+    public init(environment: APIEnvironment = .production, session: URLSession? = nil,
+                tokens: TokenProviding, autoLoginPassword: String? = nil) {
         self.environment = environment
         self.session = session ?? APIClient.makeDefaultSession()
         self.tokens = tokens
+        self.autoLoginPassword = autoLoginPassword
     }
 
     /// Production session with cookie auto-handling OFF (we set the Cookie header
@@ -56,8 +62,18 @@ public actor APIClient {
     public func send<Body: Encodable & Sendable, Response: Decodable & Sendable>(
         _ endpoint: Endpoint, body: Body, as type: Response.Type = Response.self
     ) async throws -> Response {
-        let data = try await perform(makeRequest(endpoint, body: try encode(body)))
-        return try decode(data)
+        let bodyData = try encode(body)
+        func attempt() async throws -> Response {
+            try decode(try await perform(makeRequest(endpoint, body: bodyData)))
+        }
+        do {
+            return try await attempt()
+        } catch APIError.unauthorized {
+            // Missing or expired token → log in with the shared password and retry once.
+            guard let password = autoLoginPassword else { throw APIError.unauthorized }
+            try await login(password: password)
+            return try await attempt()
+        }
     }
 
     // MARK: - Request building

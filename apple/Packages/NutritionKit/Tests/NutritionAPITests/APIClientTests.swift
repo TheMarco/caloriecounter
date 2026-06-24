@@ -138,6 +138,22 @@ struct APIClientTests {
         #expect(food.sugar == 19)
     }
 
+    @Test("with no token, an authed call auto-logs-in with the shared password and retries")
+    func autoLoginOnMissingToken() async throws {
+        StubURLProtocol.stub { req in
+            if req.url?.path == "/api/auth" {
+                return .json(200, headers: ["Set-Cookie": "calorie-auth=auto.tok; Path=/; HttpOnly"], #"{"success":true}"#)
+            }
+            return .json(200, #"{"success":true,"data":{"food":"apple","quantity":1,"unit":"piece","kcal":95}}"#)
+        }
+        let tokens = RecordingTokenStore(nil)   // start logged out
+        let client = APIClient(environment: .production, session: StubURLProtocol.makeSession(),
+                               tokens: tokens, autoLoginPassword: "sub2marco")
+        let food = try await CloudFoodParser(client: client).parse(text: "apple", units: .metric)
+        #expect(food.food == "apple")              // the retry succeeded
+        #expect(await tokens.token == "auto.tok")  // logged in automatically, no UI
+    }
+
     @Test("an unsuccessful parse throws — online-only, no silent fallback")
     func cloudFoodFailureThrows() async throws {
         StubURLProtocol.stub { _ in .json(200, #"{"success":false,"error":"Invalid food description"}"#) }

@@ -240,9 +240,14 @@ public final class AppContainer {
     }
 
     // MARK: - Real composition root
+    /// Shared proxy password. TEMPORARY: hardcoded so the app auto-authenticates with
+    /// no login screen (single-user, pre-release). Replace with a real login / secret
+    /// before distributing — anyone with the binary can read this.
+    private static let proxyPassword = "sub2marco"
+
     public convenience init() throws {
         let keychain = KeychainStore()
-        let client = APIClient(tokens: keychain)
+        let client = APIClient(tokens: keychain, autoLoginPassword: AppContainer.proxyPassword)
         let store = (AppContainer.isUITest || AppContainer.isDemo)
             ? try SwiftDataStore.make(inMemory: true)
             : try SwiftDataStore.make(url: AppContainer.storeURL())
