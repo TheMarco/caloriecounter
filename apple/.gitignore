@@ -15,3 +15,14 @@ build-device/
 **/.swiftpm/
 
 .DS_Store
+
+# Python bytecode from the data-pipeline scripts.
+scripts/__pycache__/
+*.pyc
+
+# Bulk USDA source dumps (FoundationFoods ~6 MB, FNDDS ~63 MB, SR Legacy ~201 MB).
+# The slim, app-bundled subset is generated from them by scripts/build_food_db.py
+# and IS committed (NutritionAI/Resources/FoodDB.json); the raw dumps stay out of git.
+USDA.json
+FNDDS.json
+legacyfoods.json

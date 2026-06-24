@@ -34,7 +34,12 @@ let package = Package(
         .target(name: "NutritionCore", swiftSettings: [.swiftLanguageMode(.v6)]),
         .target(name: "NutritionStore", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .target(name: "NutritionAPI", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
-        .target(name: "NutritionAI", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
+        .target(
+            name: "NutritionAI",
+            dependencies: ["NutritionCore"],
+            resources: [.process("Resources")],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
         .target(
             name: "NutritionHealth",
             dependencies: ["NutritionCore"],
