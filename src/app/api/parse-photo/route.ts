@@ -47,10 +47,6 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const unitsInstruction = units === 'metric'
-      ? 'Use metric units when possible (grams, ml, liters). For liquids like shots, use ml (e.g., 44ml for a shot of tequila). For plated meals with multiple components, use "plate" or "serving" as the unit.'
-      : 'Use imperial units when appropriate (oz, lb, cups, tbsp, tsp). For liquids like shots, use oz (e.g., 1.5oz for a shot of tequila). For plated meals with multiple components, use "plate" or "serving" as the unit.';
-
     // Build additional context from user details
     let additionalContext = '';
     if (details) {
@@ -79,81 +75,104 @@ export async function POST(request: NextRequest) {
       additionalContext += '\nUse this context to improve your portion size and nutritional estimates.';
     }
 
-    const prompt = `You are a nutrition expert analyzing a photo of food. Look at this image and provide accurate nutritional information.
+    const prompt = `Analyze the attached food photo and estimate nutrition for the visible food.
 
-IMPORTANT: The user prefers ${units} units. ${unitsInstruction}${additionalContext}
+User unit preference: ${units}.${additionalContext}
 
-CRITICAL ANALYSIS RULES:
-- Try to identify any food items in the image, even if partially visible
-- If you can see what appears to be food but aren't 100% certain, make your best estimate
-- Only refuse if the image clearly contains no food at all, or is completely unreadable
-- For unclear portions, estimate based on what you can see and note uncertainty in your response
-- IMPORTANT: If you see a bottle, jar, or package, estimate a TYPICAL SERVING SIZE, not the entire container
+Important:
+- This is a photo-based estimate, not a precise measurement.
+- Estimate the visible edible portion only.
+- If food is visible but uncertain, return the best estimate with low confidence.
+- Return an error only if no food is visible, the image is unreadable, or the visible item cannot reasonably be identified as food.
+- Do not claim certainty about hidden ingredients, exact weight, brand, recipe, oil amount, or sauce amount.
 
-COOKING METHOD & CALORIE IMPACT:
-- Identify cooking methods from visual cues (grilled marks, breading, oil sheen, etc.)
-- Fried foods: add 20-50% more calories than baked/grilled equivalents
-- Sauces and dressings: look for glossy appearance, estimate added fats
-- Cheese melted on top: add calories for cheese layer
-- Visible oils/butter: account for added fats in cooking
-- Raw vs. cooked portions: cooked meat shrinks ~25%, vegetables vary
+Unit rules:
+- ${units === 'metric' ? 'Prefer grams for solid foods and ml for liquids when practical.' : 'Prefer oz and lb for solid foods, and cups / fl oz for liquids, when practical.'}
+- For plated meals with multiple visible items, use "plate" or "serving".
+- For countable foods such as burgers, sandwiches, pizza slices, apples, tacos, pastries, or eggs, use piece or slice when natural.
+- For packages, bottles, jars, and containers, estimate a typical serving size, not the entire container, unless the visible food is clearly the full amount being eaten.
 
-If you can clearly identify food in the image, respond with this exact JSON structure:
+If food is visible, return this JSON structure exactly:
 {
   "food": "standardized food name",
   "quantity": number,
   "unit": "g|ml|cup|tbsp|tsp|piece|slice|oz|lb|bowl|plate|serving",
-  "kcal": total_calories_for_this_serving,
-  "fat": total_fat_grams_for_this_serving,
-  "carbs": total_carbs_grams_for_this_serving,
-  "protein": total_protein_grams_for_this_serving,
-  "fiber": total_dietary_fiber_grams_for_this_serving,
-  "sodium": total_sodium_milligrams_for_this_serving,
-  "sugar": total_sugars_grams_for_this_serving,
-  "notes": "brief_description_of_what_you_see",
-  "components": [ { "name": "food item", "grams": number, "kcal": number, "fat": number, "carbs": number, "protein": number } ]
+  "estimated_total_grams": number,
+  "kcal": number,
+  "fat": number,
+  "carbs": number,
+  "protein": number,
+  "fiber": number,
+  "sodium": number,
+  "sugar": number,
+  "confidence": "low|medium|high",
+  "assumptions": ["assumption 1", "assumption 2"],
+  "notes": "brief description of visible food and main uncertainty",
+  "components": [
+    { "name": "visible food item", "grams": number, "kcal": number, "fat": number, "carbs": number, "protein": number, "fiber": number, "sodium": number, "sugar": number, "confidence": "low|medium|high" }
+  ]
 }
 
-MICRONUTRIENTS: also estimate dietary fiber (grams), sodium (milligrams), and total sugars (grams) for the whole serving. Round fiber/sugar to whole grams, sodium to the nearest 10 mg — approximate.
-
-COMPONENTS: when the plate has several distinct items (e.g. chicken + rice + broccoli, or a burger + fries), list them in "components" — each with its grams and kcal/fat/carbs/protein, summing to the totals above. For a single food, return an empty array []. Use the recognizable items on the plate, not raw sub-ingredients.
-
-If you cannot see any food at all in the image, respond with:
+If no food is visible, return:
 {
   "error": "No food visible in this image"
 }
 
-PORTION SIZE ESTIMATION RULES:
-- ALWAYS estimate realistic serving sizes, NOT the entire package/bottle
-- For packaged foods: estimate typical serving size (e.g., 2 tbsp dressing, not whole bottle)
-- For plated meals with multiple components: use "plate" or "serving" as unit, estimate total calories for the entire meal
-- For single food items: use weight (grams/oz) or pieces as appropriate
-- Be generous with calorie estimates for restaurant/prepared foods
-- Consider ALL visible ingredients and components when calculating total nutrition
+If the image is too blurry, dark, obstructed, or unreadable to identify food, return:
+{
+  "error": "Image is not clear enough to identify food"
+}
 
-VISUAL SCALE ESTIMATION:
-- Use visible reference objects for scale (utensils, hands, plates, cups, coins, etc.)
-- Standard dinner plate ≈ 10-11 inches, salad plate ≈ 7-8 inches
-- Standard fork ≈ 7 inches, spoon ≈ 6 inches
-- Average adult hand span ≈ 7-9 inches
-- Look for thickness/depth cues to estimate volume
-- Consider food density (rice vs. lettuce vs. meat) when estimating weight
+Identification rules:
+- Identify visible food items and likely food category.
+- For uncertain items, use generic names rather than inventing specifics.
+- Example: use "grilled meat" instead of "grilled chicken" if the meat type is unclear.
+- Example: use "creamy sauce" instead of "alfredo sauce" if the sauce type is unclear.
+- Do not infer invisible ingredients unless they are typical and necessary for the food category.
+- Do not identify a branded packaged food unless the brand/product name is readable.
 
-REALISTIC PORTION EXAMPLES:
-  * Plate of chicken, rice, and vegetables → quantity: 1, unit: "plate", kcal: 500-700
-  * Plate of pasta with sauce → quantity: 1, unit: "plate", kcal: 600-800
-  * Bowl of rice with toppings → quantity: 1, unit: "bowl", kcal: 400-600
-  * Mixed salad on plate → quantity: 1, unit: "plate", kcal: 200-400
-  * Single apple → quantity: 1, unit: "piece", kcal: 80-100
-  * Slice of pizza → quantity: 1, unit: "slice", kcal: 250-400
-  * Sandwich → quantity: 1, unit: "piece", kcal: 300-600
-  * Bowl of soup → quantity: 1, unit: "bowl", kcal: 150-300
-  * Salad dressing → quantity: 2, unit: "tbsp", kcal: 100-150
-  * Condiments/sauces → quantity: 1-2, unit: "tbsp", kcal: 20-100
-  * Beverages → quantity: 1, unit: "cup" or "glass", kcal: varies
-  * Snack foods → quantity: 1, unit: "serving" or typical portion, kcal: varies
+Portion estimation rules:
+- Use realistic serving sizes.
+- Never use unrealistic tiny portions like 1g unless the visible food truly appears that small.
+- Use visible scale cues such as plates, bowls, utensils, cups, hands, or packaging when available.
+- If no scale cue exists, assume a normal serving for the visible food type.
+- Estimate visible portion size, not what might be outside the frame.
+- For restaurant/prepared foods, use the higher end of typical serving sizes.
+- For simple home foods, use ordinary default portions.
+- If a plate contains multiple components, estimate the total nutrition for the whole visible plate/serving.
 
-Remember: Only proceed if you can clearly see and identify food. When in doubt, return an error.`;
+Cooking and calorie rules:
+- Use visual cues such as grill marks, breading, oil sheen, melted cheese, creamy sauces, dressing, or fried texture.
+- Choose a nutrition estimate appropriate to the apparent cooking method.
+- Do not apply an extra calorie multiplier if the selected food estimate already reflects that cooking method.
+- Account for visible sauces, dressings, cheese, oils, butter, breading, and toppings when they materially affect nutrition.
+
+Component rules:
+- Use components when the visible meal has multiple distinct recognizable food items, such as chicken + rice + broccoli, burger + fries, eggs + toast, or salad + dressing.
+- Components should be visible plate items, not raw recipe ingredients.
+- Do not decompose sauces into oil, salt, flour, spices, or water.
+- For a single food item, return components as [].
+- For multi-component plates, top-level kcal, fat, carbs, protein, fiber, sodium, and sugar must equal the sum of components after rounding.
+
+Rounding rules:
+- kcal: nearest 5 calories
+- fat/carbs/protein: nearest 1g
+- fiber/sugar: nearest 1g
+- sodium: nearest 10mg
+- estimated grams/ml: nearest 5g or 5ml
+
+Realistic portion examples:
+- Plate of chicken, rice, and vegetables -> 1 plate, 500-700 kcal
+- Plate of pasta with sauce -> 1 plate, 600-900 kcal
+- Bowl of rice with toppings -> 1 bowl, 400-700 kcal
+- Mixed salad with dressing -> 1 plate/bowl, 250-600 kcal depending on toppings
+- Single apple -> 1 piece, 80-100 kcal
+- Slice of pizza -> 1 slice, 250-400 kcal
+- Sandwich -> 1 piece, 300-700 kcal
+- Burger with fries -> 1 plate/serving, 700-1200 kcal
+- Bowl of soup -> 1 bowl, 150-350 kcal
+- Salad dressing -> 2 tbsp, 100-150 kcal
+- Condiments/sauces -> 1-2 tbsp, 20-150 kcal`;
 
     console.log('🔍 Analyzing photo with OpenAI Vision API');
     console.log('🔍 Image data format:', imageData.substring(0, 50));
@@ -181,7 +200,7 @@ Remember: Only proceed if you can clearly see and identify food. When in doubt, 
           messages: [
             {
               role: 'system',
-              content: 'You are a nutrition expert. Analyze food photos carefully and respond only with valid JSON. If you cannot clearly identify food, return an error.',
+              content: 'You are a nutrition estimation engine. Analyze food photos and return only valid JSON matching the requested schema. Do not include markdown, prose, or extra text.',
             },
             {
               role: 'user',
