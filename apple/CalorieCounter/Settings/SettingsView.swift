@@ -27,6 +27,7 @@ struct SettingsView: View {
                     .scrollContentBackground(.hidden)
             }
                 .navigationTitle("Settings")
+                .navigationBarTitleDisplayMode(.inline)
                 .keyboardDoneToolbar()
                 .task { await prepareExport() }
                 .confirmationDialog("Reset all targets to the defaults?", isPresented: $showResetConfirm, titleVisibility: .visible) {

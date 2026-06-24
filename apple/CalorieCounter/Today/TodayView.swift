@@ -30,6 +30,7 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("Today")
+            .navigationBarTitleDisplayMode(.inline)
             .task(id: container.dataVersion) {
                 let m = model ?? TodayModel(store: container.store)
                 model = m

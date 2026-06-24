@@ -26,6 +26,7 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .navigationBarTitleDisplayMode(.inline)
             .task(id: container.dataVersion) {
                 let m = model ?? HistoryModel(store: container.store)
                 model = m
