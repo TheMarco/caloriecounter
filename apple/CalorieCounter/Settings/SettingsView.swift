@@ -167,9 +167,10 @@ struct SettingsView: View {
         // Full backup: every individual food + each day's offset.
         let entries = (try? await container.store.entries(from: "0000-01-01", to: "9999-12-31")) ?? []
         let dayRows = (try? await container.store.dailyTotals(lastDays: 730)) ?? []
+        let weights = (try? await container.store.weights(from: "0000-01-01", to: "9999-12-31")) ?? []
         var offsets: [String: Double] = [:]
         for d in dayRows where d.offset > 0 { offsets[d.date] = d.offset }
-        let csv = CSVExporter.entriesCSV(entries: entries, offsets: offsets)
+        let csv = CSVExporter.entriesCSV(entries: entries, offsets: offsets, weights: weights)
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(CSVExporter.filename())
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         exportURL = url

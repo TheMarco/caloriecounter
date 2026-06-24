@@ -37,6 +37,25 @@ struct CSVImporterTests {
         #expect(result.offsets["2026-06-22"] == 300)
     }
 
+    @Test("weigh-ins export and import alongside foods (backup round-trips weight)")
+    func weightRoundTrip() throws {
+        let entries = [entry("a", "Apple", kcal: 95, fat: 0, carbs: 25, protein: 0, method: .barcode, date: "2026-06-21")]
+        let weights = [
+            WeightEntry(id: WeightEntry.id(for: "2026-06-20"), date: "2026-06-20",
+                        timestamp: Date(timeIntervalSince1970: 1_750_000_000), weightKg: 82.4),
+            WeightEntry(id: WeightEntry.id(for: "2026-06-22"), date: "2026-06-22",
+                        timestamp: Date(timeIntervalSince1970: 1_750_200_000), weightKg: 81.9),
+        ]
+        let csv = CSVExporter.entriesCSV(entries: entries, offsets: [:], weights: weights)
+        let result = try CSVImporter.parse(csv)
+
+        #expect(result.entries.count == 1)
+        #expect(result.weights.count == 2)
+        let w = try #require(result.weights.first { $0.date == "2026-06-20" })
+        #expect(w.weightKg == 82.4)
+        #expect(result.dayCount == 3)   // apple day + 2 weigh-in days
+    }
+
     @Test("fiber/sodium/sugar export+import; blanks stay nil; old 10-col files still load")
     func nutrientColumns() throws {
         let e = Entry(id: "x", date: "2026-06-22", timestamp: Date(timeIntervalSince1970: 1_750_000_000),

@@ -11,9 +11,18 @@ import NutritionCore
 public struct ImportResult: Sendable, Equatable {
     public let entries: [Entry]
     public let offsets: [String: Double]
+    public let weights: [WeightEntry]
 
-    /// Distinct days covered (entries or offsets).
-    public var dayCount: Int { Set(entries.map(\.date)).union(offsets.keys).count }
+    public init(entries: [Entry], offsets: [String: Double], weights: [WeightEntry] = []) {
+        self.entries = entries
+        self.offsets = offsets
+        self.weights = weights
+    }
+
+    /// Distinct days covered (entries, offsets, or weigh-ins).
+    public var dayCount: Int {
+        Set(entries.map(\.date)).union(offsets.keys).union(weights.map(\.date)).count
+    }
 }
 
 public enum CSVImporter {
@@ -47,6 +56,7 @@ public enum CSVImporter {
     public static func apply(_ result: ImportResult, to store: any NutritionStoring) async -> Int {
         for entry in result.entries { try? await store.add(entry) }
         for (date, value) in result.offsets { try? await store.setOffset(value, on: date) }
+        for weight in result.weights { try? await store.addWeight(weight) }
         return result.dayCount
     }
 
@@ -59,6 +69,7 @@ public enum CSVImporter {
         let cols = columnIndex(headerLine)
         var entries: [Entry] = []
         var offsets: [String: Double] = [:]
+        var weights: [WeightEntry] = []
         for line in lines.dropFirst() {
             let f = CSV.split(line)
             func field(_ name: String) -> String {
@@ -78,6 +89,14 @@ public enum CSVImporter {
                 if let cal = num("calories"), cal > 0 { offsets[date] = cal }
                 continue
             }
+            if methodRaw == "weight" {
+                // Body weight stored in kg (the "quantity" column).
+                if let kg = num("quantity"), kg > 0 {
+                    weights.append(WeightEntry(id: WeightEntry.id(for: date), date: date,
+                                               timestamp: timestamp(date: date, time: time), weightKg: kg))
+                }
+                continue
+            }
             entries.append(Entry(
                 id: "import-\(date)-\(time)-\(food)",
                 date: date,
@@ -95,7 +114,7 @@ public enum CSVImporter {
                 sugar: num("sugar")
             ))
         }
-        return ImportResult(entries: entries, offsets: offsets)
+        return ImportResult(entries: entries, offsets: offsets, weights: weights)
     }
 
     /// `[lowercased column name: index]` from the header row.

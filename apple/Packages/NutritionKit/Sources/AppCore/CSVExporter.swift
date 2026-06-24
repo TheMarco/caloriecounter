@@ -21,7 +21,7 @@ public enum CSVExporter {
     /// Full export: one row per individual food (CSV-escaped name) plus one row per
     /// day-offset (`method` column = "offset"). Round-trips through CSVImporter, so
     /// it's a complete backup — every food is preserved, not just daily totals.
-    public static func entriesCSV(entries: [Entry], offsets: [String: Double]) -> String {
+    public static func entriesCSV(entries: [Entry], offsets: [String: Double], weights: [WeightEntry] = []) -> String {
         var lines = [entryHeader]
         for e in entries.sorted(by: { $0.timestamp < $1.timestamp }) {
             lines.append([
@@ -42,6 +42,11 @@ public enum CSVExporter {
         }
         for (date, value) in offsets.sorted(by: { $0.key < $1.key }) where value > 0 {
             lines.append([date, "", "Exercise & Adjustment", "", "", number(value), "", "", "", "", "", "", "offset"]
+                .joined(separator: ","))
+        }
+        // Body weight (kg in the quantity column) so the backup round-trips weigh-ins.
+        for w in weights.sorted(by: { $0.date < $1.date }) {
+            lines.append([w.date, timeString(w.timestamp), "Weight", oneDecimal(w.weightKg), "kg", "", "", "", "", "", "", "", "weight"]
                 .joined(separator: ","))
         }
         return lines.joined(separator: "\n")
