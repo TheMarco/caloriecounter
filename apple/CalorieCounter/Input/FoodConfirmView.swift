@@ -91,6 +91,7 @@ private struct ConfirmForm: View {
         }
         .navigationTitle("Confirm Food")
         .navigationBarTitleDisplayMode(.inline)
+        .keyboardDoneToolbar()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button {
@@ -129,7 +130,9 @@ private struct ConfirmForm: View {
 
             if model.componentsExpanded {
                 ForEach(model.components.indices, id: \.self) { index in
-                    componentRow(index)
+                    BreakdownRow(component: model.components[index]) { newGrams in
+                        model.setComponentGrams(at: index, to: newGrams)
+                    }
                 }
                 .onDelete { offsets in
                     for i in offsets.sorted(by: >) { model.removeComponent(at: i) }
@@ -141,31 +144,6 @@ private struct ConfirmForm: View {
                     .font(.caption2)
             }
         }
-    }
-
-    private func componentRow(_ index: Int) -> some View {
-        HStack {
-            Text(model.components[index].name)
-                .font(.subheadline)
-                .lineLimit(1)
-            Spacer()
-            TextField("g", text: Binding(
-                get: { gramText(model.components[index].grams) },
-                set: { model.setComponentGrams(at: index, to: Double($0) ?? model.components[index].grams) }
-            ))
-            .keyboardType(.decimalPad)
-            .multilineTextAlignment(.trailing)
-            .font(.subheadline)
-            .frame(maxWidth: 56)
-            Text("g").font(.subheadline).foregroundStyle(.secondary)
-            Text("\(Int(model.components[index].kcal.rounded())) kcal")
-                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                .frame(minWidth: 60, alignment: .trailing)
-        }
-    }
-
-    private func gramText(_ grams: Double) -> String {
-        grams == grams.rounded() ? String(Int(grams)) : String(format: "%.1f", grams)
     }
 
     private func nutritionRow(_ label: String, _ value: Double, _ unit: String) -> some View {
@@ -189,5 +167,73 @@ private struct ConfirmForm: View {
                 .frame(maxWidth: 80)
             Text(unit).font(.subheadline).foregroundStyle(.secondary)
         }
+    }
+}
+
+/// One editable ingredient line: name · [amount g] pill · kcal. The amount is a
+/// free-text buffer (so you can clear and retype) committed live when valid, in the
+/// app's standard value-pill styling with the caret-to-end AmountField.
+private struct BreakdownRow: View {
+    let component: FoodComponent
+    let onGramsChanged: (Double) -> Void
+
+    @State private var text = ""
+    @State private var editing = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(component.name)
+                .font(.subheadline)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+
+            HStack(spacing: 3) {
+                AmountField(text: $text,
+                            onEditingChanged: { isEditing in
+                                editing = isEditing
+                                if !isEditing { normalize() }
+                            },
+                            onChange: applyLive)
+                    .frame(minWidth: 22)
+                Text("g").font(.subheadline).foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(editing ? DS.Macro.calories.tint.opacity(0.20) : Color.primary.opacity(0.06))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .stroke(editing ? DS.Macro.calories.tint.opacity(0.7) : .clear, lineWidth: 1.5)
+                    }
+            }
+            .animation(.easeInOut(duration: 0.15), value: editing)
+
+            Text("\(Int(component.kcal.rounded())) kcal")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+                .frame(minWidth: 58, alignment: .trailing)
+        }
+        .onAppear { text = Self.gramText(component.grams) }
+        .onChange(of: component.grams) { _, grams in
+            if !editing { text = Self.gramText(grams) }   // reflect external rescales
+        }
+    }
+
+    /// Apply a valid amount as it's typed; ignore blank/partial input so the field
+    /// can be cleared and retyped.
+    private func applyLive() {
+        if let grams = Double(text), grams >= 0 { onGramsChanged(grams) }
+    }
+
+    /// On blur, commit and normalize the text (restores the canonical value if left blank).
+    private func normalize() {
+        if let grams = Double(text), grams >= 0 { onGramsChanged(grams) }
+        text = Self.gramText(component.grams)
+    }
+
+    private static func gramText(_ grams: Double) -> String {
+        grams == grams.rounded() ? String(Int(grams)) : String(format: "%.1f", grams)
     }
 }

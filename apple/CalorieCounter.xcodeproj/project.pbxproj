@@ -43,6 +43,7 @@
 		E84D0BD67B0B35644AE45C18 /* SetupWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D408ED847960B3129EF3A94 /* SetupWizardView.swift */; };
 		F163CA28FC6C67E84FA480E6 /* CalorieCounterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */; };
 		F7C56333132490527F79A7EE /* SettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A13C42EFB457743B31125F /* SettingsUITests.swift */; };
+		FC09B65C891F6CFC25B2A6D7 /* AmountField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0DBFA2A2394895AD33DEDF /* AmountField.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B0DBFA2A2394895AD33DEDF /* AmountField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmountField.swift; sourceTree = "<group>"; };
 		0EAA48BF0C24E262B95F2D6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceUITests.swift; sourceTree = "<group>"; };
 		112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEntryView.swift; sourceTree = "<group>"; };
@@ -163,6 +165,7 @@
 		639AC67818DC9F0BD583033F /* DesignSystem */ = {
 			isa = PBXGroup;
 			children = (
+				0B0DBFA2A2394895AD33DEDF /* AmountField.swift */,
 				11C5697DE6B2C053E73E22A8 /* Components.swift */,
 				B11EFF2C94E03B3961AF68B4 /* MacroDashboard.swift */,
 				F716EEE9ADA7CB899A236933 /* Theme.swift */,
@@ -353,6 +356,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0CDDE4C105133F6DEC3FFBF /* AboutView.swift in Sources */,
+				FC09B65C891F6CFC25B2A6D7 /* AmountField.swift in Sources */,
 				1805A24C296B4827BF45360D /* AppLockView.swift in Sources */,
 				4ABE8178062C62F7527F38F9 /* AppleHealthSettings.swift in Sources */,
 				5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */,

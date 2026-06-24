@@ -28,25 +28,7 @@ struct SettingsView: View {
                     .scrollContentBackground(.hidden)
             }
                 .navigationTitle("Settings")
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    // A floating Liquid Glass "Done" pill pinned above the keyboard.
-                    // It mirrors the native keyboard-accessory look but is a real view,
-                    // so it can't flicker in/out like SwiftUI's .toolbar(.keyboard).
-                    if focusedTarget != nil {
-                        HStack {
-                            Spacer()
-                            Button { focusedTarget = nil } label: {
-                                Text("Done")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(DS.Macro.calories.tint)
-                                    .padding(.horizontal, 4)
-                            }
-                            .buttonStyle(.glass)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 8)
-                    }
-                }
+                .keyboardDoneToolbar()
                 .onChange(of: focusedTarget) { _, new in
                     if new == nil { clampTargets() }   // number pad closed → snap to valid ranges
                 }

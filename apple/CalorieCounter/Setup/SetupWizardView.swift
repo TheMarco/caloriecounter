@@ -53,21 +53,7 @@ struct SetupWizardView: View {
                     .padding(.top, 8)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    if focusedField != nil {
-                        HStack {
-                            Spacer()
-                            Button { focusedField = nil } label: {
-                                Text("Done").font(.body.weight(.semibold))
-                                    .foregroundStyle(DS.Macro.calories.tint)
-                                    .padding(.horizontal, 4)
-                            }
-                            .buttonStyle(.glass)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 8)
-                    }
-                }
+                .keyboardDoneToolbar()
                 .onChange(of: focusedField) { _, new in if new == nil { clampInputs() } }
                 footer
             }
