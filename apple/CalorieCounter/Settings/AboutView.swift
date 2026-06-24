@@ -31,12 +31,13 @@ struct AboutView: View {
 
             Section {
                 Label("Your food log, weights, targets, and settings are stored only on this device.", systemImage: "lock.shield")
-                Label("Typed and spoken foods, and scanned nutrition labels, are analyzed on-device with Apple Intelligence.", systemImage: "cpu")
-                Label("Scanning a barcode or searching a brand name looks it up in Open Food Facts — only that code or search term is sent.", systemImage: "wifi")
+                Label("Typed, spoken, and photographed foods are analyzed in the cloud — the text (or photo) is sent for a nutrition estimate, nothing else.", systemImage: "sparkles")
+                Label("Voice is transcribed on-device; only the recognized words are sent.", systemImage: "mic")
+                Label("Scanning a barcode looks it up in Open Food Facts — only that code is sent.", systemImage: "barcode.viewfinder")
             } header: {
                 Text("Privacy")
             } footer: {
-                Text("That Open Food Facts lookup is the only thing that ever leaves your device. There's no account, no tracking, and no analytics.")
+                Text("Food descriptions and photos are sent to our service for analysis; your log, weights, and targets never leave the device. No tracking, no analytics.")
             }
             .font(.subheadline)
 

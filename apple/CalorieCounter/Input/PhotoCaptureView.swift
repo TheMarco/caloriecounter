@@ -1,8 +1,8 @@
 //
-//  LabelCaptureView.swift
-//  Scan a packaged food's Nutrition Facts panel and read it entirely ON-DEVICE
-//  (VisionLabelReader → on-device OCR). No cloud, no account — and far more
-//  accurate than crowd-sourced barcode data because it reads the actual label.
+//  PhotoCaptureView.swift
+//  Snap or pick a photo of a meal and send it to OpenAI (via the /api/parse-photo
+//  proxy) for a calorie + macro estimate. Replaces the on-device nutrition-label
+//  OCR — a quick "what's roughly in this?" is more useful than scanning panels.
 //
 
 import SwiftUI
@@ -10,7 +10,7 @@ import PhotosUI
 import AppCore
 import NutritionCore
 
-struct LabelCaptureView: View {
+struct PhotoCaptureView: View {
     @Environment(AppContainer.self) private var container
     let onParsed: (ParsedFood) -> Void
 
@@ -27,16 +27,16 @@ struct LabelCaptureView: View {
                     Button {
                         showCamera = true
                     } label: {
-                        Label("Take a photo of the label", systemImage: "camera.fill")
+                        Label("Take a photo of your food", systemImage: "camera.fill")
                     }
                 }
                 PhotosPicker(selection: $pickerItem, matching: .images) {
                     Label("Choose from Library", systemImage: "photo.on.rectangle")
                 }
             } header: {
-                Text("Nutrition Facts")
+                Text("Food Photo")
             } footer: {
-                Text("Point the camera at the Nutrition Facts panel. It's read on-device — accurate to the actual package, no account needed.")
+                Text("Snap your plate and we’ll estimate the calories and macros. You can adjust the amount on the next screen.")
             }
 
             if let image {
@@ -49,51 +49,52 @@ struct LabelCaptureView: View {
                 }
             }
             if processing {
-                Section { HStack { ProgressView(); Text("Reading label…").foregroundStyle(.secondary) } }
+                Section { HStack { ProgressView(); Text("Analyzing photo…").foregroundStyle(.secondary) } }
             }
         }
-        .navigationTitle("Scan Label")
+        .navigationTitle("Photo")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pickerItem) { _, item in
-            Task { await loadAndRead(item) }
+            Task { await loadAndAnalyze(item) }
         }
         .sheet(isPresented: $showCamera) {
             ImagePicker(sourceType: .camera) { uiImage in
                 image = uiImage
-                Task { await read(uiImage.jpegData(compressionQuality: 0.85)) }
+                Task { await analyze(uiImage.jpegData(compressionQuality: 0.85)) }
             }
             .ignoresSafeArea()
         }
-        .alert("Couldn’t read label", isPresented: .constant(errorMessage != nil)) {
+        .alert("Couldn’t analyze photo", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
         }
     }
 
-    private func loadAndRead(_ item: PhotosPickerItem?) async {
+    private func loadAndAnalyze(_ item: PhotosPickerItem?) async {
         guard let item else { return }
         guard let data = try? await item.loadTransferable(type: Data.self), let ui = UIImage(data: data) else {
             errorMessage = "We couldn’t load that image."
             return
         }
         image = ui
-        await read(data)
+        await analyze(data)
     }
 
-    private func read(_ data: Data?) async {
+    private func analyze(_ data: Data?) async {
         guard let data, !processing else { return }
         processing = true
         defer { processing = false }
         do {
-            onParsed(try await container.labelReader.readNutritionLabel(imageData: data, units: container.settings.units))
+            onParsed(try await container.photoParser.parse(
+                imageData: data, units: container.settings.units, details: .default))
         } catch {
-            errorMessage = "We couldn’t find a Nutrition Facts panel in that photo. Try a clearer, straight-on shot."
+            errorMessage = "We couldn’t estimate that photo. Try a clearer shot of the whole plate."
         }
     }
 }
 
-/// Minimal UIKit camera/library bridge.
+/// Minimal UIKit camera/library bridge (used by the photo capture flow).
 struct ImagePicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType
     let onImage: (UIImage) -> Void

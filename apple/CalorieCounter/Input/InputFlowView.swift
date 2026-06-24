@@ -39,7 +39,7 @@ struct InputFlowView: View {
         case .text:          TextInputView { parsed = $0 }
         case .barcode:       BarcodeScannerView { parsed = $0 }
         case .voice:         VoiceInputView { parsed = $0 }
-        case .label, .photo: LabelCaptureView { parsed = $0 }
+        case .photo, .label: PhotoCaptureView { parsed = $0 }   // .label retired → photo
         }
     }
 }

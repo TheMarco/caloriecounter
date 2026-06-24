@@ -2,8 +2,7 @@
 //  QuickAddBar.swift
 //  The food-capture launch buttons as a Liquid Glass row anchored at the TOP of
 //  Today, so it never collides with the bottom tab bar. Each method carries its
-//  own accent color. (Photo capture is intentionally omitted — barcode, voice,
-//  and text are all on-device and reliable.)
+//  own accent color.
 //
 
 import SwiftUI
@@ -12,7 +11,7 @@ import NutritionCore
 struct QuickAddBar: View {
     var onSelect: (InputMethod) -> Void
 
-    private let methods: [InputMethod] = [.barcode, .voice, .text, .label]
+    private let methods: [InputMethod] = [.barcode, .voice, .text, .photo]
 
     var body: some View {
         // Independent glass buttons (NOT inside a single GlassEffectContainer —
