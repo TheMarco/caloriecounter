@@ -42,7 +42,11 @@ Respond with this exact JSON structure:
   "fat": total_fat_grams_for_this_serving,
   "carbs": total_carbs_grams_for_this_serving,
   "protein": total_protein_grams_for_this_serving,
-  "notes": "any_additional_info"
+  "fiber": total_dietary_fiber_grams_for_this_serving,
+  "sodium": total_sodium_milligrams_for_this_serving,
+  "sugar": total_sugars_grams_for_this_serving,
+  "notes": "any_additional_info",
+  "components": [ { "name": "ingredient name", "grams": number, "kcal": number, "fat": number, "carbs": number, "protein": number } ]
 }
 
 CRITICAL PORTION SIZE RULES:
@@ -62,6 +66,17 @@ IMPORTANT RULES:
 - For complex dishes, consider ALL ingredients and typical serving sizes
 - Be generous with calorie estimates for restaurant/prepared foods
 - Use appropriate units based on user preference: ${units === 'metric' ? 'prefer grams for solids, ml for liquids' : 'use oz, lb, cups, tbsp, tsp as appropriate'}
+
+MICRONUTRIENTS:
+- Also estimate dietary fiber (grams), sodium (milligrams), and total sugars (grams) for the whole serving.
+- Round fiber and sugar to whole grams, sodium to the nearest 10 mg. These are approximate.
+
+COMPONENTS (ingredient breakdown):
+- For a COMPOUND or ASSEMBLED dish (sandwich, burger, chili dog, taco, stir fry, pasta with sauce, salad with toppings), include a "components" array of the recognizable parts a person would name. Example: "chili cheese dog" → hot dog bun, beef frank, chili, shredded cheese.
+- Use the dish's natural named parts, NOT a from-scratch recipe — never break a sauce into flour/water/spices, and never list base ingredients like oil/salt on their own.
+- Each component carries its grams and its kcal/fat/carbs/protein for THAT amount.
+- The components' kcal and macros MUST sum to the dish totals (kcal/fat/carbs/protein) above.
+- For a SINGLE food or drink (apple, coffee, a slice of bread, scrambled eggs), return an EMPTY components array []. Do not decompose it.
 
 REALISTIC PORTION EXAMPLES:
   * "plate of fettuccine alfredo" → quantity: 350, unit: "g", kcal: 800 (typical restaurant portion)
@@ -95,7 +110,7 @@ REALISTIC PORTION EXAMPLES:
               content: prompt,
             },
           ],
-          max_tokens: 150,
+          max_tokens: 900,
           temperature: 0.1,
         });
         console.log(`✅ Successfully used model: ${model}`);
@@ -135,17 +150,35 @@ REALISTIC PORTION EXAMPLES:
         throw new Error('Invalid response format');
       }
 
+      const round1 = (v: unknown) => v != null ? Math.round(Number(v) * 10) / 10 : undefined;
+      const components = Array.isArray(parsed.components)
+        ? parsed.components
+            .filter((c: { name?: string; grams?: number }) => c && c.name && Number(c.grams) > 0)
+            .map((c: { name: string; grams: number; kcal?: number; fat?: number; carbs?: number; protein?: number }) => ({
+              name: String(c.name),
+              grams: Math.round(Number(c.grams)),
+              kcal: c.kcal != null ? Math.round(Number(c.kcal)) : undefined,
+              fat: round1(c.fat),
+              carbs: round1(c.carbs),
+              protein: round1(c.protein),
+            }))
+        : undefined;
+
       return NextResponse.json<ParseFoodResponse>({
         success: true,
         data: {
           food: parsed.food,
           quantity: Number(parsed.quantity),
           unit: parsed.unit,
-          kcal: parsed.kcal ? Number(parsed.kcal) : undefined,
-          fat: parsed.fat ? Math.round(Number(parsed.fat) * 10) / 10 : undefined,
-          carbs: parsed.carbs ? Math.round(Number(parsed.carbs) * 10) / 10 : undefined,
-          protein: parsed.protein ? Math.round(Number(parsed.protein) * 10) / 10 : undefined,
+          kcal: parsed.kcal != null ? Math.round(Number(parsed.kcal)) : undefined,
+          fat: round1(parsed.fat),
+          carbs: round1(parsed.carbs),
+          protein: round1(parsed.protein),
+          fiber: parsed.fiber != null ? Math.round(Number(parsed.fiber)) : undefined,
+          sodium: parsed.sodium != null ? Math.round(Number(parsed.sodium) / 10) * 10 : undefined,
+          sugar: parsed.sugar != null ? Math.round(Number(parsed.sugar)) : undefined,
           notes: parsed.notes,
+          components: components && components.length ? components : undefined,
         },
       });
 
