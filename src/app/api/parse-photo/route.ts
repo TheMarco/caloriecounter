@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (imageData.length > 10 * 1024 * 1024) { // 10MB limit
+    // The app uploads a 1024×1024 JPEG (~200-800 KB base64). Anything over 5 MB is
+    // a misbehaving client / raw photo — reject it rather than pay for it.
+    if (imageData.length > 5 * 1024 * 1024) {
       console.error('📡 Image too large:', imageData.length);
       return NextResponse.json<ParseFoodResponse>({
         success: false,
