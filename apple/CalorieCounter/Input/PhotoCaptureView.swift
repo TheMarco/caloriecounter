@@ -88,6 +88,11 @@ struct PhotoCaptureView: View {
         guard !processing else { return }
         let square = ui.squareCropped(side: 1024)
         image = square
+        // Don't pay to analyze a near-black / lens-covered shot.
+        if square.averageBrightness() < 0.06 {
+            errorMessage = "That photo’s too dark to read. Try better lighting or a clearer shot."
+            return
+        }
         guard let data = square.jpegData(compressionQuality: 0.85) else { return }
         processing = true
         defer { processing = false }
@@ -111,6 +116,20 @@ extension UIImage {
             let w = size.width * scale, h = size.height * scale
             draw(in: CGRect(x: (side - w) / 2, y: (side - h) / 2, width: w, height: h))
         }
+    }
+
+    /// Mean perceived luminance (0…1) — the whole image averaged into one pixel.
+    /// Used to reject near-black photos before they're uploaded. Returns 1 (don't
+    /// block) if the image can't be read.
+    func averageBrightness() -> CGFloat {
+        guard let cg = cgImage else { return 1 }
+        var px = [UInt8](repeating: 0, count: 4)
+        guard let ctx = CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return 1 }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))   // downsamples → average color
+        let r = CGFloat(px[0]) / 255, g = CGFloat(px[1]) / 255, b = CGFloat(px[2]) / 255
+        return 0.299 * r + 0.587 * g + 0.114 * b
     }
 }
 
