@@ -154,6 +154,24 @@ struct FoodDatabaseTests {
             ("egg", "egg", ["white sandwich", "substitute"], nil),
             ("orange juice", "orange juice", [], 70),
             ("sweet potato", "sweet potato", ["tot", "chip", "fries"], 130),
+            // Deep-sweep fixes (was: cocktails, diet variants, processed/composite
+            // forms, brand collisions). Pins them against the shipped FoodDB.json.
+            ("black coffee with sugar", "coffee", ["russian", "bean"], 30),  // was "Black Russian"
+            ("ginger ale", "ginger ale", ["whiskey", "alcoholic"], 50),      // was "Whiskey and ginger ale"
+            ("cream cheese", "cream cheese", ["light", "low"], nil),          // was "…, light"
+            ("sour cream", "sour cream", ["light", "low"], nil),             // was "…, light"
+            ("parmesan", "parmesan", ["topping", "fat free", "free"], nil),   // was "…topping, fat free"
+            ("mozzarella", "mozzarella", ["fried", "dressing", "topping"], nil), // was "fried mozzarella"
+            ("block of cheddar", "cheddar", ["cream cheese", "cottage"], nil), // was "Cream cheese…block"
+            ("cheese curds", "cheddar", ["cottage", "sandwich"], nil),       // was "cottage, dry curd"
+            ("butter chicken with naan", "chicken", [], 400),                // was "Butter, NFS" (743 kcal!)
+            ("passion fruit", "passion fruit", ["nectar", "juice"], 110),    // was "…nectar"
+            ("cantaloupe", "cantaloupe", ["nectar"], 60),                    // was "…nectar"
+            ("russet potato", "potato", ["pancake", "chip", "fries"], 140),  // was "Potato pancake"
+            ("meatballs", "meatball", ["sandwich", "sub"], nil),             // was "Meatball…sub"
+            ("big mac", "mac", ["macaroni"], nil),                            // was "Macaroni…" (mac alias)
+            ("milk chocolate", "chocolate", ["cocoa", "beverage"], nil),     // was "…hot cocoa" beverage
+            ("onion rings", "onion", ["flavored"], nil),                     // was "Onion flavored rings"
         ]
         for (q, must, banned, maxKcal) in cases {
             let f = food(q)

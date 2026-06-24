@@ -28,8 +28,8 @@ struct SweepHarness {
             }
             let raw = FoodDatabase.expandAliases(FoodDatabase.tokenize(q))
             let qf = raw.filter { !FoodDatabase.fillerWords.contains($0) }
-            let hasConn = raw.contains { FoodDatabase.connectors.contains($0) }
-            let head = hasConn ? qf.first : qf.last
+            let connIdx = raw.firstIndex { FoodDatabase.connectors.contains($0) }
+            let head = connIdx.map { raw[..<$0].last { !FoodDatabase.fillerWords.contains($0) } ?? qf.first } ?? qf.last
             let headIn = (head != nil && Set(FoodDatabase.tokenize(f.name)).contains(head!)) ? "1" : "0"
             out += "RESULT ||| \(q) ||| \(f.name) ||| \(Int(f.kcal)) ||| \(headIn)\n"
         }

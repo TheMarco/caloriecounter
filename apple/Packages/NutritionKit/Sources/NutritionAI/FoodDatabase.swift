@@ -118,15 +118,29 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
 
     /// Best matches for a free-text query, strongest first (≤ `limit`, above a floor).
     public func match(_ query: String, limit: Int = 5) -> [DBMatch] {
-        let rawTokens = Self.expandAliases(Self.tokenize(query))
+        // Whole-query rewrites for names whose head/primary token literally collides
+        // with a different food ("big mac" → macaroni via alias, "candy cane" → sugar
+        // cane, "milk chocolate" → hot cocoa). A phrase hit replaces the query outright
+        // and SKIPS per-token aliasing, so "big mac" isn't re-expanded to "macaroni".
+        let baseTokens = Self.tokenize(query)
+        let rawTokens = Self.phraseAliases[baseTokens.joined(separator: " ")]
+            .map(Self.tokenize) ?? Self.expandAliases(baseTokens)
         let q = rawTokens.filter { !Self.fillerWords.contains($0) }
         guard !q.isEmpty else { return [] }
         let qSet = Set(q)
         let joinedQuery = q.joined(separator: " ")
         let multiWord = qSet.count >= 2
-        // The head noun: "X with Y and Z" → X (first); plain "A B C" → C (last).
-        let hasConnector = rawTokens.contains { Self.connectors.contains($0) }
-        let head = hasConnector ? q.first : q.last
+        // The head noun. For "X with Y…", it's the last real word BEFORE the first
+        // connector — the thing being described, which may itself be multi-word
+        // ("butter chicken with naan" → chicken, "hotdog with chili" → dog). For a
+        // plain "A B C" it's the last word.
+        let connectorIdx = rawTokens.firstIndex { Self.connectors.contains($0) }
+        let head: String?
+        if let connectorIdx {
+            head = rawTokens[..<connectorIdx].last { !Self.fillerWords.contains($0) } ?? q.first
+        } else {
+            head = q.last
+        }
 
         // Total query weight (denominator), weighting each word by its specificity.
         let totalWeight = qSet.reduce(0.0) { $0 + (idf[$1] ?? maxIdf) }
@@ -144,8 +158,13 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
             var score = totalWeight > 0 ? matchedWeight / totalWeight : 0
             if qSet.contains(entry.primary) { score += 0.6 }                 // primary-word hit
             // Head-noun hit: the food the user actually means (see `head`) — weighted
-            // like the primary, so it beats a food that only matched a modifier.
-            if let head, entry.tokens.contains(head) { score += 0.6 }
+            // like the primary, so it beats a food that only matched a modifier. When
+            // the head noun is ABSENT, penalize: the match latched onto a modifier/side
+            // word, not what the user asked for ("buffalo wings" → buffalo steak).
+            if let head {
+                if entry.tokens.contains(head) { score += 0.6 }
+                else { score -= 0.5 }
+            }
             score += 0.2 * Double(overlap.count) / Double(entry.tokens.count) // prefer concise names
             if entry.joined.contains(joinedQuery) { score += 0.4 }           // whole-phrase containment
             // USDA's "not further specified" generic form ("Milk, NFS") — the canonical
@@ -283,6 +302,20 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         "milkshake": "milk shake",
     ]
 
+    /// Whole-query rewrites (keys in STEMMED, tokenized-joined form — the same shape
+    /// `tokenize(query).joined(separator:" ")` produces). These handle iconic names
+    /// whose tokens collide with an unrelated food: the substitution bypasses per-token
+    /// alias expansion, so "big mac" resolves to McDonald's burger instead of macaroni.
+    /// Each target is verified to exist in the shipped FoodDB.json.
+    static let phraseAliases: [String: String] = [
+        "big mac": "mcdonald big mac",           // → "McDONALD'S, BIG MAC" (not Macaroni)
+        "onion ring": "fried onion ring",        // → "Fried onion rings" (not flavored snack rings)
+        "milk chocolate": "candies milk chocolate", // → "Candies, milk chocolate" (not hot cocoa)
+        "candy cane": "candies hard",            // → "Candies, hard" (not Sugar cane beverage)
+        "cheese curd": "cheddar",                // → "Cheese, Cheddar" (not cottage dry curd)
+        "laughing cow": "cheese spread",         // → a cheese spread (not "Beef, cow head")
+    ]
+
     /// Symmetric light stemmer (applied to both query and food tokens).
     static func stem(_ token: String) -> String {
         if token.count > 4, token.hasSuffix("ies") { return String(token.dropLast(3)) + "y" }
@@ -314,6 +347,25 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         "white", "chocolate",
         // Exclusion variants ("…, no bun", "…, no salt") — not the standard form.
         "no",
+        // Sweetened-beverage forms of a whole food (passion fruit → "…nectar").
+        "nectar", "sweetened",
+        // Diet/reduced variants — a bare query wants the regular form, not the light one.
+        // ("unsweetened" is intentionally NOT here — unsweetened almond/soy milk IS the
+        // default people mean.)
+        "light", "lite", "low", "lowfat", "reduced", "nonfat", "fatfree", "skim", "diet", "free",
+        // Prepared-dish forms of a bare ingredient (meatballs → "meatball sub",
+        // apple pie → "…filling"). NOTE: "sandwich"/"bowl" are intentionally excluded —
+        // a hot dog legitimately resolves to its "…sandwich, on bun" row, and "bowl" is
+        // already a portion/filler word.
+        "sub", "burrito", "dressing", "filling", "patty", "croquette", "pancake", "coated",
+        "flurry", "sundae", "glutinous", "spice", "extract", "topping", "fried",
+        // Added-ingredient variants of a staple (bread → "Bread, egg", spaghetti →
+        // "…spinach", greek yogurt → "…with oats"). Safe: only penalized when the user
+        // didn't type them, so "egg"/"spinach"/"oatmeal" queries are unaffected.
+        "egg", "spinach", "oat",
+        // Alcoholic forms — a non-alcoholic query shouldn't land on a cocktail/spirit.
+        "alcoholic", "whiskey", "vodka", "rum", "gin", "tequila", "cocktail", "russian",
+        "margarita", "mojito", "martini", "daiquiri", "brandy", "bourbon", "sangria",
     ]
 
     /// Words that signal an "X with Y and Z" structure, where the head noun is the
@@ -330,7 +382,7 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     /// Portion/grammar words — never the food itself.
     static let fillerWords: Set<String> = [
         "a", "an", "the", "of", "with", "without", "and", "or", "some", "my", "in", "on",
-        "bowl", "plate", "cup", "glass", "serving", "portion", "slice", "piece", "bit",
+        "bowl", "plate", "cup", "glass", "serving", "portion", "slice", "piece", "bit", "head", "block", "skewer",
         "large", "small", "medium", "big", "little", "half", "whole", "fresh", "plain",
         "made", "from", "homemade", "side",
         "couple", "few", "several", "pair", "bunch", "lots", "two", "three", "four", "five", "six",
