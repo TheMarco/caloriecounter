@@ -52,6 +52,20 @@ public final class AppContainer {
     /// Signal that stored data changed; triggers dependent views to reload.
     public func dataDidChange() { dataVersion &+= 1 }
 
+    // MARK: - Apple Intelligence availability (drives the optional "turn it on" hint)
+
+    /// Current on-device Apple Intelligence availability. Forced `.available` in
+    /// UI-test/demo so the hint never appears in screenshots or interferes with tests.
+    public var aiAvailability: AIAvailability {
+        (AppContainer.isUITest || AppContainer.isDemo) ? .available : FoundationModelsFoodParser.availability
+    }
+
+    /// Whether to show the one-time hint: capable device, Apple Intelligence is off,
+    /// and the user hasn't dismissed it.
+    public var shouldSuggestEnablingAI: Bool {
+        aiAvailability.suggestsEnabling && !settings.aiNudgeDismissed
+    }
+
     // MARK: - Apple Health sync glue (opt-in; each is a no-op unless its toggle is
     // on AND HealthKit is available. Failures are swallowed — never block local use.)
 

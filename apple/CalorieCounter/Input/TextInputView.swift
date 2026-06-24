@@ -11,6 +11,7 @@ import NutritionCore
 
 struct TextInputView: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.openURL) private var openURL
     let onParsed: (ParsedFood) -> Void
 
     @State private var model: TextInputModel?
@@ -40,6 +41,9 @@ struct TextInputView: View {
     private func content(_ model: TextInputModel) -> some View {
         @Bindable var model = model
         return Form {
+            if container.shouldSuggestEnablingAI {
+                Section { aiHint }
+            }
             Section {
                 TextField("e.g. “2 eggs and toast”", text: $model.query, axis: .vertical)
                     .lineLimit(1...3)
@@ -114,6 +118,32 @@ struct TextInputView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+    }
+
+    /// A quiet, dismissible nudge shown only on a capable device where Apple
+    /// Intelligence is switched off — it's what powers breaking down meals we don't
+    /// already recognize.
+    private var aiHint: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Turn on Apple Intelligence for smarter results", systemImage: "sparkles")
+                .font(.subheadline.weight(.medium))
+            Text("It lets the app break down meals it doesn’t recognize into ingredients. Find it in Settings → Apple Intelligence & Siri.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderless)
+                Spacer()
+                Button("Not now") { container.settings.aiNudgeDismissed = true }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .buttonStyle(.borderless)
+            }
+        }
+        .padding(.vertical, 2)
     }
 
     @ViewBuilder

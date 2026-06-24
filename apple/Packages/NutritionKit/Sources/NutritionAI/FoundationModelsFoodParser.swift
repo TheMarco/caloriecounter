@@ -28,6 +28,24 @@ public struct FoundationModelsFoodParser: FoodParsing {
         return false
     }
 
+    /// Current availability mapped to the app's `AIAvailability` (so the UI can tell
+    /// "capable but off" from "ineligible hardware" and nudge only the former).
+    public static var availability: AIAvailability {
+        switch SystemLanguageModel.default.availability {
+        case .available:
+            return .available
+        case .unavailable(let reason):
+            switch reason {
+            case .appleIntelligenceNotEnabled: return .notEnabled
+            case .deviceNotEligible: return .deviceNotEligible
+            case .modelNotReady: return .modelNotReady
+            @unknown default: return .unavailable
+            }
+        @unknown default:
+            return .unavailable
+        }
+    }
+
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
         guard Self.isAvailable else { throw FoundationModelsError.unavailable }
         // Retrieve generic foods resembling the input and hand the model their real

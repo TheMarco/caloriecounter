@@ -17,6 +17,9 @@ public final class SettingsStore {
     public var hasCompletedSetup: Bool { didSet { defaults.set(hasCompletedSetup, forKey: Keys.completedSetup) } }
     /// Color-scheme preference (auto/light/dark); the app maps it to a SwiftUI `ColorScheme?`.
     public var appearance: AppearanceMode { didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) } }
+    /// Whether the user dismissed the "turn on Apple Intelligence" hint (shown once,
+    /// only on a capable-but-off device). Sticky so we never nag.
+    public var aiNudgeDismissed: Bool { didSet { defaults.set(aiNudgeDismissed, forKey: Keys.aiNudgeDismissed) } }
 
     // MARK: - Apple Health (all opt-in; default off)
     /// Write food entries (calories + macros) to Apple Health.
@@ -61,6 +64,7 @@ public final class SettingsStore {
         self.biometricLockEnabled = defaults.bool(forKey: Keys.biometricLock)
         self.hasCompletedSetup = defaults.bool(forKey: Keys.completedSetup)
         self.appearance = defaults.string(forKey: Keys.appearance).flatMap(AppearanceMode.init(rawValue:)) ?? .system
+        self.aiNudgeDismissed = defaults.bool(forKey: Keys.aiNudgeDismissed)
         self.healthNutritionSyncEnabled = defaults.bool(forKey: Keys.healthNutrition)
         self.healthWeightSyncEnabled = defaults.bool(forKey: Keys.healthWeight)
         self.healthWeightImportEnabled = defaults.bool(forKey: Keys.healthWeightImport)
@@ -92,6 +96,7 @@ public final class SettingsStore {
         static let completedSetup = "settings.hasCompletedSetup"
         static let biometricLock = "settings.biometricLockEnabled"
         static let appearance = "settings.appearance"
+        static let aiNudgeDismissed = "settings.aiNudgeDismissed"
         static let healthNutrition = "settings.healthNutritionSync"
         static let healthWeight = "settings.healthWeightSync"
         static let healthWeightImport = "settings.healthWeightImport"
