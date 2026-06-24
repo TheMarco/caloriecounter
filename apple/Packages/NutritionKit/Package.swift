@@ -7,12 +7,13 @@
 //
 // Layer graph (downward only):
 //
-//     AppCore  ──▶ {NutritionStore, NutritionAPI, NutritionAI} ──▶ NutritionCore
+//     AppCore  ──▶ {NutritionStore, NutritionAPI, NutritionHealth} ──▶ NutritionCore
 //
 //   • NutritionCore  — pure domain value types, protocol seams, date/macro utils.
 //   • NutritionStore — local-only SwiftData persistence (@ModelActor store).
-//   • NutritionAPI   — proxy client (plate-photo + auth), Keychain, OpenFoodFacts.
-//   • NutritionAI    — on-device Foundation Models parsing + Vision label OCR.
+//   • NutritionAPI   — proxy client (text + plate-photo parsing + auth), Keychain,
+//                      OpenFoodFacts. All food AI is cloud (the OpenAI proxy).
+//   • NutritionHealth— Apple Health (HealthKit) read/write behind a seam.
 //   • AppCore        — @Observable DI container wiring the seams together.
 //
 // macOS is declared alongside iOS purely so the deterministic test suites run on
@@ -27,7 +28,6 @@ let package = Package(
         .library(name: "NutritionCore", targets: ["NutritionCore"]),
         .library(name: "NutritionStore", targets: ["NutritionStore"]),
         .library(name: "NutritionAPI", targets: ["NutritionAPI"]),
-        .library(name: "NutritionAI", targets: ["NutritionAI"]),
         .library(name: "AppCore", targets: ["AppCore"]),
     ],
     targets: [
@@ -35,22 +35,15 @@ let package = Package(
         .target(name: "NutritionStore", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .target(name: "NutritionAPI", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .target(
-            name: "NutritionAI",
-            dependencies: ["NutritionCore"],
-            resources: [.process("Resources")],
-            swiftSettings: [.swiftLanguageMode(.v6)]
-        ),
-        .target(
             name: "NutritionHealth",
             dependencies: ["NutritionCore"],
             swiftSettings: [.swiftLanguageMode(.v6)],
             linkerSettings: [.linkedFramework("HealthKit")]
         ),
-        .target(name: "AppCore", dependencies: ["NutritionCore", "NutritionStore", "NutritionAPI", "NutritionAI", "NutritionHealth"], swiftSettings: [.swiftLanguageMode(.v6)]),
+        .target(name: "AppCore", dependencies: ["NutritionCore", "NutritionStore", "NutritionAPI", "NutritionHealth"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionCoreTests", dependencies: ["NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionStoreTests", dependencies: ["NutritionStore", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionAPITests", dependencies: ["NutritionAPI", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
-        .testTarget(name: "NutritionAITests", dependencies: ["NutritionAI", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "NutritionHealthTests", dependencies: ["NutritionHealth", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(name: "AppCoreTests", dependencies: ["AppCore", "NutritionCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
     ]

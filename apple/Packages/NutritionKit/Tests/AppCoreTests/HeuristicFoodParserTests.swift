@@ -1,11 +1,11 @@
-// HeuristicFoodParser is the on-device fallback used when Foundation Models is
-// unavailable. Its logic is a faithful port of the `fallbackParsing` function in
-// `src/app/api/parse-food/route.ts`: quantity+unit regexes first, then a
-// longest-match lookup over a common-portion table, then an isDish-aware last
-// resort. These tests pin that behavior.
+// HeuristicFoodParser is the deterministic offline estimator used in UI-test/demo
+// builds (production parsing goes to the OpenAI proxy). Its logic is a faithful
+// port of the `fallbackParsing` function in `src/app/api/parse-food/route.ts`:
+// quantity+unit regexes first, then a longest-match lookup over a common-portion
+// table, then an isDish-aware last resort. These tests pin that behavior.
 
 import Testing
-@testable import NutritionAI
+@testable import AppCore
 import NutritionCore
 
 @Suite("HeuristicFoodParser")
@@ -70,51 +70,6 @@ struct HeuristicFoodParserTests {
         let food = try await parser.parse(text: "apple", units: .metric)
         #expect(food.food == "apple")
         #expect(food.kcal == 78)
-    }
-
-    // MARK: - USDA grounding (instance parse only; static estimate stays pure)
-
-    private func groundedParser() -> HeuristicFoodParser {
-        HeuristicFoodParser(database: FoodDatabase(foods: [
-            DBFood(name: "Salmon, Atlantic, farmed, cooked", kcal: 206, protein: 22, fat: 12, carbs: 0, fiber: nil, sodium: 61, sugar: nil),
-            DBFood(name: "Avocados, raw, all commercial varieties", kcal: 160, protein: 2, fat: 14.7, carbs: 8.5, fiber: 6.7, sodium: 7, sugar: 0.7),
-        ]))
-    }
-
-    @Test("an explicit gram amount is grounded in USDA density")
-    func gramsGrounded() async throws {
-        let food = try await groundedParser().parse(text: "150 g salmon", units: .metric)
-        #expect(food.quantity == 150)
-        #expect(food.unit == "g")
-        #expect(food.kcal == 309)                         // 206 * 1.5
-        #expect(food.protein == 33)
-        #expect(food.sodium == 100)                       // 91.5 → nearest 50 mg
-        #expect(food.notes?.contains("USDA") == true)
-    }
-
-    @Test("a single-item fallback is grounded and gains fiber/sodium it lacked before")
-    func singleItemGrounded() async throws {
-        let food = try await groundedParser().parse(text: "avocado", units: .metric)
-        #expect(food.unit == "g")
-        #expect(food.quantity == 100)
-        #expect(food.kcal == 160)                         // per-100g density, 100 g portion
-        #expect(food.fiber == 7)                          // 6.7 → nearest 1 g (was nil before)
         #expect(food.nutritionConfidence == .estimated)
-    }
-
-    @Test("a dish-sized estimate is NOT grounded (raw density would mis-scale a cooked bowl)")
-    func dishNotGrounded() async throws {
-        // "salmon ... bowl" → 250 g dish default; must stay the conservative estimate.
-        let food = try await groundedParser().parse(text: "bowl of salmon poke", units: .metric)
-        #expect(food.quantity == 250)
-        #expect(food.kcal == 400)                         // unchanged dish default, not USDA-scaled
-        #expect(food.fiber == nil)
-    }
-
-    @Test("an unknown single item without a USDA match keeps the plain default")
-    func unknownUngrounded() async throws {
-        let food = try await groundedParser().parse(text: "zorblax", units: .metric)
-        #expect(food.kcal == 150)
-        #expect(food.fiber == nil)
     }
 }

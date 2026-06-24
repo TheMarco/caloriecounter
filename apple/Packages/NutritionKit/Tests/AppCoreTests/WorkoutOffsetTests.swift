@@ -9,7 +9,6 @@ import Foundation
 import NutritionCore
 import NutritionStore
 import NutritionAPI
-import NutritionAI
 
 private struct StubFoodParser: FoodParsing {
     func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
@@ -19,11 +18,6 @@ private struct StubFoodParser: FoodParsing {
 private struct StubPhotoParser: PhotoParsing {
     func parse(imageData: Data, units: UnitSystem, details: PhotoDetails) async throws -> ParsedFood {
         ParsedFood(food: "photo", quantity: 1, unit: "plate", kcal: 1)
-    }
-}
-private struct StubLabelReader: LabelReading {
-    func readNutritionLabel(imageData: Data, units: UnitSystem) async throws -> ParsedFood {
-        ParsedFood(food: "label", quantity: 1, unit: "serving", kcal: 1)
     }
 }
 private struct StubBarcode: BarcodeResolving {
@@ -48,8 +42,8 @@ struct WorkoutOffsetTests {
         let container = AppContainer(
             store: store, keychain: keychain, apiClient: APIClient(tokens: keychain),
             foodParser: StubFoodParser(), photoParser: StubPhotoParser(),
-            labelReader: StubLabelReader(), barcodeResolver: StubBarcode(),
-            foodSearch: StaticFoodSearch(), foodDatabase: FoodDatabase(foods: []),
+            barcodeResolver: StubBarcode(),
+            foodSearch: StaticFoodSearch(),
             settings: settings, healthSync: MockHealthSyncService(
                 available: healthAvailable, seededWorkouts: seededWorkouts))
         return (container, settings)

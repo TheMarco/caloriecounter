@@ -1,12 +1,11 @@
 // Protocol seams (architecture decision: features depend on these abstractions,
-// never on SwiftData / the network / Foundation Models directly). Each is pure
-// Core — no framework leaks through — so the concrete implementations in
-// NutritionStore / NutritionAPI / NutritionAI (Phases 2–4) are contained swaps,
-// and tests can drive flows with mocks.
+// never on SwiftData / the network directly). Each is pure Core — no framework
+// leaks through — so the concrete implementations in NutritionStore / NutritionAPI
+// are contained swaps, and tests can drive flows with mocks.
 //
 // Query/aggregation semantics mirror `src/utils/idb.ts`; the parser seams mirror
 // the AI routing table (text/voice → FoodParsing, plate photo → PhotoParsing,
-// barcode → BarcodeResolving, nutrition label → LabelReading).
+// barcode → BarcodeResolving).
 
 import Foundation
 
@@ -57,7 +56,8 @@ public protocol NutritionStoring: Sendable {
     func deleteWeight(id: String) async throws
 }
 
-/// Text/voice → structured food (on-device Foundation Models, or heuristic fallback).
+/// Text/voice → structured food (the OpenAI `/api/parse-food` proxy; a deterministic
+/// heuristic stands in for UI-test/demo builds).
 public protocol FoodParsing: Sendable {
     func parse(text: String, units: UnitSystem) async throws -> ParsedFood
 }
@@ -67,26 +67,15 @@ public protocol PhotoParsing: Sendable {
     func parse(imageData: Data, units: UnitSystem, details: PhotoDetails) async throws -> ParsedFood
 }
 
-/// Barcode → structured food (OpenFoodFacts, with an FM nutriment estimate fallback).
+/// Barcode → structured food (OpenFoodFacts; when OFF knows the product but has no
+/// nutriments, the name is estimated via the cloud food parser).
 public protocol BarcodeResolving: Sendable {
     func resolve(code: String, units: UnitSystem) async throws -> ParsedFood
 }
 
 /// Free-text product name → branded matches from a nutrition database (OpenFoodFacts).
 /// Surfaced as optional, tappable suggestions in the type-food flow — generic/homemade
-/// foods still fall through to the on-device estimate. Returns [] on no match or offline.
+/// foods still fall through to the cloud estimate. Returns [] on no match or offline.
 public protocol FoodSearching: Sendable {
     func search(_ query: String, units: UnitSystem) async throws -> [ParsedFood]
-}
-
-/// Free-text description → generic-food matches from the bundled on-device USDA
-/// database (dishes + ingredients), each resolved to a portioned `ParsedFood` with,
-/// for dishes, an editable recipe breakdown. Local, synchronous, always available.
-public protocol FoodDatabaseQuerying: Sendable {
-    func suggestions(_ query: String, units: UnitSystem, limit: Int) -> [ParsedFood]
-}
-
-/// Nutrition-label photo → structured food (on-device Vision OCR + normalization).
-public protocol LabelReading: Sendable {
-    func readNutritionLabel(imageData: Data, units: UnitSystem) async throws -> ParsedFood
 }

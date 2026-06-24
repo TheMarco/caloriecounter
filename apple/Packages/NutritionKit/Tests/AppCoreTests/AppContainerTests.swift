@@ -8,7 +8,6 @@ import Foundation
 import NutritionCore
 import NutritionStore
 import NutritionAPI
-import NutritionAI
 
 private struct StubFoodParser: FoodParsing {
     func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
@@ -18,11 +17,6 @@ private struct StubFoodParser: FoodParsing {
 private struct StubPhotoParser: PhotoParsing {
     func parse(imageData: Data, units: UnitSystem, details: PhotoDetails) async throws -> ParsedFood {
         ParsedFood(food: "photo", quantity: 1, unit: "plate", kcal: 1)
-    }
-}
-private struct StubLabelReader: LabelReading {
-    func readNutritionLabel(imageData: Data, units: UnitSystem) async throws -> ParsedFood {
-        ParsedFood(food: "label", quantity: 1, unit: "serving", kcal: 1)
     }
 }
 private struct StubBarcode: BarcodeResolving {
@@ -46,10 +40,8 @@ struct AppContainerTests {
             apiClient: APIClient(tokens: keychain),
             foodParser: StubFoodParser(),
             photoParser: StubPhotoParser(),
-            labelReader: StubLabelReader(),
             barcodeResolver: StubBarcode(),
             foodSearch: StaticFoodSearch(),
-            foodDatabase: FoodDatabase(foods: []),
             settings: settings,
             healthSync: MockHealthSyncService()
         )
@@ -75,7 +67,6 @@ struct AppContainerTests {
         let container = try makeContainer()
         #expect(try await container.foodParser.parse(text: "apple", units: .metric).food == "apple")
         #expect(try await container.photoParser.parse(imageData: Data(), units: .metric, details: .default).food == "photo")
-        #expect(try await container.labelReader.readNutritionLabel(imageData: Data(), units: .metric).food == "label")
         #expect(try await container.barcodeResolver.resolve(code: "1", units: .metric).food == "barcode")
         #expect(container.settings.units == .metric)
     }
@@ -108,15 +99,5 @@ struct AppContainerTests {
         container.dataDidChange()
         container.dataDidChange()
         #expect(container.dataVersion == before + 2)
-    }
-
-    @Test("foodParser selection falls back to the heuristic parser when FM is unavailable")
-    func foodParserSelection() {
-        let parser = AppContainer.makeFoodParser()
-        if FoundationModelsFoodParser.isAvailable {
-            #expect(parser is FoundationModelsFoodParser)
-        } else {
-            #expect(parser is HeuristicFoodParser)
-        }
     }
 }

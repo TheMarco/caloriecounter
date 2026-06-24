@@ -1,8 +1,7 @@
 //
 //  TextInputView.swift
-//  Type a food description (on-device Foundation Models parse), with autocomplete
-//  from previously-eaten foods. Works fully on the simulator (heuristic parser
-//  when FM is unavailable).
+//  Type a food description (parsed by the OpenAI proxy), with autocomplete from
+//  previously-eaten foods and branded product matches from OpenFoodFacts.
 //
 
 import SwiftUI
@@ -11,7 +10,6 @@ import NutritionCore
 
 struct TextInputView: View {
     @Environment(AppContainer.self) private var container
-    @Environment(\.openURL) private var openURL
     let onParsed: (ParsedFood) -> Void
 
     @State private var model: TextInputModel?
@@ -32,7 +30,6 @@ struct TextInputView: View {
                 model = TextInputModel(store: container.store,
                                        parser: container.foodParser,
                                        foodSearch: container.foodSearch,
-                                       foodDatabase: container.foodDatabase,
                                        units: container.settings.units)
             }
         }
@@ -41,9 +38,6 @@ struct TextInputView: View {
     private func content(_ model: TextInputModel) -> some View {
         @Bindable var model = model
         return Form {
-            if container.shouldSuggestEnablingAI {
-                Section { aiHint }
-            }
             Section {
                 TextField("e.g. “2 eggs and toast”", text: $model.query)
                     .submitLabel(.search)
@@ -51,7 +45,6 @@ struct TextInputView: View {
                     .onChange(of: model.query) { _, _ in
                         Task { await model.updateSuggestions() }
                         Task { await model.searchProducts() }
-                        Task { await model.searchDatabase() }
                     }
                 Button {
                     submit(model)
@@ -63,23 +56,6 @@ struct TextInputView: View {
                     }
                 }
                 .disabled(model.query.trimmingCharacters(in: .whitespaces).isEmpty || model.isParsing)
-            }
-
-            if !model.dbMatches.isEmpty {
-                Section {
-                    ForEach(Array(model.dbMatches.enumerated()), id: \.offset) { _, match in
-                        Button {
-                            onParsed(match)
-                        } label: {
-                            matchRow(match, icon: "fork.knife")
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } header: {
-                    Text("Foods")
-                } footer: {
-                    Text("From the on-device USDA database. Tap to use measured nutrition.")
-                }
             }
 
             if !model.productMatches.isEmpty {
@@ -117,32 +93,6 @@ struct TextInputView: View {
         } message: {
             Text(errorMessage ?? "")
         }
-    }
-
-    /// A quiet, dismissible nudge shown only on a capable device where Apple
-    /// Intelligence is switched off — it's what powers breaking down meals we don't
-    /// already recognize.
-    private var aiHint: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Turn on Apple Intelligence for smarter results", systemImage: "sparkles")
-                .font(.subheadline.weight(.medium))
-            Text("It lets the app break down meals it doesn’t recognize into ingredients. Find it in Settings → Apple Intelligence & Siri.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            HStack {
-                Button("Open Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                }
-                .font(.caption.weight(.semibold))
-                .buttonStyle(.borderless)
-                Spacer()
-                Button("Not now") { container.settings.aiNudgeDismissed = true }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .buttonStyle(.borderless)
-            }
-        }
-        .padding(.vertical, 2)
     }
 
     @ViewBuilder

@@ -33,14 +33,12 @@ struct SettingsStoreTests {
         a.targets = MacroTargets(calories: 2200, fat: 70, carbs: 200, protein: 120)
         a.biometricLockEnabled = true
         a.appearance = .dark
-        a.aiNudgeDismissed = true
 
         let b = SettingsStore(defaults: defaults)
         #expect(b.units == .imperial)
         #expect(b.targets == MacroTargets(calories: 2200, fat: 70, carbs: 200, protein: 120))
         #expect(b.biometricLockEnabled == true)
         #expect(b.appearance == .dark)
-        #expect(b.aiNudgeDismissed == true)
     }
 
     @Test("Apple Health sync toggles default off and persist")

@@ -1,6 +1,9 @@
-// On-device fallback parser used when Foundation Models is unavailable (older
-// device, Apple Intelligence off, model not ready). A faithful port of the
-// `fallbackParsing` function in `src/app/api/parse-food/route.ts`:
+// Deterministic, offline food estimator — the parser wired into UI-test and demo
+// builds so flows run with no network and no cloud model. (Production text/voice
+// parsing goes to the OpenAI proxy via CloudFoodParser; this never runs there.)
+//
+// A faithful port of the `fallbackParsing` function in
+// `src/app/api/parse-food/route.ts`:
 //   1. "<number> <unit> <food>" regexes  → structural parse, no calorie estimate.
 //   2. longest-key match over a common-portion table → estimated portion + kcal.
 //   3. isDish-aware last resort defaults.
@@ -11,37 +14,11 @@ import Foundation
 import NutritionCore
 
 public struct HeuristicFoodParser: FoodParsing {
-    /// Generic-food density knowledge — upgrades gram-based estimates with real
-    /// USDA numbers and fills fiber/sodium/sugar that the table can't (see FoodDatabase).
-    private let database: FoodDatabase
-
-    public init(database: FoodDatabase = .shared) {
-        self.database = database
-    }
+    public init() {}
 
     public func parse(text: String, units: UnitSystem) async throws -> ParsedFood {
-        let (base, usdaEligible) = Self.estimateDetailed(text, units: units)
-        var food = base
+        var food = Self.estimate(text, units: units)
         food.unit = FoodUnitNormalizer.normalizedUnit(food: food.food, unit: food.unit, quantity: food.quantity)
-
-        // Ground gram/ml estimates in USDA density when a generic food matches well.
-        // (Only mass-based portions: scaling a raw-ingredient density onto a cooked
-        // "bowl" estimate would be wrong, so dishes/curated portions are left alone.)
-        if usdaEligible, food.unit == "g" || food.unit == "ml",
-           let match = database.bestConfidentMatch(food.food) {
-            let s = match.scaled(toGrams: food.quantity)
-            food.kcal = s.kcal.rounded()
-            food.fat = (s.fat * 10).rounded() / 10
-            food.carbs = (s.carbs * 10).rounded() / 10
-            food.protein = (s.protein * 10).rounded() / 10
-            food.fiber = s.fiber.map { $0.rounded() }
-            food.sodium = s.sodium.map { ($0 / 50).rounded() * 50 }
-            food.sugar = s.sugar.map { $0.rounded() }
-            food.notes = "Estimated from USDA generic-food data"
-            food.nutritionConfidence = .estimated
-            return food
-        }
-
         food.nutritionConfidence = .estimated   // heuristic: leave fiber/sodium nil, don't fabricate
         return food
     }
@@ -49,36 +26,28 @@ public struct HeuristicFoodParser: FoodParsing {
     // MARK: - Pure estimation
 
     public static func estimate(_ text: String, units: UnitSystem) -> ParsedFood {
-        estimateDetailed(text, units: units).food
-    }
-
-    /// Estimate plus whether the result is a mass-based portion safe to ground with
-    /// USDA densities (true for explicit-gram parses and single-item fallbacks;
-    /// false for curated common portions and dish-sized defaults).
-    static func estimateDetailed(_ text: String, units: UnitSystem) -> (food: ParsedFood, usdaEligible: Bool) {
         let clean = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
         // 1. "<number> <unit> <food>" — the user gave an explicit amount.
-        if let structural = quantityUnitMatch(clean) { return (structural, true) }
+        if let structural = quantityUnitMatch(clean) { return structural }
 
         // 2. Common-portion table, longest (most specific) key first. Curated values.
         for (key, portion) in commonPortions.sorted(by: { $0.0.count > $1.0.count }) {
             if clean.contains(key) {
-                return (ParsedFood(food: key, quantity: portion.quantity, unit: portion.unit,
-                                   kcal: portion.kcal, notes: "Estimated portion size - please verify"), false)
+                return ParsedFood(food: key, quantity: portion.quantity, unit: portion.unit,
+                                  kcal: portion.kcal, notes: "Estimated portion size - please verify")
             }
         }
 
         // 3. Last resort: dishes get a larger default portion than single items.
         let isDish = ["plate", "bowl", "dish", "serving", "portion"].contains { clean.contains($0) }
-        let food = ParsedFood(
+        return ParsedFood(
             food: clean,
             quantity: isDish ? 250 : 100,
             unit: "g",
             kcal: isDish ? 400 : 150,
             notes: "Estimated portion - please verify and adjust as needed"
         )
-        return (food, !isDish)   // single items are safe to ground; dishes aren't
     }
 
     // MARK: - Quantity+unit regexes

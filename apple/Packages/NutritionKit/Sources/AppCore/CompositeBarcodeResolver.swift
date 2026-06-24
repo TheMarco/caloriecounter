@@ -1,8 +1,7 @@
 // Barcode resolution chain: OpenFoodFacts first; if the product is known but has
 // no calorie data (`OpenFoodFactsError.missingNutriments`), fall back to an
-// on-device estimate from the product name. The estimator is injected as a
-// closure so AppCore can wire FoundationModelsBarcodeEstimator while tests pass a
-// mock (and so this layer doesn't hard-depend on NutritionAI).
+// estimate of the product name. The estimator is injected as a closure so AppCore
+// can wire the cloud food parser (`/api/parse-food`) while tests pass a mock.
 
 import Foundation
 import NutritionCore

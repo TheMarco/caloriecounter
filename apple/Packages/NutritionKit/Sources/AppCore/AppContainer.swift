@@ -2,12 +2,11 @@
 // `@Observable` so views re-render only on the properties they read; `@MainActor`
 // because it owns UI-facing settings and is created/held by the app shell.
 //
-// Wiring decisions:
-//  • foodParser  — Foundation Models if available, else the heuristic fallback.
-//  • photoParser — the cloud `/api/parse-photo` proxy (the only cloud call).
-//  • labelReader — on-device Vision OCR.
-//  • barcodeResolver — OpenFoodFacts, falling back to an on-device FM estimate
-//    when OFF has the product but no nutriments.
+// Wiring decisions (all food AI is cloud — the OpenAI proxy):
+//  • foodParser  — the `/api/parse-food` proxy (heuristic stub in test/demo).
+//  • photoParser — the cloud `/api/parse-photo` proxy.
+//  • barcodeResolver — OpenFoodFacts, falling back to a cloud estimate of the
+//    product name when OFF has the product but no nutriments.
 //
 // All persistence is local-only (no CloudKit); the only stored secret is the
 // proxy auth token, in the Keychain.
@@ -17,7 +16,6 @@ import Observation
 import NutritionCore
 import NutritionStore
 import NutritionAPI
-import NutritionAI
 import NutritionHealth
 
 @Observable
@@ -30,12 +28,9 @@ public final class AppContainer {
     public let apiClient: APIClient
     public let foodParser: any FoodParsing
     public let photoParser: any PhotoParsing
-    public let labelReader: any LabelReading
     public let barcodeResolver: any BarcodeResolving
     /// Free-text product search (OFF) surfacing branded matches in the type flow.
     public let foodSearch: any FoodSearching
-    /// On-device USDA generic-food database surfacing tappable matches in the type flow.
-    public let foodDatabase: any FoodDatabaseQuerying
     public let settings: SettingsStore
     /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
     public let healthSync: any HealthSyncing
@@ -51,20 +46,6 @@ public final class AppContainer {
 
     /// Signal that stored data changed; triggers dependent views to reload.
     public func dataDidChange() { dataVersion &+= 1 }
-
-    // MARK: - Apple Intelligence availability (drives the optional "turn it on" hint)
-
-    /// Current on-device Apple Intelligence availability. Forced `.available` in
-    /// UI-test/demo so the hint never appears in screenshots or interferes with tests.
-    public var aiAvailability: AIAvailability {
-        (AppContainer.isUITest || AppContainer.isDemo) ? .available : FoundationModelsFoodParser.availability
-    }
-
-    /// Whether to show the one-time hint: capable device, Apple Intelligence is off,
-    /// and the user hasn't dismissed it.
-    public var shouldSuggestEnablingAI: Bool {
-        aiAvailability.suggestsEnabling && !settings.aiNudgeDismissed
-    }
 
     // MARK: - Apple Health sync glue (opt-in; each is a no-op unless its toggle is
     // on AND HealthKit is available. Failures are swallowed — never block local use.)
@@ -206,10 +187,8 @@ public final class AppContainer {
         apiClient: APIClient,
         foodParser: any FoodParsing,
         photoParser: any PhotoParsing,
-        labelReader: any LabelReading,
         barcodeResolver: any BarcodeResolving,
         foodSearch: any FoodSearching,
-        foodDatabase: any FoodDatabaseQuerying,
         settings: SettingsStore,
         healthSync: any HealthSyncing
     ) {
@@ -218,10 +197,8 @@ public final class AppContainer {
         self.apiClient = apiClient
         self.foodParser = foodParser
         self.photoParser = photoParser
-        self.labelReader = labelReader
         self.barcodeResolver = barcodeResolver
         self.foodSearch = foodSearch
-        self.foodDatabase = foodDatabase
         self.settings = settings
         self.healthSync = healthSync
         self.isHealthAvailable = healthSync.isAvailable()
@@ -251,62 +228,39 @@ public final class AppContainer {
         let store = (AppContainer.isUITest || AppContainer.isDemo)
             ? try SwiftDataStore.make(inMemory: true)
             : try SwiftDataStore.make(url: AppContainer.storeURL())
+        // The OpenAI proxy parser. Production text/voice "Analyze" goes here, and the
+        // barcode resolver reuses it to estimate products OFF recognizes but has no
+        // nutriments for. UI-test/demo builds swap in the deterministic heuristic.
+        let cloudParser = CloudFoodParser(client: client)
         let barcode = CompositeBarcodeResolver(
             primary: OpenFoodFactsResolver(),
-            estimate: { name, units in
-                try await FoundationModelsBarcodeEstimator().estimate(productName: name, units: units)
-            }
+            estimate: { name, units in try await cloudParser.parse(text: name, units: units) }
         )
+        let offline = AppContainer.isUITest || AppContainer.isDemo
         self.init(
             store: store,
             keychain: keychain,
             apiClient: client,
-            // "Analyze" pipeline. Production routes text/voice to the OpenAI proxy
-            // (/api/parse-food) — a strong cloud model returns the nutrition estimate
-            // and an editable breakdown, like the original web app. Online-only by
-            // design; a network failure surfaces as "couldn't analyze". UI tests/demos
-            // stay on the deterministic on-device chain (no network).
-            // (The on-device USDA/Foundation-Models system is archived — see the
-            // `food-ai-on-device-v1` tag — pending removal.)
-            foodParser: (AppContainer.isUITest || AppContainer.isDemo)
-                ? CompositeFoodParser([DatabaseFoodParser(), AppContainer.makeFoodParser(), HeuristicFoodParser()])
-                : CloudFoodParser(client: client),
+            // Production routes text/voice to the OpenAI proxy (/api/parse-food) — a
+            // strong cloud model returns the nutrition estimate and an editable
+            // breakdown, like the original web app. Online-only by design; a network
+            // failure surfaces as "couldn't analyze". UI tests/demos use the
+            // deterministic offline heuristic (no network).
+            foodParser: offline ? HeuristicFoodParser() : cloudParser,
             photoParser: APIPhotoParser(client: client),
-            labelReader: VisionLabelReader(),
             barcodeResolver: barcode,
             // Real product search online; an empty stub in tests/demo (no network).
-            foodSearch: (AppContainer.isUITest || AppContainer.isDemo)
-                ? StaticFoodSearch()
-                : OpenFoodFactsResolver(),
-            // Lazy seam: the bundled DB cold-loads only on the first off-main query,
-            // never during this synchronous (main-actor) launch init.
-            foodDatabase: (AppContainer.isUITest || AppContainer.isDemo)
-                ? StaticFoodDatabase()
-                : LazySharedFoodDatabase(),
+            foodSearch: offline ? StaticFoodSearch() : OpenFoodFactsResolver(),
             settings: SettingsStore(defaultUnits: .deviceDefault),
-            healthSync: (AppContainer.isUITest || AppContainer.isDemo)
-                ? MockHealthSyncService()
-                : AppleHealthKitService()
+            healthSync: offline ? MockHealthSyncService() : AppleHealthKitService()
         )
-    }
-
-    /// Foundation Models when usable, otherwise the deterministic heuristic.
-    /// UI tests force the heuristic parser so parses are deterministic.
-    public static func makeFoodParser() -> any FoodParsing {
-        if isUITest { return HeuristicFoodParser() }
-        return FoundationModelsFoodParser.isAvailable ? FoundationModelsFoodParser() : HeuristicFoodParser()
     }
 
     // MARK: - Lifecycle
     /// Preflight hook called from the root view's `.task`. Seeds demo data in
-    /// `-demo` mode; otherwise the store is ready and FM availability is resolved
-    /// at wiring time. Also warms the bundled food database off-main so the first
-    /// type-flow query doesn't pay the ~380 ms cold load.
+    /// `-demo` mode; otherwise the store is already ready (all food AI is cloud).
     public func bootstrap() async {
         if AppContainer.isDemo { await seedDemoData() }
-        if !AppContainer.isUITest {
-            Task.detached(priority: .utility) { _ = FoodDatabase.shared.count }
-        }
     }
 
     /// Seed ~2 months of realistic, individually-named meals (breakfast / lunch /
