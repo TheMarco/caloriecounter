@@ -198,6 +198,25 @@ struct FoodDatabaseTests {
         #expect(db.resolve("bacon lettuce tomato sandwich", units: .metric)?.components?.isEmpty == false)
     }
 
+    /// A described dish must not resolve to a condiment/component standing in for it
+    /// ("fettuccine alfredo" → "Alfredo sauce") — that's a partial answer pretending to
+    /// be the whole thing. The Analyze chain then defers to a whole-dish estimate.
+    @Test("a condiment posing as a described dish defers (no partial 'sauce' answer)")
+    func partialComponentMatchDefers() {
+        let db = FoodDatabase.shared
+        func name(_ q: String) -> String? { db.confidentWholeMatch(q)?.name.lowercased() }
+        // Sauce standing in for a pasta dish → defer (nil).
+        #expect(db.confidentWholeMatch("fettuccine alfredo") == nil)
+        #expect(db.confidentWholeMatch("fettucine alfredo with parmesan") == nil)
+        #expect(db.confidentWholeMatch("chicken alfredo") == nil)
+        // …but the condiment ITSELF, or a match that covers the whole query, stays.
+        #expect(name("alfredo sauce")?.contains("alfredo") == true)
+        #expect(name("pesto")?.contains("pesto") == true)
+        #expect(name("black coffee")?.contains("coffee") == true)   // dropped modifier, not a component
+        #expect(name("caesar salad")?.contains("caesar") == true)   // covers the whole query
+        #expect(name("chicken curry")?.contains("chicken") == true)
+    }
+
     @Test("base staples and enrichment lines are classified as non-food ingredients")
     func baseOrEnrichmentClassifier() {
         for n in ["Flour", "Oil", "Sugars", "Salt", "Vegetable oil", "Table fat",

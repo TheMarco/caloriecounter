@@ -207,6 +207,27 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
         return top.food
     }
 
+    /// A confident match suitable as a FINAL ANSWER (stricter than `bestConfidentMatch`,
+    /// which is fine for grounding). Rejects a condiment/component standing in for the
+    /// dish the user described — "fettuccine alfredo" must NOT resolve to "Alfredo
+    /// sauce", "chicken alfredo" must not resolve to the sauce either. The caller then
+    /// defers to a whole-dish estimate. The match is allowed to ADD a component word
+    /// only when it still covers the whole query ("pesto" → "Pesto sauce", "ranch" →
+    /// "Dressing, ranch", "alfredo" → "Alfredo sauce" — the user asked for just that).
+    func confidentWholeMatch(_ query: String, minScore: Double = 1.1) -> DBFood? {
+        guard let top = match(query, limit: 1).first, top.score >= minScore else { return nil }
+        let base = Self.tokenize(query)
+        let rawTokens = Self.phraseAliases[base.joined(separator: " ")].map(Self.tokenize) ?? Self.expandAliases(base)
+        let qSet = Set(rawTokens.filter { !Self.fillerWords.contains($0) })
+        let matchTokens = Set(Self.tokenize(top.food.name))
+        // Does the match introduce a condiment/component word the user didn't type?
+        let introducesComponent = !matchTokens.intersection(Self.componentWords).isSubset(of: qSet)
+        // Does it cover every word the user DID type?
+        let coversWholeQuery = qSet.isSubset(of: matchTokens)
+        if introducesComponent && !coversWholeQuery { return nil }   // a sauce posing as the dish → defer
+        return top.food
+    }
+
     /// Top foods as grounding references for the AI parsers (per-100g densities).
     public func referenceFoods(_ query: String, limit: Int = 3) -> [DBFood] {
         match(query, limit: limit).map(\.food)
@@ -219,7 +240,7 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     /// `keepingName` overrides the food name with the user's wording (the Analyze
     /// path keeps "apple"; a tapped suggestion keeps the canonical DB name).
     public func resolve(_ query: String, units: UnitSystem, keepingName: String? = nil) -> ParsedFood? {
-        guard let food = bestConfidentMatch(query) else { return nil }
+        guard let food = confidentWholeMatch(query) else { return nil }
         return parsedFood(for: food, units: units, nameOverride: keepingName)
     }
 
@@ -413,6 +434,15 @@ public final class FoodDatabase: FoodDatabaseQuerying, Sendable {
     static let genericMarkers: Set<String> = [
         "nfs", "ns", "as", "to", "type", "cooked", "raw", "brewed", "prepared",
         "reconstituted", "fresh", "or",
+    ]
+
+    /// Condiment/component words: a match that ADDS one of these (a "sauce",
+    /// "dressing"…) the user didn't type, while missing part of their query, is a
+    /// component standing in for a whole dish ("Alfredo sauce" for "fettuccine
+    /// alfredo") — not a final answer. (Stemmed; "sauces" → "sauce".)
+    static let componentWords: Set<String> = [
+        "sauce", "dressing", "gravy", "marinade", "glaze", "vinaigrette",
+        "seasoning", "condiment", "dip", "spread", "syrup",
     ]
 
     /// Portion/grammar words — never the food itself.
