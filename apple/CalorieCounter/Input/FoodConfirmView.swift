@@ -72,15 +72,13 @@ private struct ConfirmForm: View {
             }
             if model.hasBreakdown {
                 breakdownSection
-            } else {
+            } else if model.fiber != nil || model.sodium != nil || model.sugar != nil {
                 Section {
-                    advancedRow("Fiber", $model.fiberText, "g")
-                    advancedRow("Sodium", $model.sodiumText, "mg")
-                    advancedRow("Sugar", $model.sugarText, "g")
+                    if let f = model.fiber { nutritionRow("Fiber", f, "g") }
+                    if let s = model.sodium { nutritionRow("Sodium", s, "mg") }
+                    if let su = model.sugar { nutritionRow("Sugar", su, "g") }
                 } header: {
                     Text("Advanced Nutrition").font(.footnote)
-                } footer: {
-                    Text("Optional — leave blank if unknown.").font(.caption2)
                 }
             }
             if let notes, !notes.isEmpty {
@@ -154,15 +152,6 @@ private struct ConfirmForm: View {
         }
     }
 
-    /// A quiet, secondary row for optional fiber/sodium/sugar (visually subordinate
-    /// to the macros above).
-    private func advancedRow(_ label: String, _ text: Binding<String>, _ unit: String) -> some View {
-        HStack {
-            Text(label).font(.subheadline).foregroundStyle(.secondary)
-            Spacer(minLength: 8)
-            PillTextField(text: text, unit: unit, placeholder: "—", accessibilityLabel: label)
-        }
-    }
 }
 
 /// One editable ingredient line: name · [amount g] pill · kcal. The amount is a

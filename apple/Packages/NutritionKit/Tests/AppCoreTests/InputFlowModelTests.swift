@@ -21,27 +21,22 @@ struct FoodConfirmModelTests {
     private let parsed = ParsedFood(food: "Brown Rice", quantity: 100, unit: "g",
                                     kcal: 111, fat: 0.9, carbs: 23, protein: 2.6)
 
-    @Test("advanced nutrition is seeded, editable, and marks user-edited; blank → nil")
-    func advancedNutrition() throws {
+    @Test("context nutrients are read-only, derived from the parse, and scale with quantity; nil stays nil")
+    func contextNutrientsDerived() throws {
         let parsed = ParsedFood(food: "Bran", quantity: 1, unit: "bowl", kcal: 200,
                                 fiber: 12, sodium: 210, sugar: nil, nutritionConfidence: .barcode)
         let model = FoodConfirmModel(parsed: parsed, method: .barcode, store: try makeStore())
-        // Seeded from the parse.
-        #expect(model.fiberText == "12")
-        #expect(model.sodiumText == "210")
-        #expect(model.sugarText == "")
+        // Derived from the parse at the original quantity; unknown stays unknown.
+        #expect(model.fiber == 12)
+        #expect(model.sodium == 210)
+        #expect(model.sugar == nil)
+        #expect(model.makeEntry().nutritionConfidence == .barcode)   // not hand-edited
 
-        // Unedited → keeps the parse source and values.
-        #expect(model.makeEntry().fiber == 12)
-        #expect(model.makeEntry().nutritionConfidence == .barcode)
-
-        // Editing a value flips the source to .userEdited; a blank stays nil.
-        model.fiberText = "9"
-        model.sodiumText = ""
-        let e = model.makeEntry()
-        #expect(e.fiber == 9)
-        #expect(e.sodium == nil)
-        #expect(e.nutritionConfidence == .userEdited)
+        // Doubling the quantity scales them like the macros do.
+        model.quantityText = "2"
+        #expect(model.fiber == 24)
+        #expect(model.sodium == 420)
+        #expect(model.sugar == nil)
     }
 
     @Test("nutrition scales (and rounds kcal) the moment the quantity changes")
@@ -120,15 +115,16 @@ struct FoodConfirmModelTests {
         #expect(model.kcal == 480)                 // two servings
     }
 
-    @Test("no breakdown → advanced fields and original-scaling behave exactly as before")
-    func noBreakdownUnchanged() throws {
+    @Test("no breakdown → nutrition (incl. fiber/sodium) all scales from the parse with the quantity")
+    func noBreakdownScalesFromParse() throws {
         let p = ParsedFood(food: "Brown Rice", quantity: 100, unit: "g", kcal: 111, fat: 0.9, carbs: 23, protein: 2.6, fiber: 1)
         let model = FoodConfirmModel(parsed: p, method: .text, store: try makeStore())
         #expect(!model.hasBreakdown)
         #expect(model.kcal == 111)
+        #expect(model.fiber == 1)
         model.quantityText = "200"
-        #expect(model.kcal == 222)                 // original-scaling path, unchanged
-        #expect(model.fiber == 1)                  // from the advanced text field, not a breakdown
+        #expect(model.kcal == 222)                 // scales from the parse
+        #expect(model.fiber == 2)                  // fiber is a nutrient too — scales with the amount
     }
 
     @Test("save persists an Entry with the edited values and chosen method")

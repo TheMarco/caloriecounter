@@ -45,6 +45,10 @@ public enum MacroMath {
             result.fat = 0
             result.carbs = 0
             result.protein = 0
+            // Context nutrients scale to a known zero, or stay unknown.
+            result.fiber = entry.fiber.map { _ in 0 }
+            result.sodium = entry.sodium.map { _ in 0 }
+            result.sugar = entry.sugar.map { _ in 0 }
             return result
         }
         let ratio = newQuantity / entry.quantity
@@ -56,6 +60,10 @@ public enum MacroMath {
         result.fat = entry.fat * ratio
         result.carbs = entry.carbs * ratio
         result.protein = entry.protein * ratio
+        // Fiber/sodium/sugar are nutrients too — scale them with the amount (nil stays nil).
+        result.fiber = entry.fiber.map { $0 * ratio }
+        result.sodium = entry.sodium.map { $0 * ratio }
+        result.sugar = entry.sugar.map { $0 * ratio }
         return result
     }
 }

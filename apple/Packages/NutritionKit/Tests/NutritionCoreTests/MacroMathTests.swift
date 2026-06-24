@@ -78,4 +78,21 @@ struct MacroMathTests {
         #expect(scaled.carbs == 0)
         #expect(scaled.protein == 0)
     }
+
+    @Test("scaled also scales fiber/sodium/sugar (nutrients too); unknown stays nil")
+    func scaledContextNutrients() {
+        let entry = Entry(
+            id: "e1", date: "2026-06-22", timestamp: Date(timeIntervalSince1970: 0),
+            food: "Bran", quantity: 100, unit: "g", kcal: 200, fat: 2, carbs: 40, protein: 8,
+            method: .text, fiber: 12, sodium: 210, sugar: nil
+        )
+        let scaled = MacroMath.scaled(entry, toQuantity: 200)
+        #expect(scaled.fiber == 24)
+        #expect(scaled.sodium == 420)
+        #expect(scaled.sugar == nil)                 // unknown is never fabricated
+
+        let zeroed = MacroMath.scaled(entry, toQuantity: 0)
+        #expect(zeroed.fiber == 0)                   // known zero
+        #expect(zeroed.sugar == nil)                 // still unknown
+    }
 }

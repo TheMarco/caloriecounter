@@ -19,10 +19,6 @@ public final class FoodConfirmModel {
     public var unit: String
     /// Edited as text so the field can be cleared; `quantity` parses it.
     public var quantityText: String
-    // Optional "Advanced Nutrition" — editable, blank = unknown.
-    public var fiberText: String
-    public var sodiumText: String
-    public var sugarText: String
 
     // Editable ingredient breakdown for compound foods (a matched dish's recipe or
     // the model's itemization). Empty for simple foods. When present, the breakdown
@@ -42,9 +38,6 @@ public final class FoodConfirmModel {
         self.food = parsed.food
         self.unit = parsed.unit
         self.quantityText = FoodConfirmModel.format(parsed.quantity)
-        self.fiberText = parsed.fiber.map(FoodConfirmModel.format) ?? ""
-        self.sodiumText = parsed.sodium.map(FoodConfirmModel.format) ?? ""
-        self.sugarText = parsed.sugar.map(FoodConfirmModel.format) ?? ""
         self.components = parsed.components ?? []
         self.method = method
         self.store = store
@@ -54,27 +47,19 @@ public final class FoodConfirmModel {
     /// True when this food carries an editable ingredient breakdown.
     public var hasBreakdown: Bool { !components.isEmpty }
 
+    // Context nutrients are DERIVED like the macros: from the breakdown when present,
+    // else scaled from the parse with the quantity. Read-only (nil stays unknown).
     public var fiber: Double? {
-        hasBreakdown ? components.summed(\.fiber).map { round1($0 * quantityRatio) } : parseOptional(fiberText)
+        hasBreakdown ? components.summed(\.fiber).map { round1($0 * quantityRatio) }
+                     : original.fiber.map { round1($0 * quantityRatio) }
     }
     public var sodium: Double? {
-        hasBreakdown ? components.summed(\.sodium).map { ($0 * quantityRatio).rounded() } : parseOptional(sodiumText)
+        hasBreakdown ? components.summed(\.sodium).map { ($0 * quantityRatio).rounded() }
+                     : original.sodium.map { ($0 * quantityRatio).rounded() }
     }
     public var sugar: Double? {
-        hasBreakdown ? components.summed(\.sugar).map { round1($0 * quantityRatio) } : parseOptional(sugarText)
-    }
-
-    private func parseOptional(_ text: String) -> Double? {
-        let t = text.trimmingCharacters(in: .whitespaces)
-        return t.isEmpty ? nil : Double(t)
-    }
-    /// True once the user has typed/changed any advanced-nutrition TEXT value. (Uses
-    /// the raw fields, not the computed nutrition, so a breakdown-derived value never
-    /// looks "edited" on its own.)
-    private var advancedEdited: Bool {
-        parseOptional(fiberText) != original.fiber
-            || parseOptional(sodiumText) != original.sodium
-            || parseOptional(sugarText) != original.sugar
+        hasBreakdown ? components.summed(\.sugar).map { round1($0 * quantityRatio) }
+                     : original.sugar.map { round1($0 * quantityRatio) }
     }
 
     // MARK: - Breakdown editing (flips the source to .userEdited)
@@ -143,7 +128,7 @@ public final class FoodConfirmModel {
             kcal: kcal, fat: fat, carbs: carbs, protein: protein,
             method: method, confidence: original.confidence,
             fiber: fiber, sodium: sodium, sugar: sugar,
-            nutritionConfidence: (advancedEdited || userBreakdownEdited) ? .userEdited : original.nutritionConfidence
+            nutritionConfidence: userBreakdownEdited ? .userEdited : original.nutritionConfidence
         )
     }
 
