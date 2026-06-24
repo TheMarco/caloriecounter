@@ -18,6 +18,7 @@ struct FoodConfirmView: View {
     @State private var model: FoodConfirmModel?
     @State private var searchText = ""
     @State private var reanalyzing = false
+    @State private var currentNotes: String?
 
     /// Typed/spoken entries can be re-analyzed in place; a scan can't be re-typed.
     private var canResearch: Bool { method == .text || method == .voice }
@@ -25,7 +26,7 @@ struct FoodConfirmView: View {
     var body: some View {
         Group {
             if let model {
-                ConfirmForm(model: model, notes: parsed.notes, onSaved: onSaved,
+                ConfirmForm(model: model, notes: currentNotes, onSaved: onSaved,
                             searchTerm: canResearch ? $searchText : nil,
                             reanalyzing: reanalyzing,
                             onReanalyze: reanalyze)
@@ -37,6 +38,7 @@ struct FoodConfirmView: View {
             if model == nil {
                 model = FoodConfirmModel(parsed: parsed, method: method, store: container.store)
                 searchText = parsed.food
+                currentNotes = parsed.notes
             }
         }
     }
@@ -52,6 +54,7 @@ struct FoodConfirmView: View {
             reanalyzing = false
             if let result {
                 model = FoodConfirmModel(parsed: result, method: method, store: container.store)
+                currentNotes = result.notes
             }
         }
     }
@@ -78,10 +81,20 @@ private struct ConfirmForm: View {
                         TextField("Edit search…", text: searchTerm)
                             .submitLabel(.search)
                             .onSubmit(onReanalyze)
-                        if reanalyzing { ProgressView() }
+                        if reanalyzing {
+                            ProgressView()
+                        } else {
+                            // An explicit tap target — the keyboard's Search key works,
+                            // but most people dismiss with the green-check toolbar, which
+                            // doesn't submit. This always re-runs the parser.
+                            Button("Re-analyze", action: onReanalyze)
+                                .font(.subheadline.weight(.semibold))
+                                .buttonStyle(.borderless)
+                                .disabled(searchTerm.wrappedValue.trimmingCharacters(in: .whitespaces).isEmpty)
+                        }
                     }
                 } footer: {
-                    Text("Change what you typed and press search to re-analyze.")
+                    Text("Edit what you typed, then tap Re-analyze.")
                 }
             }
             Section("Food") {
