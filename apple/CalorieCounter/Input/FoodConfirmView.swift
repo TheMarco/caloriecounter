@@ -16,11 +16,19 @@ struct FoodConfirmView: View {
     let onSaved: () -> Void
 
     @State private var model: FoodConfirmModel?
+    @State private var searchText = ""
+    @State private var reanalyzing = false
+
+    /// Typed/spoken entries can be re-analyzed in place; a scan can't be re-typed.
+    private var canResearch: Bool { method == .text || method == .voice }
 
     var body: some View {
         Group {
             if let model {
-                ConfirmForm(model: model, notes: parsed.notes, onSaved: onSaved)
+                ConfirmForm(model: model, notes: parsed.notes, onSaved: onSaved,
+                            searchTerm: canResearch ? $searchText : nil,
+                            reanalyzing: reanalyzing,
+                            onReanalyze: reanalyze)
             } else {
                 ProgressView()
             }
@@ -28,6 +36,22 @@ struct FoodConfirmView: View {
         .task {
             if model == nil {
                 model = FoodConfirmModel(parsed: parsed, method: method, store: container.store)
+                searchText = parsed.food
+            }
+        }
+    }
+
+    /// Re-run the parser on an edited search term and replace the result in place,
+    /// so you don't have to go back to the search screen.
+    private func reanalyze() {
+        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty, !reanalyzing else { return }
+        reanalyzing = true
+        Task {
+            let result = try? await container.foodParser.parse(text: q, units: container.settings.units)
+            reanalyzing = false
+            if let result {
+                model = FoodConfirmModel(parsed: result, method: method, store: container.store)
             }
         }
     }
@@ -38,12 +62,28 @@ private struct ConfirmForm: View {
     @Bindable var model: FoodConfirmModel
     let notes: String?
     let onSaved: () -> Void
+    var searchTerm: Binding<String>? = nil
+    var reanalyzing: Bool = false
+    var onReanalyze: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
     @State private var saving = false
 
     var body: some View {
         Form {
+            if let searchTerm {
+                Section {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                        TextField("Edit search…", text: searchTerm)
+                            .submitLabel(.search)
+                            .onSubmit(onReanalyze)
+                        if reanalyzing { ProgressView() }
+                    }
+                } footer: {
+                    Text("Change what you typed and press search to re-analyze.")
+                }
+            }
             Section("Food") {
                 TextField("Name", text: $model.food)
                     .textInputAutocapitalization(.words)

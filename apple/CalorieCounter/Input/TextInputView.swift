@@ -45,8 +45,7 @@ struct TextInputView: View {
                 Section { aiHint }
             }
             Section {
-                TextField("e.g. “2 eggs and toast”", text: $model.query, axis: .vertical)
-                    .lineLimit(1...3)
+                TextField("e.g. “2 eggs and toast”", text: $model.query)
                     .submitLabel(.search)
                     .onSubmit { submit(model) }
                     .onChange(of: model.query) { _, _ in
