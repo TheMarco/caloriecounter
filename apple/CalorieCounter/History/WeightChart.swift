@@ -48,7 +48,10 @@ struct WeightChart: View {
         .chartYScale(domain: yDomain)
         .chartXScale(domain: xDomain)
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 5)) {
+            // Explicit stride (~4 labels), not .automatic: automatic picks daily marks
+            // for a short range and the rightmost one truncates to "…" against the
+            // padded domain edge. Strided marks land on whole days, inset from the edge.
+            AxisMarks(values: .stride(by: .day, count: labelStride)) {
                 AxisGridLine()
                 AxisValueLabel(format: .dateTime.month(.abbreviated).day())
             }
@@ -79,5 +82,12 @@ struct WeightChart: View {
         }
         let pad = base.upperBound.timeIntervalSince(base.lowerBound) * 0.06
         return base.lowerBound.addingTimeInterval(-pad)...base.upperBound.addingTimeInterval(pad)
+    }
+
+    /// Day interval between x-axis labels — ~4 across the range, so they stay sparse
+    /// and fully legible (no crowding or truncation) at any window length.
+    private var labelStride: Int {
+        let days = xDomain.upperBound.timeIntervalSince(xDomain.lowerBound) / 86_400
+        return max(1, Int((days / 4).rounded(.up)))
     }
 }
