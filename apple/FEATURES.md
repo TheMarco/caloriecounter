@@ -1,20 +1,26 @@
 # CalorieCounter (iOS) — Complete Feature Guide
 
-A local‑first calorie and macro tracker for **iOS 26**. Everything runs **on the
-device** — food recognition, voice transcription, label scanning, and meal
-planning all use Apple's built‑in frameworks (including **Apple Intelligence /
-Foundation Models**). Your nutrition data never leaves the phone.
+A local‑first calorie and macro tracker for **iOS 26**. Your nutrition log lives
+only on your device. Food *estimates* come from a cloud AI service (OpenAI) when
+you type, speak, or photograph a meal; voice is transcribed **on‑device** (only
+the recognized words are sent). Your log, weights, and targets never leave the phone.
 
 ---
 
 ## 1. Philosophy & Privacy
 
-- **On‑device first.** Text/voice food parsing, nutrition‑label OCR, and barcode
-  scanning are all processed locally. The only network call is an anonymous
-  barcode lookup to OpenFoodFacts (a public food database).
-- **Your data stays put.** Entries, weights, and settings live in a local
+- **Local‑first storage.** Entries, weights, and settings live in a local
   SwiftData store with no iCloud/CloudKit sync. The biometric‑lock token is kept
-  in the Keychain, device‑only, non‑syncing.
+  in the Keychain, device‑only, non‑syncing. Your log never leaves the phone.
+- **Cloud estimates, no identity.** Typed, spoken, and photographed foods are
+  analyzed by **OpenAI** — only the food text or photo is sent, with no name,
+  account, or device ID attached, so requests can't be tied back to you. Under
+  OpenAI's API terms the data isn't used to train their models.
+- **Barcodes via OpenFoodFacts.** A barcode is looked up in OpenFoodFacts (a
+  public food database); when it has the product but no nutrition, the product
+  name is sent to the cloud parser for an estimate.
+- **Voice stays on‑device.** Speech is transcribed by Apple's on‑device
+  recognizer; only the recognized words go to the cloud parser.
 - **No account required.** Open the app and start tracking.
 
 ---
@@ -46,27 +52,28 @@ and never drop below a safe 1,200 kcal floor.
 
 ---
 
-## 3. Logging Food — four on‑device methods
+## 3. Logging Food — four methods
 
 Capture buttons sit at the **top** of the Today screen (so they never clash with
-the tab bar). Each parses input and shows a confirmation dialog before saving.
+the tab bar). Each parses input and shows a confirmation screen before saving,
+where you can adjust the amount and the per‑ingredient breakdown.
 
 - **Scan (barcode).** Point at a product barcode (VisionKit DataScanner). Looks
   it up in OpenFoodFacts and uses **per‑serving** nutrition when the label
-  provides it (e.g. per‑slice for bread). If the product isn't found, an on‑device
-  Foundation Models estimate fills in. Changing the quantity/unit recalculates
-  calories and macros live.
+  provides it (e.g. per‑slice for bread). When OpenFoodFacts has the product but
+  no nutrition, the name is sent to the cloud parser for an estimate. Changing the
+  quantity/unit recalculates calories and macros live.
 - **Speak (voice).** Tap the mic and say what you ate ("two eggs and a slice of
-  toast"). On‑device speech recognition transcribes it, then Foundation Models
-  structures it into food + quantity + nutrition.
-- **Type (text).** Type a food description. As you type, **previously‑eaten foods
-  matching what you've typed appear** (ranked by how often/recently you've logged
-  them) — tap one to reuse its exact nutrition and skip the AI parse.
-- **Label (OCR).** Photograph a nutrition label. On‑device Vision text
-  recognition reads it and normalizes it into a food entry.
-
-> Plate‑photo recognition was removed — the four methods above are all on‑device
-> and reliable.
+  toast"). Apple's **on‑device** recognizer transcribes it; the recognized text is
+  then sent to the cloud parser, which structures it into food + quantity +
+  nutrition with a per‑ingredient breakdown.
+- **Type (text).** Type a food description; the cloud parser returns the estimate
+  and breakdown. As you type, **previously‑eaten foods matching what you've typed
+  appear** (ranked by how often/recently you've logged them) — tap one to reuse
+  its exact nutrition and skip the cloud parse.
+- **Photo (meal).** Snap a square photo of your plate; it's sent to OpenAI's
+  vision model for a calorie + macro estimate. The estimate is a starting point —
+  you adjust the amount and ingredients on the confirmation screen before saving.
 
 **Units everywhere.** Your Metric/Imperial setting tells the parsers whether to
 describe foods in grams/ml or oz/lb/cups — so it affects *every* logging method,
@@ -164,7 +171,7 @@ afterward in Settings.
 - **Your Data** — export and import (see §9).
 - **Erase All Data & Start Over** — wipes every entry, weight, and offset, resets
   settings, and relaunches the setup wizard. Confirmed before it runs.
-- **About** — app icon, version, on‑device privacy summary, and credits.
+- **About** — app icon, version, privacy summary, and data‑source credits.
 
 ---
 
@@ -209,8 +216,8 @@ breakfasts/lunches/dinners/snacks, exercise offsets, and a weekly weigh‑in tre
 - **Swift 6** with strict concurrency; a layered Swift Package (`NutritionKit`)
   with protocol "seams" so features depend on abstractions, not frameworks.
 - **SwiftData** (`@ModelActor`) for local storage; **@Observable** view models.
-- **Foundation Models** (Apple Intelligence) for parsing, with a deterministic
-  heuristic fallback when the model is unavailable.
-- **Vision** (label OCR), **VisionKit** (barcode), **Speech** (voice),
+- **OpenAI** (via a thin proxy) for text and photo food parsing; a deterministic
+  heuristic stands in for UI‑test/demo builds (no network).
+- **VisionKit** (barcode scanning), **Speech** (on‑device voice transcription),
   **LocalAuthentication** (biometric lock), **Swift Charts** (graphs).
 - Heavily unit‑ and UI‑tested.

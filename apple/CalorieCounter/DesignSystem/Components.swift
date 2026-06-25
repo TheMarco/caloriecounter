@@ -140,7 +140,7 @@ struct EmptyDayCard: View {
                 .foregroundStyle(DS.Macro.calories.linearGradient)
             Text("Nothing logged yet")
                 .font(.headline)
-            Text("Tap a button below to scan, speak, type, or snap your first food.")
+            Text("Use a button above to scan, speak, type, or snap your first food.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -127,7 +127,7 @@ private struct ConfirmForm: View {
                 nutritionRow("Carbs", model.carbs, "g")
                 nutritionRow("Protein", model.protein, "g")
             } header: {
-                Text("Nutrition (recalculated)")
+                Text(model.method == .barcode ? "Nutrition" : "Estimated Nutrition")
             } footer: {
                 if model.method == .photo {
                     Text("Estimated from your photo by AI — it won't always be exact. Tweak the amount above, or the ingredients below, until it matches what you ate.")

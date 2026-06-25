@@ -64,7 +64,7 @@ final class SettingsUITests: XCTestCase {
     }
 
     @MainActor
-    func testAboutShowsUSDAAttribution() {
+    func testAboutShowsDataSourceAttribution() {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest"]
         app.launch()
@@ -77,12 +77,12 @@ final class SettingsUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 5), "About should open")
 
         // Data Sources is near the bottom of the (lazily-rendered) list.
-        let usda = app.staticTexts.containing(
-            NSPredicate(format: "label CONTAINS %@", "USDA FoodData Central")).firstMatch
+        let off = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS %@", "Open Food Facts")).firstMatch
         app.swipeUp(); app.swipeUp()
-        XCTAssertTrue(usda.waitForExistence(timeout: 3), "USDA FoodData Central attribution should be visible")
-        XCTAssertTrue(app.links["fdc.nal.usda.gov"].exists || app.buttons["fdc.nal.usda.gov"].exists,
-                      "A tappable FoodData Central link should be present")
+        XCTAssertTrue(off.waitForExistence(timeout: 3), "Open Food Facts attribution should be visible")
+        XCTAssertTrue(app.links["openfoodfacts.org"].exists || app.buttons["openfoodfacts.org"].exists,
+                      "A tappable Open Food Facts link should be present")
     }
 
     @MainActor

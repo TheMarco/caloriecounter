@@ -158,20 +158,20 @@ struct TodayView: View {
         guard let drift = weightDrift else { return "" }
         let u = container.settings.units
         let amount = abs(u.weightForDisplay(kg: drift))
-        let dir = drift < 0 ? "lighter" : "heavier"
-        return String(format: "You're about %.0f %@ %@ than when you set your plan.", amount, u.weightUnit, dir)
+        let dir = drift < 0 ? "down" : "up"
+        return String(format: "Your weight is about %.0f %@ %@ from when you set your plan.", amount, u.weightUnit, dir)
     }
 
     private var weightDriftBanner: some View {
         SoftCard {
             VStack(alignment: .leading, spacing: 10) {
-                Label("Your weight has changed", systemImage: "scalemass")
+                Label("Refresh your plan?", systemImage: "scalemass")
                     .font(.subheadline.weight(.semibold))
-                Text("\(nudgeMessage) Update your targets so they match.")
+                Text("\(nudgeMessage) You can refresh your targets to match whenever you're ready.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 10) {
-                    Button("Update targets") { showWizard = true }
+                    Button("Refresh plan") { showWizard = true }
                         .buttonStyle(.glass).tint(DS.Macro.calories.tint)
                     Button("Not now") { nudgeDismissed = true }
                         .buttonStyle(.glass)
