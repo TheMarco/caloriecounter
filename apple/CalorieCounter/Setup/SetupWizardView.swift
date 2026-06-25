@@ -103,7 +103,9 @@ struct SetupWizardView: View {
                 .font(dynamicTypeSize.isAccessibilitySize ? .title2.weight(.bold) : .largeTitle.weight(.bold))
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text(subtitle)
-                .font(.subheadline)
+                // Smaller (not dropped) at AX so it doesn't eat the room the step's
+                // actual content needs — the text is still there.
+                .font(dynamicTypeSize.isAccessibilitySize ? .footnote : .subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -166,33 +168,39 @@ struct SetupWizardView: View {
     /// judgment" story that otherwise only lives in About.
     private var welcomeStep: some View {
         SoftCard {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: dynamicTypeSize.isAccessibilitySize ? 12 : 16) {
                 trustPoint("lock.fill", "No account, ever",
-                           "Nothing to sign up for — just open the app and track.")
+                           "Nothing to sign up for — just open the app and track.",
+                           short: "Nothing to sign up for.")
                 Divider()
                 trustPoint("iphone", "Your log stays on your phone",
-                           "Entries, weights, and targets live on this device, not a server.")
+                           "Entries, weights, and targets live on this device, not a server.",
+                           short: "Stored on this device, not a server.")
                 Divider()
                 trustPoint("heart.text.square.fill", "Apple Health is optional",
-                           "It stays off until you choose to turn it on.")
+                           "It stays off until you choose to turn it on.",
+                           short: "Off until you turn it on.")
                 Divider()
                 trustPoint("sparkles", "Estimates, not judgment",
-                           "Calories and macros are a guide to help you — adjust anything, anytime.")
+                           "Calories and macros are a guide to help you — adjust anything, anytime.",
+                           short: "A guide to help you — adjust anytime.")
             }
         }
     }
 
-    private func trustPoint(_ icon: String, _ title: String, _ detail: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+    /// One trust point. At accessibility sizes it goes compact — smaller icon and
+    /// title (sizing), and a shorter detail string — so several points fit instead of
+    /// one. Not omission: the privacy context is still present, just concise.
+    private func trustPoint(_ icon: String, _ title: String, _ detail: String, short: String) -> some View {
+        let ax = dynamicTypeSize.isAccessibilitySize
+        return HStack(alignment: .top, spacing: ax ? 11 : 14) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(ax ? .footnote.weight(.semibold) : .title3)
                 .foregroundStyle(DS.Macro.calories.tint)
-                .frame(width: 30)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.headline)
-                // Keep the explanatory detail at every text size — accessibility users
-                // get the same privacy context as everyone else; it just scrolls.
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                .frame(width: ax ? 22 : 30)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(ax ? .subheadline.weight(.semibold) : .headline)
+                Text(ax ? short : detail).font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
