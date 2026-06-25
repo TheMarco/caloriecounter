@@ -61,12 +61,23 @@ struct WeightChart: View {
         }
     }
 
-    /// Span the full selected window if given, else the data's own date span.
+    /// Span the full selected window if given, else the data's own date span — padded
+    /// a little on each end so a weigh-in on the first/last day isn't pinned to (or
+    /// clipped at) the plot edge.
     private var xDomain: ClosedRange<Date> {
-        if let window { return window }
-        let dates = points.compactMap { LocalDate.date(from: $0.date) }
-        if let lo = dates.min(), let hi = dates.max(), lo < hi { return lo...hi }
-        let now = Date()
-        return now.addingTimeInterval(-86_400)...now
+        let base: ClosedRange<Date>
+        if let window {
+            base = window
+        } else {
+            let dates = points.compactMap { LocalDate.date(from: $0.date) }
+            if let lo = dates.min(), let hi = dates.max(), lo < hi {
+                base = lo...hi
+            } else {
+                let now = Date()
+                return now.addingTimeInterval(-86_400)...now
+            }
+        }
+        let pad = base.upperBound.timeIntervalSince(base.lowerBound) * 0.06
+        return base.lowerBound.addingTimeInterval(-pad)...base.upperBound.addingTimeInterval(pad)
     }
 }
