@@ -12,6 +12,7 @@ import NutritionCore
 struct SetupWizardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Whether the user can back out without finishing (true when re-run from
     /// Settings; false for mandatory first-launch onboarding).
     var allowsCancel: Bool = false
@@ -142,6 +143,7 @@ struct SetupWizardView: View {
             ForEach(WeightGoal.allCases) { g in
                 Button { goal = g } label: { goalCard(g) }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(goal == g ? .isSelected : [])
             }
         }
     }
@@ -151,69 +153,80 @@ struct SetupWizardView: View {
             ForEach(DietStyle.allCases) { d in
                 Button { diet = d } label: { dietCard(d) }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(diet == d ? .isSelected : [])
             }
-        }
-    }
-
-    private func dietCard(_ d: DietStyle) -> some View {
-        let selected = diet == d
-        let color = DS.Macro.calories.tint
-        return HStack(spacing: 14) {
-            ZStack {
-                Circle().fill(color.opacity(0.18))
-                Image(systemName: d.systemImage).font(.system(size: 20, weight: .semibold)).foregroundStyle(color)
-            }
-            .frame(width: 48, height: 48)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(d.label).font(.headline)
-                Text(d.detail).font(.caption).foregroundStyle(.secondary)
-                Text(d.splitLabel).font(.caption2.weight(.semibold)).foregroundStyle(color)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)   // wrap text; don't widen the row
-            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundStyle(selected ? color : Color.secondary.opacity(0.4))
-        }
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(16)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(selected ? color.opacity(0.7) : .white.opacity(0.06), lineWidth: selected ? 2 : 1)
-                }
         }
     }
 
     private func goalCard(_ g: WeightGoal) -> some View {
-        let selected = goal == g
-        let color = goalColor(g)
-        return HStack(spacing: 14) {
-            ZStack {
-                Circle().fill(color.opacity(0.18))
-                Image(systemName: g.systemImage).font(.system(size: 20, weight: .semibold)).foregroundStyle(color)
-            }
-            .frame(width: 48, height: 48)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(g.label).font(.headline)
-                Text(g.detail).font(.caption).foregroundStyle(.secondary)
-            }
+        selectableCard(selected: goal == g, color: goalColor(g), icon: g.systemImage) {
+            Text(g.label).font(.headline)
+            Text(g.detail).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func dietCard(_ d: DietStyle) -> some View {
+        let color = DS.Macro.calories.tint
+        return selectableCard(selected: diet == d, color: color, icon: d.systemImage) {
+            Text(d.label).font(.headline)
+            Text(d.detail).font(.caption).foregroundStyle(.secondary)
+            Text(d.splitLabel).font(.caption2.weight(.semibold)).foregroundStyle(color)
+        }
+    }
+
+    /// A selectable option card (goal / diet / activity). At accessibility text sizes
+    /// it reflows to a vertical layout — icon and checkmark on a top row, the label
+    /// full-width below — so big text doesn't squeeze into a narrow middle column and
+    /// the controls don't strand. Otherwise it's the standard icon · text · check row.
+    @ViewBuilder
+    private func selectableCard<Content: View>(
+        selected: Bool, color: Color, icon: String? = nil, cornerRadius: CGFloat = 22,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        let text = VStack(alignment: .leading, spacing: 4) { content() }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundStyle(selected ? color : Color.secondary.opacity(0.4))
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        if let icon { iconBadge(icon, color) }
+                        Spacer()
+                        selectionMark(selected, color)
+                    }
+                    text
+                }
+            } else {
+                HStack(spacing: 14) {
+                    if let icon { iconBadge(icon, color) }
+                    text
+                    selectionMark(selected, color)
+                }
+            }
         }
         .fixedSize(horizontal: false, vertical: true)
         .padding(16)
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .stroke(selected ? color.opacity(0.7) : .white.opacity(0.06), lineWidth: selected ? 2 : 1)
                 }
         }
+    }
+
+    private func iconBadge(_ name: String, _ color: Color) -> some View {
+        ZStack {
+            Circle().fill(color.opacity(0.18))
+            Image(systemName: name).font(.system(size: 20, weight: .semibold)).foregroundStyle(color)
+        }
+        .frame(width: 48, height: 48)
+    }
+
+    private func selectionMark(_ selected: Bool, _ color: Color) -> some View {
+        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+            .font(.title3)
+            .foregroundStyle(selected ? color : Color.secondary.opacity(0.4))
     }
 
     private var bodyStep: some View {
@@ -291,28 +304,13 @@ struct SetupWizardView: View {
         VStack(spacing: 12) {
             ForEach(ActivityLevel.allCases) { level in
                 Button { activity = level } label: {
-                    HStack(spacing: 14) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(level.label).font(.headline)
-                            Text(level.detail).font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Image(systemName: activity == level ? "checkmark.circle.fill" : "circle")
-                            .font(.title3)
-                            .foregroundStyle(activity == level ? DS.Macro.calories.tint : Color.secondary.opacity(0.4))
-                    }
-                    .padding(16)
-                    .background {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(activity == level ? DS.Macro.calories.tint.opacity(0.6) : .white.opacity(0.06),
-                                            lineWidth: activity == level ? 2 : 1)
-                            }
+                    selectableCard(selected: activity == level, color: DS.Macro.calories.tint, cornerRadius: 20) {
+                        Text(level.label).font(.headline)
+                        Text(level.detail).font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(activity == level ? .isSelected : [])
             }
         }
     }
