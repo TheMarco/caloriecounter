@@ -100,10 +100,11 @@ struct MainTabView: View {
         let bg = DS.appBackgroundBase(scheme)
         return LinearGradient(
             stops: [
-                .init(color: bg.opacity(0), location: 0),       // tall, gradual fade in…
-                .init(color: bg.opacity(0.9), location: 0.34),
-                .init(color: bg, location: 0.42),               // …solid only where the dock sits
-            ],
+                .init(color: bg.opacity(0), location: 0),        // graceful fade in…
+                .init(color: bg.opacity(0.85), location: 0.18),
+                .init(color: bg, location: 0.32),                // …then a fully SOLID protected
+                .init(color: bg, location: 1),                   //    band the dock sits inside —
+            ],                                                    //    no content ghosts behind it.
             startPoint: .top, endPoint: .bottom
         )
         .frame(height: DS.dockClearance)

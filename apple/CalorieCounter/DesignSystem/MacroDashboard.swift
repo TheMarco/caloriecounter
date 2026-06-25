@@ -61,6 +61,7 @@ struct MacroDashboard: View {
     let offset: Double
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var net: Double { MacroMath.netCalories(total: totals.calories, offset: offset) }
 
@@ -91,6 +92,16 @@ struct MacroDashboard: View {
     private var caloriesOver: Bool { net > targets.calories && targets.calories > 0 }
 
     var body: some View {
+        // At accessibility text sizes the ring dashboard can't stay legible — drop the
+        // rings and become a clear, scannable nutrition summary instead.
+        if typeSize.isAccessibilitySize {
+            accessibleSummary
+        } else {
+            ringDashboard
+        }
+    }
+
+    private var ringDashboard: some View {
         VStack(spacing: 38) {
             ZStack {
                 MacroRing(macro: .calories, fraction: calorieFraction, lineWidth: 22, animate: !reduceMotion)
@@ -126,6 +137,82 @@ struct MacroDashboard: View {
                 }
             }
         }
+    }
+
+    // MARK: - Accessibility-size summary (no rings — clear numbers + bars)
+
+    private var accessibleSummary: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            // Calories — the headline.
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(Int(net))")
+                        .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(caloriesOver ? AnyShapeStyle(DS.over) : AnyShapeStyle(.primary))
+                        .contentTransition(.numericText())
+                    Text(offset > 0 ? "net kcal" : "kcal")
+                        .font(.headline).foregroundStyle(.secondary)
+                }
+                Text(caloriesOver
+                     ? "\(Int(net - targets.calories)) over your \(Int(targets.calories)) goal"
+                     : "of \(Int(targets.calories)) goal")
+                    .font(.subheadline)
+                    .foregroundStyle(caloriesOver ? DS.over : .secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                progressBar(.calories, calorieFraction, over: caloriesOver)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Calories")
+            .accessibilityValue(caloriesOver
+                ? "\(Int(net)) net, over the \(Int(targets.calories)) goal by \(Int(net - targets.calories))"
+                : "\(Int(net)) net of \(Int(targets.calories)) goal")
+
+            Divider()
+
+            ForEach([DS.Macro.protein, .carbs, .fat]) { m in
+                macroSummaryRow(m)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func macroSummaryRow(_ m: DS.Macro) -> some View {
+        // Vertical at accessibility sizes (the only place this renders): the macro
+        // name gets a full line so it never wraps mid-word, the numbers sit on the
+        // next line, then the bar — nothing competes for horizontal space.
+        VStack(alignment: .leading, spacing: 6) {
+            Label(m.title, systemImage: m.systemImage)
+                .font(.headline)
+                .foregroundStyle(m.tint)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(isOver(m)
+                 ? "\(Int(consumed(m)))\(m.short) · \(Int(consumed(m) - target(m)))\(m.short) over"
+                 : "\(Int(consumed(m))) / \(Int(target(m)))\(m.short)")
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .foregroundStyle(isOver(m) ? DS.over : .primary)
+                .fixedSize(horizontal: false, vertical: true)
+            progressBar(m, fraction(m), over: isOver(m))
+                .padding(.top, 1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(m.title)
+        .accessibilityValue(isOver(m)
+            ? "\(Int(consumed(m))) grams, over the \(Int(target(m))) gram target by \(Int(consumed(m) - target(m)))"
+            : "\(Int(consumed(m))) of \(Int(target(m))) grams")
+    }
+
+    private func progressBar(_ m: DS.Macro, _ frac: Double, over: Bool) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(m.tint.opacity(0.18))
+                Capsule()
+                    .fill(over ? AnyShapeStyle(DS.over) : AnyShapeStyle(m.tint))
+                    .frame(width: geo.size.width * min(max(frac, 0), 1))
+            }
+        }
+        .frame(height: 8)
+        .accessibilityHidden(true)
     }
 
     private func macroSatellite(_ m: DS.Macro) -> some View {

@@ -108,7 +108,9 @@ struct CaptureDock: View {
             VStack(spacing: 2) {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: selected ? .semibold : .regular))
-                if selected {
+                // Labels only at standard sizes; at AX the dock stays icon-only so it
+                // can't overflow — the selected tab reads by emphasis + the screen.
+                if selected && !typeSize.isAccessibilitySize {
                     Text(title).font(.caption2.weight(.semibold))
                 }
             }
@@ -129,26 +131,19 @@ struct CaptureDock: View {
             Haptics.adjusted()
             onPlus()
         } label: {
-            VStack(spacing: 1) {
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 70, height: 70)
-                        .overlay(Circle().stroke(.white.opacity(scheme == .dark ? 0.12 : 0.08), lineWidth: 1))
-                    Circle()
-                        .fill(DS.Macro.calories.linearGradient)
-                        .frame(width: 56, height: 56)
-                        .shadow(color: DS.Macro.calories.tint.opacity(0.45), radius: 9, y: 3)
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(.white)
-                        .rotationEffect(.degrees(captureOpen ? 45 : 0))
-                }
-                if typeSize.isAccessibilitySize {
-                    Text("Log")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(DS.Macro.calories.tint)
-                }
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 70, height: 70)
+                    .overlay(Circle().stroke(.white.opacity(scheme == .dark ? 0.12 : 0.08), lineWidth: 1))
+                Circle()
+                    .fill(DS.Macro.calories.linearGradient)
+                    .frame(width: 56, height: 56)
+                    .shadow(color: DS.Macro.calories.tint.opacity(0.45), radius: 9, y: 3)
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
+                    .rotationEffect(.degrees(captureOpen ? 45 : 0))
             }
         }
         .buttonStyle(.plain)
