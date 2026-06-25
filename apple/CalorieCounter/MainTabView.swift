@@ -98,16 +98,23 @@ struct MainTabView: View {
     /// the app's base backdrop, solid where the bar actually sits.
     private var dockShelf: some View {
         let bg = DS.appBackgroundBase(scheme)
+        // A FIXED scrim: a short `dockFade` soft transition at the top, then a fully
+        // SOLID `dockSolidBand` the dock sits inside. Deliberately short so only the
+        // strip directly behind the bar dissolves — readable rows stay crisp and
+        // scroll clear of it (via `dockClearance`) rather than fading out early.
+        let shelf = DS.dockFade + DS.dockSolidBand
+        let solidStart = DS.dockFade / shelf
         return LinearGradient(
             stops: [
-                .init(color: bg.opacity(0), location: 0),        // graceful fade in…
-                .init(color: bg.opacity(0.85), location: 0.18),
-                .init(color: bg, location: 0.32),                // …then a fully SOLID protected
-                .init(color: bg, location: 1),                   //    band the dock sits inside —
-            ],                                                    //    no content ghosts behind it.
+                .init(color: bg.opacity(0), location: 0),                    // graceful fade in…
+                .init(color: bg.opacity(0.55), location: solidStart * 0.55),
+                .init(color: bg.opacity(0.9), location: solidStart * 0.84),
+                .init(color: bg, location: solidStart),                      // …then a fully SOLID protected
+                .init(color: bg, location: 1),                               //    band the dock sits inside —
+            ],                                                               //    no content ghosts behind it.
             startPoint: .top, endPoint: .bottom
         )
-        .frame(height: DS.dockClearance)
+        .frame(height: shelf)
         .frame(maxHeight: .infinity, alignment: .bottom)
         .ignoresSafeArea()
         .allowsHitTesting(false)

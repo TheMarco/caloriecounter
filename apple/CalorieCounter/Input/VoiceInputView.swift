@@ -1,8 +1,10 @@
 //
 //  VoiceInputView.swift
-//  Speak a food description → on-device speech recognition → on-device Foundation
-//  Models parse → ParsedFood. Uses SFSpeechRecognizer with on-device recognition
-//  (private, offline). Microphone/recognition are validated on device (Phase 11).
+//  Speak a food description → on-device speech recognition (SFSpeechRecognizer,
+//  private/offline) → the recognized TEXT is handed to `container.foodParser`,
+//  exactly like a typed entry (the cloud estimator online, the local heuristic
+//  offline) → ParsedFood. Only the words are sent — the audio never leaves the
+//  device. Microphone/recognition are validated on device (Phase 11).
 //
 
 import SwiftUI

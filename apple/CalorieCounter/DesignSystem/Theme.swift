@@ -38,11 +38,22 @@ enum DS {
     static let cardRadius: CGFloat = 28
     static let chipRadius: CGFloat = 20
 
-    /// The height reserved at the bottom for the floating dock + its fade — shared by
-    /// the scroll clearance and the background shelf so they always agree. Generous
-    /// enough for a tall, gradual fade above the bar (content dissolves into the
-    /// background well before it reaches the dock).
-    static let dockClearance: CGFloat = 160
+    /// Bottom SCROLL clearance — the inset that lets the last row scroll fully clear
+    /// of the floating dock. Scaled with Dynamic Type at the call site, so at large
+    /// text sizes there's proportionally more room to scroll tall content above the
+    /// bar. (Distinct from the background shelf below, which is fixed: the dock
+    /// itself doesn't grow with Dynamic Type, so neither should the scrim that masks
+    /// it.) Kept ≥ the shelf height so content always clears the fade.
+    static let dockClearance: CGFloat = 188
+
+    /// The dock's background SHELF — a fixed scrim painted behind the floating bar so
+    /// content doesn't ghost against the backdrop as it slides under. `dockSolidBand`
+    /// is the fully-opaque base that hides the bar + the raised "+" jewel; `dockFade`
+    /// is the short soft fade above it. Both FIXED (the dock doesn't scale), so the
+    /// fade stays a tight transition instead of dissolving readable rows at large
+    /// text sizes — tall content scrolls clear via `dockClearance` instead.
+    static let dockSolidBand: CGFloat = 124
+    static let dockFade: CGFloat = 48
 
     /// The app's base backdrop color (matches `AppBackground`'s base), used to paint
     /// the dock's background shelf so content fades into the background behind it.
@@ -153,10 +164,11 @@ struct AppBackground: View {
 }
 
 /// Reserves scroll space for the floating dock so the LAST card can scroll fully
-/// above it (paired with `MainTabView`'s background shelf, which covers anything
-/// passing behind the bar mid-scroll). Applied to the Today / History scroll
-/// containers; the height scales with Dynamic Type (the dock's + grows the "Log"
-/// caption at AX sizes). The matching shelf height lives in `DS.dockClearance`.
+/// above it (paired with `MainTabView`'s background shelf, which fades anything
+/// passing behind the bar mid-scroll into the app background). Applied to the
+/// Today / History scroll containers; the height scales with Dynamic Type so the
+/// reserved space grows alongside the content. The matching shelf height lives in
+/// `DS.dockClearance`.
 private struct TabBarBottomClearance: ViewModifier {
     @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = DS.dockClearance
     func body(content: Content) -> some View {
