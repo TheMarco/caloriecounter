@@ -123,6 +123,12 @@ struct HistoryView: View {
                 .clearRow()
             } header: {
                 sectionHeader("Trends")
+            } footer: {
+                if macro == .calories {
+                    Text("Calories are net — your food minus exercise and adjustments.")
+                        .font(.caption2)
+                        .padding(.leading, 4)
+                }
             }
 
             Section {
@@ -169,14 +175,15 @@ struct HistoryView: View {
     }
 
     /// Plain, non-judgmental: state the average and how it sits against the goal.
+    /// "net" (matching Today's ring) signals this is food minus exercise, not raw intake.
     private func caloriesSentence(_ i: RangeInsights) -> String {
         let avg = Int(i.avgCalories.rounded())
         let delta = Int(abs(i.calorieDelta).rounded())
         if delta < 25 {
-            return "You're averaging \(avg) kcal a day — right around your \(Int(i.calorieGoal)) goal."
+            return "You're averaging \(avg) net kcal a day — right around your \(Int(i.calorieGoal)) goal."
         }
         let dir = i.calorieDelta < 0 ? "under" : "over"
-        return "You're averaging \(avg) kcal a day — about \(delta) \(dir) your \(Int(i.calorieGoal)) goal."
+        return "You're averaging \(avg) net kcal a day — about \(delta) \(dir) your \(Int(i.calorieGoal)) goal."
     }
 
     private func proteinSentence(_ i: RangeInsights) -> String {
