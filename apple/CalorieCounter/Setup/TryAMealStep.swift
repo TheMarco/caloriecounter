@@ -11,6 +11,7 @@ import NutritionCore
 
 struct TryAMealStep: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var revealed = false
     /// Local-only scale the demo chips apply, so "adjust" feels real without saving.
     @State private var multiplier = 1.0
@@ -68,17 +69,31 @@ struct TryAMealStep: View {
         }
     }
 
+    @ViewBuilder
     private var chipRow: some View {
-        HStack(spacing: 8) {
-            ForEach(Self.chips, id: \.label) { chip in
-                Button(chip.label) { apply(chip.kind) }
-                    .buttonStyle(.bordered)
-                    .tint(.secondary)
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
+        // One equal-width row normally; a compact 2×2 grid at accessibility sizes so
+        // the labels never crush and the demo stays short in the onboarding card.
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) { chipButton(Self.chips[0]); chipButton(Self.chips[1]) }
+                    HStack(spacing: 8) { chipButton(Self.chips[2]); chipButton(Self.chips[3]) }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    ForEach(Self.chips, id: \.label) { chipButton($0) }
+                }
             }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    private func chipButton(_ chip: (label: String, kind: Adjust)) -> some View {
+        Button(chip.label) { apply(chip.kind) }
+            .buttonStyle(.bordered)
+            .tint(.secondary)
+            .font(.subheadline.weight(.medium))
+            .frame(maxWidth: .infinity)
     }
 
     private func apply(_ adjust: Adjust) {

@@ -51,6 +51,7 @@ struct FoodConfirmView: View {
 private struct ConfirmForm: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @Bindable var model: FoodConfirmModel
     let notes: String?
     let onSaved: (Entry) -> Void
@@ -197,19 +198,28 @@ private struct ConfirmForm: View {
     private var parsedNamePlaceholder: String { "This food" }
 
     /// One-tap honest corrections. Adjusting the portion never pretends to be more
-    /// precise — it just rescales the estimate. Horizontally scrollable so the row
-    /// never overflows at large text sizes.
+    /// precise — it just rescales the estimate.
+    @ViewBuilder
     private var chipRow: some View {
-        // Equal-width chips (no horizontal scroller — that would swallow the sheet's
-        // vertical scroll gesture). They shrink to fit rather than overflow.
-        HStack(spacing: 8) {
-            chip("½", selected: model.isPortion(0.5)) { model.setPortion(0.5) }
-            chip("2×", selected: model.isPortion(2)) { model.setPortion(2) }
-            chip("Less") { model.nudge(0.85) }
-            chip("More") { model.nudge(1.15) }
-            if UnitConversion.compatibleUnits(with: model.unit).count > 1 {
-                chip("Swap unit") { model.cycleUnit() }
-            }
+        // At standard sizes the chips share one equal-width row; at accessibility
+        // sizes they stack full-width so the labels never crush and each stays an
+        // easy tap target. (No horizontal scroller — it would swallow the sheet's
+        // vertical scroll gesture.)
+        if typeSize.isAccessibilitySize {
+            VStack(spacing: 8) { chipButtons }
+        } else {
+            HStack(spacing: 8) { chipButtons }
+        }
+    }
+
+    @ViewBuilder
+    private var chipButtons: some View {
+        chip("½", selected: model.isPortion(0.5)) { model.setPortion(0.5) }
+        chip("2×", selected: model.isPortion(2)) { model.setPortion(2) }
+        chip("Less") { model.nudge(0.85) }
+        chip("More") { model.nudge(1.15) }
+        if UnitConversion.compatibleUnits(with: model.unit).count > 1 {
+            chip("Swap unit") { model.cycleUnit() }
         }
     }
 
