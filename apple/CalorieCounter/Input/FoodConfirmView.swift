@@ -1,8 +1,11 @@
 //
 //  FoodConfirmView.swift
-//  The shared confirmation sheet every capture flow converges on: edit the name,
-//  quantity, and unit; calories+macros recalculate live; Save persists via
-//  FoodConfirmModel → store.add. Replaces FoodConfirmDialog.tsx.
+//  The signature confirmation moment: every capture flow converges here, and the
+//  parsed food reveals into the hero MealCard — honest about its provenance
+//  (Measured / Estimated / Adjusted), framing estimates as "about N". One-tap
+//  correction chips (½ · 2× · Less · More · Swap unit) adjust it; Save persists via
+//  FoodConfirmModel → store.add and hands the saved entry back so Today can offer
+//  an undo. Replaces FoodConfirmDialog.tsx.
 //
 
 import SwiftUI
@@ -14,7 +17,8 @@ struct FoodConfirmView: View {
     @Environment(\.dismiss) private var dismiss
     let parsed: ParsedFood
     let method: InputMethod
-    let onSaved: () -> Void
+    /// Hands the saved entry back so the host (Today) can offer a one-tap undo.
+    let onSaved: (Entry) -> Void
 
     @State private var model: FoodConfirmModel?
 
@@ -35,7 +39,10 @@ struct FoodConfirmView: View {
         }
         .task {
             if model == nil {
-                model = FoodConfirmModel(parsed: parsed, method: method, store: container.store)
+                let m = FoodConfirmModel(parsed: parsed, method: method,
+                                         store: container.store, corrections: container.corrections)
+                await m.loadRememberedCorrection()   // pre-apply your last edit for this food
+                model = m
             }
         }
     }
@@ -43,33 +50,33 @@ struct FoodConfirmView: View {
 
 private struct ConfirmForm: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Bindable var model: FoodConfirmModel
     let notes: String?
-    let onSaved: () -> Void
+    let onSaved: (Entry) -> Void
     /// The original search term; when non-nil, a tappable shortcut back to the search
     /// form is shown. `onEditSearch` performs the navigation.
     var searchTerm: String? = nil
     var onEditSearch: () -> Void = {}
 
-    @Environment(\.dismiss) private var dismiss
     @State private var saving = false
-    /// The amount the model first parsed, captured once — the portion chips scale
-    /// relative to this so "½" always means half of the original serving.
-    @State private var baseQuantity: Double?
+    @State private var revealed = false
 
-    /// One-tap portion multipliers shown under the quantity field.
-    private static let portions: [(label: String, mult: Double)] =
-        [("½", 0.5), ("1×", 1), ("1½", 1.5), ("2×", 2)]
-
-    private func setPortion(_ mult: Double) {
-        guard let base = baseQuantity, base > 0 else { return }
-        let q = base * mult
-        model.quantityText = q == q.rounded() ? String(Int(q)) : String(format: "%.1f", q)
+    /// The capture-method phrasing for the badge's source row.
+    private var sourceLabel: String {
+        switch model.method {
+        case .barcode: return "Barcode"
+        case .label:   return "Label"
+        case .photo:   return "Photo estimate"
+        case .voice:   return "Spoken estimate"
+        case .text:    return "Typed estimate"
+        }
     }
 
-    private func isPortion(_ mult: Double) -> Bool {
-        guard let base = baseQuantity, base > 0 else { return false }
-        return abs(model.quantity - base * mult) < 0.05
+    private var detailText: String {
+        let q = model.quantity
+        let amount = q == q.rounded() ? String(Int(q)) : String(format: "%.1f", q)
+        return "\(amount) \(model.unit)"
     }
 
     var body: some View {
@@ -91,10 +98,39 @@ private struct ConfirmForm: View {
                     Text("Not what you meant? Tap to change your search.")
                 }
             }
+
+            // The hero: the parsed food revealed as a MealCard, honest about its
+            // provenance and framing estimates as "about N".
+            Section {
+                Group {
+                    if revealed {
+                        MealCard(
+                            foodName: model.food.isEmpty ? parsedNamePlaceholder : model.food,
+                            detail: detailText,
+                            kcal: model.kcal, protein: model.protein, carbs: model.carbs, fat: model.fat,
+                            confidence: model.nutritionConfidence, sourceLabel: sourceLabel
+                        ) {
+                            chipRow
+                        }
+                        .transition(Motion.reveal(reduceMotion: reduceMotion))
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0))
+            } footer: {
+                if model.appliedRememberedCorrection {
+                    Label("We remembered your last edit for this food.", systemImage: "checkmark.circle")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Food") {
                 TextField("Name", text: $model.food)
                     .textInputAutocapitalization(.words)
             }
+
             Section("Amount") {
                 HStack {
                     Text("Quantity")
@@ -110,35 +146,13 @@ private struct ConfirmForm: View {
                         Text(model.unit).foregroundStyle(.secondary)
                     }
                 }
-                // One-tap portion scaling ("half eaten", bigger servings).
-                HStack(spacing: 8) {
-                    ForEach(Self.portions, id: \.label) { p in
-                        Button(p.label) { setPortion(p.mult) }
-                            .buttonStyle(.bordered)
-                            .tint(isPortion(p.mult) ? .green : .secondary)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .font(.subheadline.weight(.medium))
             }
-            Section {
-                nutritionRow("Calories", model.kcal, "kcal")
-                nutritionRow("Fat", model.fat, "g")
-                nutritionRow("Carbs", model.carbs, "g")
-                nutritionRow("Protein", model.protein, "g")
-            } header: {
-                Text(model.method == .barcode ? "Nutrition" : "Estimated Nutrition")
-            } footer: {
-                if model.method == .photo {
-                    Text("Estimated from your photo by AI — it won't always be exact. Tweak the amount above, or the ingredients below, until it matches what you ate.")
-                }
-            }
+
             if model.hasBreakdown {
                 breakdownSection
             }
-            // Show fiber/sodium/sugar whenever we have them — independent of the
-            // breakdown. (They used to be in an `else if`, so a breakdown hid them,
-            // and the cloud returns a breakdown for almost everything.)
+            // Show fiber/sodium/sugar whenever we have them — the MealCard covers the
+            // headline macros, this is the extra detail.
             if model.fiber != nil || model.sodium != nil || model.sugar != nil {
                 Section {
                     if let f = model.fiber { nutritionRow("Fiber", f, "g") }
@@ -156,7 +170,11 @@ private struct ConfirmForm: View {
         }
         .navigationTitle("Confirm Food")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { if baseQuantity == nil { baseQuantity = model.quantity } }
+        .onAppear {
+            guard !revealed else { return }
+            withAnimation(Motion.spring(reduceMotion: reduceMotion)) { revealed = true }
+            model.isLowConfidenceEstimate ? Haptics.uncertain() : Haptics.parsed()
+        }
         .keyboardDoneToolbar()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -165,7 +183,8 @@ private struct ConfirmForm: View {
                     Task {
                         let entry = await model.save()
                         await container.healthSyncFood(entry)   // no-op unless Health sync is on
-                        onSaved()
+                        Haptics.saved()
+                        onSaved(entry)
                     }
                 } label: {
                     if saving { ProgressView() } else { Text("Add") }
@@ -173,6 +192,40 @@ private struct ConfirmForm: View {
                 .disabled(model.food.trimmingCharacters(in: .whitespaces).isEmpty || model.quantity <= 0 || saving)
             }
         }
+    }
+
+    private var parsedNamePlaceholder: String { "This food" }
+
+    /// One-tap honest corrections. Adjusting the portion never pretends to be more
+    /// precise — it just rescales the estimate. Horizontally scrollable so the row
+    /// never overflows at large text sizes.
+    private var chipRow: some View {
+        // Equal-width chips (no horizontal scroller — that would swallow the sheet's
+        // vertical scroll gesture). They shrink to fit rather than overflow.
+        HStack(spacing: 8) {
+            chip("½", selected: model.isPortion(0.5)) { model.setPortion(0.5) }
+            chip("2×", selected: model.isPortion(2)) { model.setPortion(2) }
+            chip("Less") { model.nudge(0.85) }
+            chip("More") { model.nudge(1.15) }
+            if UnitConversion.compatibleUnits(with: model.unit).count > 1 {
+                chip("Swap unit") { model.cycleUnit() }
+            }
+        }
+    }
+
+    private func chip(_ label: String, selected: Bool = false, _ action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(Motion.spring(reduceMotion: reduceMotion)) { action() }
+            Haptics.adjusted()
+        } label: {
+            Text(label)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(selected ? DS.Macro.calories.tint : .secondary)
+        .font(.subheadline.weight(.medium))
     }
 
     /// A collapsed, editable ingredient breakdown for compound foods. Tap the header
@@ -219,7 +272,6 @@ private struct ConfirmForm: View {
                 .monospacedDigit()
         }
     }
-
 }
 
 /// One editable ingredient line: name · [amount g] pill · kcal. The amount is a

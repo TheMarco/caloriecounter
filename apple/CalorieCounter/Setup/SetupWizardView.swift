@@ -32,7 +32,9 @@ struct SetupWizardView: View {
     @State private var activity: ActivityLevel = .moderate
 
     private var units: UnitSystem { container.settings.units }
-    private let stepCount = 6
+    private var stepCount: Int { OnboardingStep.count }
+    /// The current step as the typed flow value (drives titles + gating).
+    private var currentStep: OnboardingStep { OnboardingStep(rawValue: step) ?? .plan }
 
     private static let lbPerKg = 2.2046226
 
@@ -42,37 +44,36 @@ struct SetupWizardView: View {
             VStack(spacing: 0) {
                 header
                 ScrollView {
-                    Group {
-                        switch step {
-                        case 0: welcomeStep
-                        case 1: goalStep
-                        case 2: dietStep
-                        case 3: bodyStep
-                        case 4: activityStep
-                        default: planStep
+                    VStack(spacing: 0) {
+                        Group {
+                            switch currentStep {
+                            case .welcome:  welcomeStep
+                            case .tryMeal:  TryAMealStep()
+                            case .goal:     goalStep
+                            case .diet:     dietStep
+                            case .body:     bodyStep
+                            case .activity: activityStep
+                            case .plan:     planStep
+                            }
+                        }
+                        .padding(.top, 8)
+                        // At accessibility sizes the nav buttons join the scroll flow
+                        // (instead of a fixed footer that would clip the content above
+                        // it) — you scroll through everything to reach Continue, so
+                        // nothing is hidden and you can't skip the trust points.
+                        if dynamicTypeSize.isAccessibilitySize {
+                            navButtons.padding(.top, 24)
                         }
                     }
                     .padding(.horizontal, DS.screenPadding)
-                    .padding(.top, 8)
-                    .padding(.bottom, 44)
+                    .padding(.bottom, dynamicTypeSize.isAccessibilitySize ? 32 : 44)
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .keyboardDoneToolbar()
-                // When content overflows (e.g. long copy at large text), fade it into
-                // the action bar instead of hard-clipping mid-sentence — the cutoff
-                // reads as "more below", not broken. A no-op when content fits (the
-                // faded zone is just empty space above the footer).
-                .mask(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .black, location: 0),
-                            .init(color: .black, location: 0.9),
-                            .init(color: .clear, location: 1.0),
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-                footer
+                // At standard sizes the action bar is pinned below the scroll content.
+                if !dynamicTypeSize.isAccessibilitySize {
+                    navButtons.padding(DS.screenPadding)
+                }
             }
         }
         .task { await prefill() }
@@ -96,7 +97,9 @@ struct SetupWizardView: View {
                         .frame(height: 5)
                 }
             }
-            Text(title)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Step \(step + 1) of \(stepCount)")
+            Text(currentStep.title)
                 // A full largeTitle eats ~half the screen at AX sizes; shrink it (a
                 // sizing change only — no copy is dropped) so the content and its
                 // explanatory text keep their room and simply scroll.
@@ -118,7 +121,9 @@ struct SetupWizardView: View {
         .padding(.bottom, 8)
     }
 
-    private var footer: some View {
+    /// Back / Continue. Pinned below the scroll at standard sizes; folded into the
+    /// scroll content at accessibility sizes (see `body`).
+    private var navButtons: some View {
         HStack(spacing: 12) {
             if step > 0 {
                 Button { withAnimation(.snappy) { step -= 1 } } label: {
@@ -139,29 +144,19 @@ struct SetupWizardView: View {
             }
             .buttonStyle(.glassProminent)
             .tint(DS.Macro.calories.tint)
-            .disabled(step == 1 && goal == nil)
+            .disabled(currentStep.requiresGoal && goal == nil)
         }
-        .padding(DS.screenPadding)
     }
 
-    private var title: String {
-        switch step {
-        case 0: return "Welcome"
-        case 1: return "Your Goal"
-        case 2: return "Diet Style"
-        case 3: return "About You"
-        case 4: return "Activity"
-        default: return "Your Plan"
-        }
-    }
     private var subtitle: String {
-        switch step {
-        case 0: return "A few things to know before we begin."
-        case 1: return "What are you working toward?"
-        case 2: return "How do you like to eat?"
-        case 3: return "We use this to estimate your needs."
-        case 4: return "How active are you day to day?"
-        default: return "Tuned to your goal — adjust anytime in Settings."
+        switch currentStep {
+        case .welcome:  return "A few things to know before we begin."
+        case .tryMeal:  return "A quick taste — nothing is saved yet."
+        case .goal:     return "What are you working toward?"
+        case .diet:     return "How do you like to eat?"
+        case .body:     return "We use this to estimate your needs."
+        case .activity: return "How active are you day to day?"
+        case .plan:     return "Tuned to your goal — adjust anytime in Settings."
         }
     }
 
@@ -172,13 +167,28 @@ struct SetupWizardView: View {
     /// judgment" story that otherwise only lives in About.
     private var welcomeStep: some View {
         let ax = dynamicTypeSize.isAccessibilitySize
-        return SoftCard {
-            VStack(alignment: .leading, spacing: ax ? 14 : 16) {
-                ForEach(Array(Self.trustPoints.enumerated()), id: \.offset) { i, point in
-                    if i > 0 && !ax { Divider() }   // dividers add height; drop them at AX
-                    trustPointRow(point)
+        return VStack(spacing: 0) {
+            ForEach(Array(Self.trustPoints.enumerated()), id: \.offset) { i, point in
+                if i > 0 {
+                    Divider()
+                        .padding(.leading, ax ? 16 : 60)   // inset under the text
+                        .padding(.trailing, 16)
                 }
+                trustPointRow(point)
+                    .padding(.vertical, ax ? 8 : 13)
+                    .padding(.horizontal, 16)
+                    .accessibilityElement(children: .combine)
             }
+        }
+        // A quiet grouped-list look — hairline-separated rows on a calm surface,
+        // like a Settings group, not a prominent glass slab.
+        .background {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(DS.cardBorder(colorScheme, colorSchemeContrast), lineWidth: 1)
         }
     }
 
@@ -190,16 +200,16 @@ struct SetupWizardView: View {
     private static let trustPoints: [TrustPoint] = [
         .init(icon: "lock.fill", title: "No account, ever",
               detail: "Nothing to sign up for — just open the app and track.",
-              axLine: "No account — nothing to sign up for."),
+              axLine: "No account, ever."),
         .init(icon: "iphone", title: "Your log stays on your phone",
               detail: "Entries, weights, and targets live on this device, not a server.",
-              axLine: "Your log stays on this device, not a server."),
+              axLine: "Your log stays on this phone."),
         .init(icon: "heart.text.square.fill", title: "Apple Health is optional",
               detail: "It stays off until you choose to turn it on.",
-              axLine: "Apple Health is optional — off until you turn it on."),
+              axLine: "Apple Health stays optional."),
         .init(icon: "sparkles", title: "Estimates, not judgment",
               detail: "Calories and macros are a guide to help you — adjust anything, anytime.",
-              axLine: "Calories are a guide to help you, not judgment."),
+              axLine: "Estimates, not judgment."),
     ]
 
     @ViewBuilder

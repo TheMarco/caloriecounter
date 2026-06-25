@@ -11,8 +11,16 @@ import NutritionCore
 
 struct TodayView: View {
     @Environment(AppContainer.self) private var container
+    /// Opens the capture fan (the dock's + flow), e.g. from the empty state.
+    var onRequestLog: () -> Void = {}
+    /// Shows a transient undo toast (hosted by the dock container).
+    var presentUndo: (String, @escaping () -> Void) -> Void = { _, _ in }
+    /// Opens Settings (the top-right gear).
+    var onOpenSettings: () -> Void = {}
+    /// The entry just logged (briefly haloed as it lands).
+    var justLoggedId: String? = nil
+
     @State private var model: TodayModel?
-    @State private var activeInput: InputMethod?
     @State private var editingEntry: Entry?
     @State private var editingOffset = false
     @State private var latestWeightKg: Double?
@@ -32,6 +40,12 @@ struct TodayView: View {
             }
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { onOpenSettings() } label: { Image(systemName: "gearshape") }
+                        .accessibilityLabel("Settings")
+                }
+            }
             .task(id: container.dataVersion) {
                 let m = model ?? TodayModel(store: container.store)
                 model = m
@@ -42,9 +56,6 @@ struct TodayView: View {
             }
             .fullScreenCover(isPresented: $showWizard) {
                 SetupWizardView(allowsCancel: true) {}
-            }
-            .sheet(item: $activeInput) { method in
-                InputFlowView(method: method) { container.dataDidChange() }
             }
             .sheet(item: $editingEntry) { entry in
                 EditEntryView(entry: entry) { container.dataDidChange() }
@@ -68,11 +79,6 @@ struct TodayView: View {
                 }
             }
             Section {
-                QuickAddBar { activeInput = $0 }
-                    .padding(.bottom, 4)
-                    .clearRow()
-            }
-            Section {
                 MacroDashboard(totals: model.totals, targets: container.settings.targets, offset: model.offset)
                     .padding(.top, 34)
                     .padding(.bottom, 12)
@@ -87,21 +93,35 @@ struct TodayView: View {
                     workoutOfferBanner(offer).clearRow()
                 }
             }
+            if !model.usuals.isEmpty {
+                Section {
+                    usualsRow(model)
+                } header: {
+                    Text("Your Usuals")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
+                        .padding(.leading, 4)
+                }
+            }
             Section {
                 if model.entries.isEmpty {
-                    EmptyDayCard().clearRow()
+                    EmptyDayCard { onRequestLog() }.clearRow()
                 } else {
                     ForEach(model.entries) { entry in
                         Button { editingEntry = entry } label: { EntryCard(entry: entry) }
                             .buttonStyle(.plain)
+                            .justLoggedHighlight(entry.id == justLoggedId)
                             .clearRow()
-                    }
-                    .onDelete { offsets in
-                        let ids = offsets.map { model.entries[$0].id }
-                        Task {
-                            for id in ids { await model.deleteEntry(id: id); await container.healthDeleteFood(id: id) }
-                            container.dataDidChange()
-                        }
+                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                Button { editingEntry = entry } label: { Label("Edit", systemImage: "pencil") }
+                                    .tint(DS.Macro.carbs.tint)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) { deleteWithUndo(entry, in: model) } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                     }
                 }
             } header: {
@@ -120,6 +140,72 @@ struct TodayView: View {
         .tabBarBottomClearance()
         .scrollEdgeEffectStyle(.soft, for: .top)
         .refreshable { await model.load() }
+    }
+
+    // MARK: - Usuals
+
+    /// One-tap re-log of frequently-eaten foods.
+    private func usualsRow(_ model: TodayModel) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(model.usuals) { usual in
+                    Button { relogUsual(usual, in: model) } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: usual.method.systemImage)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Text(usual.food).font(.subheadline.weight(.medium)).lineLimit(1)
+                            Text("\(Int(usual.kcal))")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(DS.Macro.calories.tint)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Capsule().fill(.ultraThinMaterial))
+                        .overlay(Capsule().stroke(.white.opacity(0.06), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Log \(usual.food), \(Int(usual.kcal)) calories")
+                }
+            }
+            .padding(.horizontal, DS.screenPadding)
+        }
+        .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
+    // MARK: - Undo plumbing (the toast itself is hosted by the dock container)
+
+    /// Delete an entry and offer to restore it.
+    private func deleteWithUndo(_ entry: Entry, in model: TodayModel) {
+        Task {
+            await model.deleteEntry(id: entry.id)
+            await container.healthDeleteFood(id: entry.id)
+            container.dataDidChange()
+            presentUndo("Deleted") {
+                Task {
+                    await model.restore(entry)
+                    await container.healthSyncFood(entry)
+                    container.dataDidChange()
+                }
+            }
+        }
+    }
+
+    /// Re-log a usual and offer to undo it.
+    private func relogUsual(_ usual: Entry, in model: TodayModel) {
+        Task {
+            let fresh = await model.relog(usual)
+            await container.healthSyncFood(fresh)
+            container.dataDidChange()
+            presentUndo("Logged") {
+                Task {
+                    await model.deleteEntry(id: fresh.id)
+                    await container.healthDeleteFood(id: fresh.id)
+                    container.dataDidChange()
+                }
+            }
+        }
     }
 
     // MARK: - Workout offset offer

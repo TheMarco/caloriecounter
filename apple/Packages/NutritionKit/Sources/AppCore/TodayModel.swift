@@ -36,6 +36,9 @@ public final class TodayModel {
     public private(set) var totals: MacroTotals = .zero
     public private(set) var offset: Double = 0
     public private(set) var isLoading = false
+    /// "Your usuals": frequently-logged foods (last ~30 days) not yet logged today,
+    /// for one-tap re-logging.
+    public private(set) var usuals: [Entry] = []
 
     public init(store: any NutritionStoring, date: String = LocalDate.today()) {
         self.store = store
@@ -65,6 +68,41 @@ public final class TodayModel {
         entries = loaded
         totals = MacroTotals.summing(loaded)
         offset = (try? await offsetResult) ?? 0
+        await loadUsuals()
+    }
+
+    /// Recompute "your usuals" from the last ~30 days, excluding what's already on
+    /// today's plate.
+    private func loadUsuals() async {
+        let endDate = LocalDate.date(from: date) ?? Date()
+        let window = LocalDate.lastDays(30, endingOn: endDate)
+        guard let start = window.first else { usuals = []; return }
+        let recent = (try? await store.entries(from: start, to: date)) ?? []
+        let loggedToday = Set(entries.map { FoodCorrection.key(food: $0.food, unit: $0.unit) })
+        usuals = FoodFrequency.usuals(from: recent, excluding: loggedToday, limit: 8)
+    }
+
+    /// Re-log a previously-eaten food as a fresh entry for today, returning it (so the
+    /// caller can offer an undo). Nutrition carries over 1:1.
+    @discardableResult
+    public func relog(_ previous: Entry, now: Date = Date()) async -> Entry {
+        let fresh = Entry(
+            id: UUID().uuidString, date: date, timestamp: now,
+            food: previous.food, quantity: previous.quantity, unit: previous.unit,
+            kcal: previous.kcal, fat: previous.fat, carbs: previous.carbs, protein: previous.protein,
+            method: previous.method, confidence: previous.confidence,
+            fiber: previous.fiber, sodium: previous.sodium, sugar: previous.sugar,
+            nutritionConfidence: previous.nutritionConfidence
+        )
+        try? await store.add(fresh)
+        await load()
+        return fresh
+    }
+
+    /// Restore a previously-deleted entry (undo). Re-adds it by its original id.
+    public func restore(_ entry: Entry) async {
+        try? await store.add(entry)
+        await load()
     }
 
     public func deleteEntry(id: String) async {

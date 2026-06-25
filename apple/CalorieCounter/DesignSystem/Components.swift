@@ -18,6 +18,17 @@ extension InputMethod {
         case .label:   return Color(hex: 0x30D158)   // green
         }
     }
+
+    /// Short verb-y label for the capture buttons ("Scan / Speak / Type / Photo").
+    var shortLabel: String {
+        switch self {
+        case .barcode: return "Scan"
+        case .voice:   return "Speak"
+        case .text:    return "Type"
+        case .photo:   return "Photo"
+        case .label:   return "Label"
+        }
+    }
 }
 
 /// A single logged food, as a floating glass card.
@@ -131,22 +142,71 @@ struct OffsetChip: View {
     }
 }
 
-/// Friendly empty state for a day with no entries.
+/// A brief green halo on a freshly-logged entry — the "it landed" cue that pairs
+/// with the ring ticking up. Fades out shortly after appearing (instant under
+/// Reduce Motion).
+private struct JustLoggedHighlight: ViewModifier {
+    let active: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var faded = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if active {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(DS.Macro.calories.tint, lineWidth: 2)
+                        .shadow(color: DS.Macro.calories.tint.opacity(0.5), radius: 8)
+                        .opacity(faded ? 0 : 0.9)
+                        .allowsHitTesting(false)
+                }
+            }
+            .task(id: active) {
+                guard active else { return }
+                faded = false
+                withAnimation(.easeOut(duration: reduceMotion ? 0.01 : 1.2)) { faded = true }
+            }
+    }
+}
+
+extension View {
+    /// Briefly halo this row when it's the entry that was just logged.
+    func justLoggedHighlight(_ active: Bool) -> some View {
+        modifier(JustLoggedHighlight(active: active))
+    }
+}
+
+/// Inviting empty state for a day with no entries: one warm invitation and a single
+/// primary action. The four capture methods live one tap deeper (the action opens
+/// the log cluster), so the screen reads calm, not like a wall of buttons.
 struct EmptyDayCard: View {
+    var onLog: () -> Void = {}
+
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Image(systemName: "fork.knife.circle.fill")
-                .font(.system(size: 44))
+                .font(.system(size: 46))
                 .foregroundStyle(DS.Macro.calories.linearGradient)
-            Text("Nothing logged yet")
-                .font(.headline)
-            Text("Use a button above to scan, speak, type, or snap your first food.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 5) {
+                Text("Nothing logged yet")
+                    .font(.headline)
+                Text("Start whenever you're ready — it only takes a tap.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Button(action: onLog) {
+                Label("Log your first meal", systemImage: "plus.circle.fill")
+                    .font(.callout.weight(.semibold))
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(DS.Macro.calories.tint)
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
+        .padding(.vertical, 30)
         .padding(.horizontal, 20)
     }
 }

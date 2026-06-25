@@ -26,6 +26,10 @@ final class VoiceUITests: XCTestCase {
             return false
         }
 
+        // Open the capture fan (dock +), then pick Voice.
+        let plus = app.buttons["Log food"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 10), "The dock's + (Log food) should exist")
+        plus.tap()
         app.buttons["Voice"].tap()
 
         // The voice sheet must open (its title proves VoiceInputView built without

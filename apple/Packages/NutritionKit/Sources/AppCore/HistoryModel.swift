@@ -98,6 +98,9 @@ public final class HistoryModel {
     public private(set) var weightPoints: [WeightPoint] = []
     public private(set) var latestWeightKg: Double?
     public private(set) var isLoading = false
+    /// Per-day provenance (measured / mixed / estimated) over the loaded range —
+    /// drives the calendar's subtle filled-vs-hollow dot.
+    public private(set) var provenanceByDate: [String: DayProvenance] = [:]
 
     @ObservationIgnored private let store: any NutritionStoring
 
@@ -112,14 +115,25 @@ public final class HistoryModel {
         let span = await dayCount(for: range)
         days = (try? await store.dailyTotals(lastDays: span)) ?? []
 
-        // Weight measurements over the same window (one per day already).
+        // Weight measurements + per-day provenance over the same window.
         if let start = days.first?.date, let end = days.last?.date {
             let ws = (try? await store.weights(from: start, to: end)) ?? []
             weightPoints = ws.map { WeightPoint(date: $0.date, weightKg: $0.weightKg) }
+
+            let entries = (try? await store.entries(from: start, to: end)) ?? []
+            var byDate: [String: [NutritionConfidence?]] = [:]
+            for e in entries { byDate[e.date, default: []].append(e.nutritionConfidence) }
+            provenanceByDate = byDate.mapValues { DayProvenance.from(confidences: $0) }
         } else {
             weightPoints = []
+            provenanceByDate = [:]
         }
         latestWeightKg = (try? await store.latestWeight())?.weightKg
+    }
+
+    /// The provenance of a given day (defaults to `.none` outside the loaded range).
+    public func provenance(for date: String) -> DayProvenance {
+        provenanceByDate[date] ?? .none
     }
 
     /// Days to load: the preset span, or — for `.all` — the inclusive span from the
@@ -150,6 +164,16 @@ public final class HistoryModel {
     /// Summary numbers for the Insights card over the currently-loaded range.
     public func insights(targets: MacroTargets) -> RangeInsights {
         RangeInsights.from(days: days, targets: targets)
+    }
+
+    /// Calm, non-moral "this week" observations over the loaded range.
+    public func weeklyInsight(targets: MacroTargets) -> WeeklyInsight {
+        WeeklyInsight.from(days: days, targets: targets)
+    }
+
+    /// Totals for a specific loaded day (for the chart-point day summary).
+    public func dayTotals(for date: String) -> DayTotals? {
+        days.first { $0.date == date }
     }
 }
 

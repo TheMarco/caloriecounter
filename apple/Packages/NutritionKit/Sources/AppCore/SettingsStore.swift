@@ -17,6 +17,8 @@ public final class SettingsStore {
     public var hasCompletedSetup: Bool { didSet { defaults.set(hasCompletedSetup, forKey: Keys.completedSetup) } }
     /// Color-scheme preference (auto/light/dark); the app maps it to a SwiftUI `ColorScheme?`.
     public var appearance: AppearanceMode { didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) } }
+    /// Whether to play haptic feedback (default on). The app mirrors this to `Haptics.enabled`.
+    public var hapticsEnabled: Bool { didSet { defaults.set(hapticsEnabled, forKey: Keys.haptics) } }
 
     // MARK: - Apple Health (all opt-in; default off)
     /// Write food entries (calories + macros) to Apple Health.
@@ -63,6 +65,7 @@ public final class SettingsStore {
         self.biometricLockEnabled = defaults.bool(forKey: Keys.biometricLock)
         self.hasCompletedSetup = defaults.bool(forKey: Keys.completedSetup)
         self.appearance = defaults.string(forKey: Keys.appearance).flatMap(AppearanceMode.init(rawValue:)) ?? .system
+        self.hapticsEnabled = defaults.object(forKey: Keys.haptics) as? Bool ?? true   // default on
         self.healthNutritionSyncEnabled = defaults.bool(forKey: Keys.healthNutrition)
         self.healthWeightSyncEnabled = defaults.bool(forKey: Keys.healthWeight)
         self.healthWeightImportEnabled = defaults.bool(forKey: Keys.healthWeightImport)
@@ -124,6 +127,7 @@ public final class SettingsStore {
         static let completedSetup = "settings.hasCompletedSetup"
         static let biometricLock = "settings.biometricLockEnabled"
         static let appearance = "settings.appearance"
+        static let haptics = "settings.hapticsEnabled"
         static let healthNutrition = "settings.healthNutritionSync"
         static let healthWeight = "settings.healthWeightSync"
         static let healthWeightImport = "settings.healthWeightImport"

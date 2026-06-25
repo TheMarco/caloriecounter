@@ -195,9 +195,36 @@ public actor SwiftDataStore: NutritionStoring {
     }
 }
 
+// MARK: - Per-food correction memory (additive — see CorrectionRecord)
+
+extension SwiftDataStore: FoodCorrectionStoring {
+    /// Upsert a correction by its normalized key. Best-effort (memory, not data the
+    /// user would miss), so a failure is swallowed rather than surfaced.
+    public func remember(_ correction: FoodCorrection) async {
+        let key = correction.key
+        let descriptor = FetchDescriptor<CorrectionRecord>(predicate: #Predicate { $0.key == key })
+        do {
+            if let existing = try modelContext.fetch(descriptor).first {
+                existing.update(from: correction)
+            } else {
+                modelContext.insert(CorrectionRecord(from: correction))
+            }
+            try modelContext.save()
+        } catch {
+            // Correction memory is a convenience; never let it break a save flow.
+        }
+    }
+
+    public func correction(for key: String) async -> FoodCorrection? {
+        let k = key
+        let descriptor = FetchDescriptor<CorrectionRecord>(predicate: #Predicate { $0.key == k })
+        return (try? modelContext.fetch(descriptor).first)?.toDomain()
+    }
+}
+
 public extension SwiftDataStore {
     /// The model types this store manages.
-    static var schemaTypes: [any PersistentModel.Type] { [EntryRecord.self, DayOffsetRecord.self, WeightRecord.self] }
+    static var schemaTypes: [any PersistentModel.Type] { [EntryRecord.self, DayOffsetRecord.self, WeightRecord.self, CorrectionRecord.self] }
 
     /// Build a store. `inMemory` for tests/previews; an explicit `url` overrides
     /// (used by the app to place the on-disk store under Application Support with
@@ -208,7 +235,7 @@ public extension SwiftDataStore {
             return ModelConfiguration(isStoredInMemoryOnly: inMemory)
         }()
         let container = try ModelContainer(
-            for: EntryRecord.self, DayOffsetRecord.self, WeightRecord.self,
+            for: EntryRecord.self, DayOffsetRecord.self, WeightRecord.self, CorrectionRecord.self,
             configurations: configuration
         )
         return SwiftDataStore(modelContainer: container)

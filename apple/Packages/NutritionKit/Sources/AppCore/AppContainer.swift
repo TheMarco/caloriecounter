@@ -32,6 +32,11 @@ public final class AppContainer {
     public let settings: SettingsStore
     /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
     public let healthSync: any HealthSyncing
+
+    /// Per-food correction memory — the app's record of *your* numbers. The local
+    /// store conforms to FoodCorrectionStoring, so this is the same SwiftData store
+    /// (in-memory in test/demo); FoodConfirmModel pre-applies and remembers through it.
+    public var corrections: any FoodCorrectionStoring { store }
     /// Whether HealthKit exists on this device — cached once at launch so views
     /// never call the (potentially slow) availability check during a render.
     public let isHealthAvailable: Bool
@@ -210,6 +215,13 @@ public final class AppContainer {
     /// / demos): pass `-demo` as a launch argument.
     public static var isDemo: Bool {
         ProcessInfo.processInfo.arguments.contains("-demo")
+    }
+
+    /// Force the onboarding wizard even under `-uitest` (which otherwise suppresses
+    /// it), so the onboarding flow can be UI-tested deterministically: pass
+    /// `-onboarding` alongside `-uitest`.
+    public static var forcesOnboarding: Bool {
+        ProcessInfo.processInfo.arguments.contains("-onboarding")
     }
 
     // MARK: - Real composition root

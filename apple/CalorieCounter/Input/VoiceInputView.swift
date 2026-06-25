@@ -18,7 +18,7 @@ struct VoiceInputView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dictation = SpeechDictation()
     @State private var parsing = false
-    @State private var errorMessage: String?
+    @State private var errorInfo: CaptureErrorInfo?
 
     var body: some View {
         VStack(spacing: 28) {
@@ -64,10 +64,12 @@ struct VoiceInputView: View {
         .padding(.bottom, 32)
         .navigationTitle("Speak Food")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Voice input unavailable", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
+        .overlay {
+            if let errorInfo {
+                CaptureErrorCard(info: errorInfo,
+                                 onRetry: { Task { await toggle() } },
+                                 onDismiss: { self.errorInfo = nil })
+            }
         }
         .onDisappear { dictation.stop() }
     }
@@ -80,7 +82,13 @@ struct VoiceInputView: View {
             do {
                 try await dictation.start()
             } catch {
-                errorMessage = "We couldn’t access the microphone or speech recognition. Check Settings → Privacy."
+                // Distinguish "access is off" (fixable in Settings) from "not
+                // available right now".
+                if case SpeechDictation.DictationError.unauthorized = error {
+                    errorInfo = .from(.microphonePermission)
+                } else {
+                    errorInfo = .from(.speechUnavailable)
+                }
             }
         }
     }
@@ -93,7 +101,7 @@ struct VoiceInputView: View {
         do {
             onParsed(try await container.foodParser.parse(text: text, units: container.settings.units))
         } catch {
-            errorMessage = "We couldn’t understand that. Try again."
+            errorInfo = .from(.classify(error, fallback: .unreadable))
         }
     }
 }

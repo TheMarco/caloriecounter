@@ -21,7 +21,7 @@ struct PhotoCaptureView: View {
     @State private var pending: UIImage?
     @State private var showCamera = false
     @State private var processing = false
-    @State private var errorMessage: String?
+    @State private var errorInfo: CaptureErrorInfo?
 
     // Portion context the user confirms before analysis (forwarded to the model).
     @State private var plateSize: PlateSize = .medium
@@ -91,13 +91,17 @@ struct PhotoCaptureView: View {
                     prepare(ui)
                 },
                 onCancel: { showCamera = false }
+                // Camera-permission denial is handled inline by SquareCameraView
+                // (its own "Camera access is off · Open Settings" state).
             )
             .ignoresSafeArea()
         }
-        .alert("Couldn’t use that photo", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
+        .overlay {
+            if let errorInfo {
+                CaptureErrorCard(info: errorInfo,
+                                 onRetry: { showCamera = true },   // retake / re-open camera
+                                 onDismiss: { self.errorInfo = nil })
+            }
         }
     }
 
@@ -106,7 +110,7 @@ struct PhotoCaptureView: View {
     private func prepare(_ ui: UIImage) {
         let square = ui.squareCropped(side: 1024)
         if square.averageBrightness() < 0.06 {
-            errorMessage = "That photo’s too dark to read. Try better lighting or a clearer shot."
+            errorInfo = .from(.photoUnusable)
             return
         }
         pending = square
@@ -127,7 +131,7 @@ struct PhotoCaptureView: View {
             onParsed(try await container.photoParser.parse(
                 imageData: data, units: container.settings.units, details: details))
         } catch {
-            errorMessage = "We couldn’t estimate that photo. Try a clearer shot of just the food."
+            errorInfo = .from(.classify(error, fallback: .photoUnusable))
         }
     }
 

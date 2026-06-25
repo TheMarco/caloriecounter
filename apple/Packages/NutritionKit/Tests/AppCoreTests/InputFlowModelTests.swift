@@ -141,6 +141,127 @@ struct FoodConfirmModelTests {
         let day = try await store.entries(on: "2026-06-22")
         #expect(day.map(\.id) == [saved.id])
     }
+
+    // MARK: - Confirm-screen correction chips (½ · 2× · Less · More · Swap unit)
+
+    @Test("Less / More nudge the amount ~15% and re-round; calories follow")
+    func nudgeAdjustsAmount() throws {
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())
+        #expect(model.quantity == 100)
+        model.nudge(1.15)                       // More
+        #expect(model.quantity == 115)          // tidy-rounded
+        #expect(model.kcal == 128)              // round(1.11 × 115)
+
+        model.quantityText = "100"
+        model.nudge(0.85)                       // Less
+        #expect(model.quantity == 85)
+        #expect(model.kcal == 94)               // round(1.11 × 85)
+    }
+
+    @Test("½ and 2× scale from the original serving, not the current amount")
+    func portionChips() throws {
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())
+        model.setPortion(2)
+        #expect(model.quantity == 200)
+        #expect(model.isPortion(2))
+        model.setPortion(0.5)
+        #expect(model.quantity == 50)           // half of the BASE 100, not half of 200
+        #expect(model.isPortion(0.5))
+    }
+
+    @Test("Swap unit cycles compatible units preserving nutrition; a no-op when only one")
+    func cycleUnitPreservesNutrition() throws {
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())
+        #expect(model.unit == "g")
+        let before = model.kcal                 // 111 at 100 g
+        model.cycleUnit()                       // g → oz
+        #expect(model.unit == "oz")
+        #expect(abs(model.kcal - before) <= 2)  // nutrition preserved across the swap
+
+        // Abstract units (piece/slice/…) have no family → cycleUnit does nothing.
+        let piece = FoodConfirmModel(parsed: ParsedFood(food: "Egg", quantity: 1, unit: "piece", kcal: 78),
+                                     method: .text, store: try makeStore())
+        piece.cycleUnit()
+        #expect(piece.unit == "piece")
+        #expect(piece.quantity == 1)
+    }
+
+    @Test("the confirm badge confidence reflects provenance and flips to Adjusted on edit")
+    func confidenceExposed() throws {
+        let est = FoodConfirmModel(
+            parsed: ParsedFood(food: "Soup", quantity: 1, unit: "bowl", kcal: 200, nutritionConfidence: .estimated),
+            method: .text, store: try makeStore())
+        #expect(est.nutritionConfidence == .estimated)
+        #expect(!est.isExact)
+
+        let bar = FoodConfirmModel(
+            parsed: ParsedFood(food: "Bar", quantity: 1, unit: "piece", kcal: 200, nutritionConfidence: .barcode),
+            method: .barcode, store: try makeStore())
+        #expect(bar.nutritionConfidence == .barcode)
+        #expect(bar.isExact)
+
+        // Editing the breakdown flips to userEdited (Adjusted).
+        let blt = FoodConfirmModel(
+            parsed: ParsedFood(food: "BLT", quantity: 1, unit: "serving", kcal: 240, nutritionConfidence: .estimated,
+                               components: [FoodComponent(name: "Bacon", grams: 16, kcal: 80, fat: 7, carbs: 0, protein: 5)]),
+            method: .text, store: try makeStore())
+        #expect(blt.nutritionConfidence == .estimated)
+        blt.setComponentGrams(at: 0, to: 32)
+        #expect(blt.nutritionConfidence == .userEdited)
+        #expect(blt.isExact)
+    }
+
+    // MARK: - Per-food correction memory
+
+    @Test("an estimated parse pre-applies a remembered correction and becomes Adjusted")
+    func preAppliesRememberedCorrection() async throws {
+        let corrections = MockCorrectionStore([
+            FoodCorrection(food: "Banana", unit: "piece", kcal: 100, fat: 0.4, carbs: 27, protein: 1.3,
+                           updatedAt: Date(timeIntervalSince1970: 1))
+        ])
+        let parsed = ParsedFood(food: "banana", quantity: 1, unit: "piece", kcal: 130, nutritionConfidence: .estimated)
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore(), corrections: corrections)
+        await model.loadRememberedCorrection()
+        #expect(model.kcal == 100)                      // pre-applied (was a 130 estimate)
+        #expect(model.nutritionConfidence == .userEdited)
+        #expect(model.appliedRememberedCorrection)
+        // …and it still scales with quantity (per-unit basis).
+        model.quantityText = "2"
+        #expect(model.kcal == 200)
+    }
+
+    @Test("a measured (barcode) parse is NOT overwritten by a correction")
+    func measuredParseNotOverwritten() async throws {
+        let corrections = MockCorrectionStore([
+            FoodCorrection(food: "Bar", unit: "piece", kcal: 50, fat: 1, carbs: 5, protein: 5,
+                           updatedAt: Date(timeIntervalSince1970: 1))
+        ])
+        let parsed = ParsedFood(food: "Bar", quantity: 1, unit: "piece", kcal: 210, nutritionConfidence: .barcode)
+        let model = FoodConfirmModel(parsed: parsed, method: .barcode, store: try makeStore(), corrections: corrections)
+        await model.loadRememberedCorrection()
+        #expect(model.kcal == 210)                      // barcode is trusted
+        #expect(model.nutritionConfidence == .barcode)
+        #expect(!model.appliedRememberedCorrection)
+    }
+
+    @Test("editing the numbers and saving remembers a per-unit correction")
+    func savingRemembersCorrection() async throws {
+        let corrections = MockCorrectionStore()
+        let parsed = ParsedFood(food: "BLT", quantity: 1, unit: "serving", kcal: 240, nutritionConfidence: .estimated,
+                                components: [FoodComponent(name: "Bacon", grams: 16, kcal: 80, fat: 7, carbs: 0, protein: 5),
+                                             FoodComponent(name: "Bread", grams: 60, kcal: 160, fat: 2, carbs: 30, protein: 6)])
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore(), corrections: corrections)
+        model.setComponentGrams(at: 0, to: 32)          // edit → 320 kcal, user-edited
+        _ = await model.save(date: "2026-06-22", now: Date(timeIntervalSince1970: 0))
+        let remembered = await corrections.correction(for: FoodCorrection.key(food: "BLT", unit: "serving"))
+        #expect(remembered?.kcal == 320)                // per-unit at quantity 1 = 320
+
+        // An UNEDITED estimate does not pollute the memory.
+        let clean = FoodConfirmModel(parsed: ParsedFood(food: "Soup", quantity: 1, unit: "bowl", kcal: 200, nutritionConfidence: .estimated),
+                                     method: .text, store: try makeStore(), corrections: corrections)
+        _ = await clean.save(date: "2026-06-22", now: Date(timeIntervalSince1970: 0))
+        #expect(await corrections.correction(for: FoodCorrection.key(food: "Soup", unit: "bowl")) == nil)
+    }
 }
 
 @MainActor

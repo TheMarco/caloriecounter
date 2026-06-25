@@ -19,9 +19,12 @@ final class TextFlowUITests: XCTestCase {
         app.launchArguments += ["-uitest"]
         app.launch()
 
-        // Quick-add "Text" button (accessibility label from QuickAddBar).
+        // Open the capture fan (the dock's +), then pick Text.
+        let plus = app.buttons["Log food"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 10), "The dock's + (Log food) should exist")
+        plus.tap()
         let textButton = app.buttons["Text"]
-        XCTAssertTrue(textButton.waitForExistence(timeout: 10), "Text quick-add button should exist")
+        XCTAssertTrue(textButton.waitForExistence(timeout: 5), "Text capture method should appear in the fan")
         textButton.tap()
 
         // Type a known food the heuristic parser recognizes.
@@ -48,6 +51,7 @@ final class TextFlowUITests: XCTestCase {
         app.launchArguments += ["-uitest"]
         app.launch()
 
+        app.buttons["Log food"].tap()
         app.buttons["Text"].tap()
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5))
@@ -71,6 +75,7 @@ final class TextFlowUITests: XCTestCase {
         app.launchArguments += ["-uitest"]
         app.launch()
 
+        app.buttons["Log food"].tap()
         app.buttons["Text"].tap()
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5))

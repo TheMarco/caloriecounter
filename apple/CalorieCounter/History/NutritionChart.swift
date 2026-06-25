@@ -28,6 +28,10 @@ struct NutritionChart: View {
     let target: Double
     let unit: String
     var macro: DS.Macro = .calories
+    /// A rich summary for a day key (kcal + macros) shown when a bar is selected.
+    var daySummary: (String) -> String? = { _ in nil }
+
+    @State private var selectedDate: Date?
 
     private var isEmpty: Bool { points.allSatisfy { $0.value == 0 } }
 
@@ -35,6 +39,19 @@ struct NutritionChart: View {
     /// "5…" the way per-bar labels did. (Charts ignores `desiredCount` on a dense
     /// daily scale, so stride explicitly.)
     private var labelStride: Int { max(1, Int((Double(points.count) / 6).rounded(.up))) }
+
+    private var selectedKey: String? { selectedDate.map { LocalDate.key(for: $0) } }
+    private var selectedPoint: MacroSeriesPoint? {
+        guard let key = selectedKey else { return nil }
+        return points.first { $0.date == key }
+    }
+
+    /// A bar's style — muted when another bar is the focus, so the selection leads.
+    private func barStyle(_ point: MacroSeriesPoint) -> AnyShapeStyle {
+        let base = point.isOverTarget ? AnyShapeStyle(DS.over.gradient) : AnyShapeStyle(macro.linearGradient)
+        guard let key = selectedKey, key != point.date else { return base }
+        return AnyShapeStyle(macro.tint.opacity(0.22))
+    }
 
     var body: some View {
         Chart {
@@ -44,9 +61,7 @@ struct NutritionChart: View {
                         x: .value("Day", date, unit: .day),
                         y: .value(unit.capitalized, point.value)
                     )
-                    .foregroundStyle(point.isOverTarget
-                                     ? AnyShapeStyle(DS.over.gradient)
-                                     : AnyShapeStyle(macro.linearGradient))
+                    .foregroundStyle(barStyle(point))
                     .cornerRadius(3)
                 }
             }
@@ -60,7 +75,15 @@ struct NutritionChart: View {
                             .foregroundStyle(.secondary)
                     }
             }
+            if let sp = selectedPoint, let date = LocalDate.date(from: sp.date) {
+                RuleMark(x: .value("Selected", date, unit: .day))
+                    .foregroundStyle(.secondary.opacity(0.4))
+                    .annotation(position: .top, alignment: .center, overflowResolution: .init(x: .fit, y: .disabled)) {
+                        dayCallout(sp)
+                    }
+            }
         }
+        .chartXSelection(value: $selectedDate)
         .chartXAxis {
             AxisMarks(values: .stride(by: .day, count: labelStride)) {
                 AxisGridLine()
@@ -75,5 +98,29 @@ struct NutritionChart: View {
                     .font(.subheadline).foregroundStyle(.secondary)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(chartSummary)
+    }
+
+    /// The selected day's totals, shown as a small callout above the bar.
+    private func dayCallout(_ point: MacroSeriesPoint) -> some View {
+        let summary = daySummary(point.date) ?? "\(Int(point.value)) \(unit)"
+        return Text(summary)
+            .font(.caption2.weight(.medium))
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 8).padding(.vertical, 5)
+            .background(Capsule().fill(.ultraThinMaterial))
+            .overlay(Capsule().stroke(.white.opacity(0.08), lineWidth: 1))
+            .fixedSize()
+    }
+
+    /// One-line VoiceOver summary of the whole chart.
+    private var chartSummary: String {
+        let logged = points.filter { $0.value > 0 }
+        guard !logged.isEmpty else { return "\(unit) chart, no data in this range yet" }
+        let avg = Int((logged.reduce(0) { $0 + $1.value } / Double(logged.count)).rounded())
+        let lo = Int((logged.map(\.value).min() ?? 0).rounded())
+        let hi = Int((logged.map(\.value).max() ?? 0).rounded())
+        return "\(points.count)-day \(unit.lowercased()) chart. Average \(avg) \(unit), range \(lo) to \(hi)."
     }
 }

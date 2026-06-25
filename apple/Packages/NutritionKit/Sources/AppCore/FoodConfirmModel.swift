@@ -30,10 +30,16 @@ public final class FoodConfirmModel {
     @ObservationIgnored private var userBreakdownEdited = false
 
     public let method: InputMethod
-    @ObservationIgnored private let original: ParsedFood
+    @ObservationIgnored private var original: ParsedFood
     @ObservationIgnored private let store: any NutritionStoring
+    @ObservationIgnored private let corrections: (any FoodCorrectionStoring)?
 
-    public init(parsed: ParsedFood, method: InputMethod, store: any NutritionStoring) {
+    /// True once a remembered per-food correction has been pre-applied — the view
+    /// surfaces a subtle "we remembered your last edit" note.
+    public private(set) var appliedRememberedCorrection = false
+
+    public init(parsed: ParsedFood, method: InputMethod, store: any NutritionStoring,
+                corrections: (any FoodCorrectionStoring)? = nil) {
         self.original = parsed
         self.food = parsed.food
         self.unit = parsed.unit
@@ -41,6 +47,7 @@ public final class FoodConfirmModel {
         self.components = parsed.components ?? []
         self.method = method
         self.store = store
+        self.corrections = corrections
     }
 
     public var quantity: Double { Double(quantityText) ?? 0 }
@@ -119,6 +126,65 @@ public final class FoodConfirmModel {
         return base * (amount / original.quantity)
     }
 
+    // MARK: - Confirm-screen correction chips (½ · 2× · Less · More · Swap unit)
+
+    /// The amount the original parse described — the basis for the ½ / 2× chips, so
+    /// "½" always means half of the parsed serving (not half of the current amount).
+    public var basePortion: Double { original.quantity }
+
+    /// Set the amount to a multiple of the original serving (½ → 0.5, 2× → 2).
+    public func setPortion(_ multiplier: Double) {
+        guard basePortion > 0 else { return }
+        quantityText = Self.format(basePortion * multiplier)
+    }
+
+    /// Whether the current amount equals the given multiple of the base serving
+    /// (drives the chip's selected state).
+    public func isPortion(_ multiplier: Double) -> Bool {
+        guard basePortion > 0 else { return false }
+        return abs(quantity - basePortion * multiplier) < 0.05
+    }
+
+    /// Nudge the amount by a factor (Less ≈ 0.85, More ≈ 1.15), re-rounded to a tidy
+    /// step so it never lands on a fussy decimal.
+    public func nudge(_ factor: Double) {
+        quantityText = Self.format(Self.tidyRound(quantity * factor))
+    }
+
+    /// Cycle to the next compatible unit, converting the amount so the nutrition is
+    /// preserved (g↔oz↔lb, ml↔cup↔…). A no-op for abstract units with no family.
+    public func cycleUnit() {
+        let units = UnitConversion.compatibleUnits(with: unit)
+        guard units.count > 1, let i = units.firstIndex(of: unit) else { return }
+        let next = units[(i + 1) % units.count]
+        if let converted = UnitConversion.convert(quantity, from: unit, to: next) {
+            quantityText = Self.format(round2(converted))
+        }
+        unit = next
+    }
+
+    /// The provenance to surface on the confirm badge: a hand-edited breakdown reads
+    /// as "Adjusted" (.userEdited); otherwise it's whatever the parse reported.
+    public var nutritionConfidence: NutritionConfidence? {
+        userBreakdownEdited ? .userEdited : original.nutritionConfidence
+    }
+    /// Whether the current numbers should be shown precisely (vs. rounded "about N").
+    public var isExact: Bool { nutritionConfidence?.isExact ?? false }
+
+    /// A shaky estimate the UI should acknowledge with a softer (uncertain) haptic
+    /// rather than a confident one.
+    public var isLowConfidenceEstimate: Bool {
+        nutritionConfidence == .estimated && (original.confidence ?? 1) < 0.5
+    }
+
+    private func round2(_ v: Double) -> Double { (v * 100).rounded() / 100 }
+    /// Round to a tidy step scaled to the amount's magnitude (nearest 5 for big
+    /// amounts, 1 for medium, 0.5 for small) so a ±15% nudge reads cleanly.
+    private static func tidyRound(_ v: Double) -> Double {
+        let step: Double = v >= 40 ? 5 : (v >= 8 ? 1 : 0.5)
+        return (v / step).rounded() * step
+    }
+
     public func makeEntry(date: String = LocalDate.today(), now: Date = Date()) -> Entry {
         Entry(
             id: UUID().uuidString, date: date, timestamp: now,
@@ -131,10 +197,55 @@ public final class FoodConfirmModel {
         )
     }
 
+    // MARK: - Per-food correction memory (the app learns your truth)
+
+    /// If this is an *estimate* and we remember a prior correction for this exact
+    /// food+unit, pre-apply your remembered numbers and mark it Adjusted. Measured
+    /// sources (label/barcode) are trusted and never overwritten. Async — call from
+    /// the `.task` that builds the model. Idempotent.
+    public func loadRememberedCorrection() async {
+        guard !appliedRememberedCorrection else { return }
+        guard !(original.nutritionConfidence?.isExact ?? false) else { return }   // don't override measured
+        guard let corrections else { return }
+        let key = FoodCorrection.key(food: original.food, unit: original.unit)
+        guard let c = await corrections.correction(for: key) else { return }
+        // The remembered numbers are per-unit; rebuild the basis at the parsed
+        // quantity so the usual quantity scaling keeps working, and drop any stale
+        // breakdown — your correction is the truth now.
+        let q = original.quantity
+        original = ParsedFood(
+            food: original.food, quantity: q, unit: original.unit,
+            kcal: c.kcal * q, fat: c.fat * q, carbs: c.carbs * q, protein: c.protein * q,
+            confidence: original.confidence, notes: original.notes,
+            fiber: c.fiber.map { $0 * q }, sodium: c.sodium.map { $0 * q }, sugar: c.sugar.map { $0 * q },
+            nutritionConfidence: .userEdited, components: nil
+        )
+        components = []
+        appliedRememberedCorrection = true
+    }
+
+    /// The user's edited numbers as a per-unit correction to remember.
+    private func perUnitCorrection(from e: Entry, at now: Date) -> FoodCorrection {
+        let q = e.quantity
+        func per(_ v: Double) -> Double { q > 0 ? v / q : v }
+        func perOpt(_ v: Double?) -> Double? { v.map { q > 0 ? $0 / q : $0 } }
+        return FoodCorrection(
+            food: e.food, unit: e.unit,
+            kcal: per(e.kcal), fat: per(e.fat), carbs: per(e.carbs), protein: per(e.protein),
+            fiber: perOpt(e.fiber), sodium: perOpt(e.sodium), sugar: perOpt(e.sugar),
+            updatedAt: now
+        )
+    }
+
     @discardableResult
     public func save(date: String = LocalDate.today(), now: Date = Date()) async -> Entry {
         let entry = makeEntry(date: date, now: now)
         try? await store.add(entry)
+        // Remember the correction when the user actually changed the numbers (edited
+        // the breakdown), so re-logging this food pre-applies their truth.
+        if userBreakdownEdited, entry.quantity > 0 {
+            await corrections?.remember(perUnitCorrection(from: entry, at: now))
+        }
         return entry
     }
 

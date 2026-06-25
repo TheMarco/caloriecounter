@@ -13,7 +13,7 @@ struct TextInputView: View {
     let onParsed: (ParsedFood) -> Void
 
     @State private var model: TextInputModel?
-    @State private var errorMessage: String?
+    @State private var errorInfo: CaptureErrorInfo?
 
     var body: some View {
         Group {
@@ -69,10 +69,12 @@ struct TextInputView: View {
                 }
             }
         }
-        .alert("Couldn’t analyze", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
+        .overlay {
+            if let errorInfo {
+                CaptureErrorCard(info: errorInfo,
+                                 onRetry: { submit(model) },
+                                 onDismiss: { self.errorInfo = nil })
+            }
         }
     }
 
@@ -81,7 +83,7 @@ struct TextInputView: View {
             do {
                 onParsed(try await model.parse())
             } catch {
-                errorMessage = "We couldn’t understand that. Try rephrasing the food and amount."
+                errorInfo = .from(.classify(error, fallback: .unreadable))
             }
         }
     }

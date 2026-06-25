@@ -10,6 +10,8 @@ import NutritionCore
 
 struct HistoryView: View {
     @Environment(AppContainer.self) private var container
+    /// Opens Settings (the top-right gear).
+    var onOpenSettings: () -> Void = {}
     @State private var model: HistoryModel?
     @State private var macro: MacroKind = .calories
     @State private var selectedDate: String?
@@ -27,6 +29,12 @@ struct HistoryView: View {
             }
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { onOpenSettings() } label: { Image(systemName: "gearshape") }
+                        .accessibilityLabel("Settings")
+                }
+            }
             .task(id: container.dataVersion) {
                 let m = model ?? HistoryModel(store: container.store)
                 model = m
@@ -41,9 +49,12 @@ struct HistoryView: View {
         }
     }
 
+    /// Icons for the "This Week" lines, in WeeklyInsight's order (consistency,
+    /// calories, protein).
+    private static let insightIcons = ["calendar", "flame.fill", "bolt.heart.fill"]
+
     private func content(_ model: HistoryModel) -> some View {
         @Bindable var model = model
-        let insights = model.insights(targets: container.settings.targets)
         return List {
             Section {
                 Picker("Range", selection: $model.range) {
@@ -54,19 +65,20 @@ struct HistoryView: View {
                 .clearRow()
             }
 
-            if insights.hasData {
+            let weekly = model.weeklyInsight(targets: container.settings.targets)
+            if !weekly.lines.isEmpty {
                 Section {
                     SoftCard {
                         VStack(alignment: .leading, spacing: 12) {
-                            insightRow("calendar", DS.Macro.calories.tint,
-                                       "Logged \(insights.loggedDays) of \(insights.totalDays) days in this range.")
-                            insightRow("flame.fill", DS.Macro.calories.tint, caloriesSentence(insights))
-                            insightRow("bolt.heart.fill", DS.Macro.protein.tint, proteinSentence(insights))
+                            ForEach(Array(weekly.lines.enumerated()), id: \.offset) { i, line in
+                                insightRow(i < Self.insightIcons.count ? Self.insightIcons[i] : "circle.fill",
+                                           i == 2 ? DS.Macro.protein.tint : DS.Macro.calories.tint, line)
+                            }
                         }
                     }
                     .clearRow()
                 } header: {
-                    sectionHeader("Insights")
+                    sectionHeader(model.range == .week ? "This Week" : "Summary")
                 }
             }
 
@@ -115,7 +127,8 @@ struct HistoryView: View {
                             points: model.series(macro, targets: container.settings.targets),
                             target: macro.target(in: container.settings.targets),
                             unit: macro.unit,
-                            macro: macro.ds
+                            macro: macro.ds,
+                            daySummary: { daySummary(model, key: $0) }
                         )
                         .frame(height: 230)
                     }
@@ -133,7 +146,8 @@ struct HistoryView: View {
 
             Section {
                 SoftCard {
-                    CalendarView(datesWithEntries: model.datesWithEntries) { date in
+                    CalendarView(datesWithEntries: model.datesWithEntries,
+                                 provenance: { model.provenance(for: $0) }) { date in
                         selectedDate = date
                     }
                 }
@@ -174,23 +188,14 @@ struct HistoryView: View {
         }
     }
 
-    /// Plain, non-judgmental: state the average and how it sits against the goal.
-    /// "net" (matching Today's ring) signals this is food minus exercise, not raw intake.
-    private func caloriesSentence(_ i: RangeInsights) -> String {
-        let avg = Int(i.avgCalories.rounded())
-        let delta = Int(abs(i.calorieDelta).rounded())
-        if delta < 25 {
-            return "You're averaging \(avg) net kcal a day — right around your \(Int(i.calorieGoal)) goal."
-        }
-        let dir = i.calorieDelta < 0 ? "under" : "over"
-        return "You're averaging \(avg) net kcal a day — about \(delta) \(dir) your \(Int(i.calorieGoal)) goal."
-    }
-
-    private func proteinSentence(_ i: RangeInsights) -> String {
-        if i.proteinShortDays == 0 {
-            return "Protein hit your \(Int(i.proteinGoal))g target every logged day."
-        }
-        return "Protein was under your \(Int(i.proteinGoal))g target on \(i.proteinShortDays) of \(i.loggedDays) logged days."
+    /// A compact totals summary for a chart-selected day, e.g.
+    /// "Jun 22 · 1,850 kcal · P95 C210 F60".
+    private func daySummary(_ model: HistoryModel, key: String) -> String? {
+        guard let d = model.dayTotals(for: key) else { return nil }
+        let label = LocalDate.date(from: key).map {
+            $0.formatted(.dateTime.month(.abbreviated).day())
+        } ?? key
+        return "\(label) · \(Int(d.netCalories)) kcal · P\(Int(d.totals.protein)) C\(Int(d.totals.carbs)) F\(Int(d.totals.fat))"
     }
 
     /// The latest measurement in the user's units, e.g. "82.5 kg" (or "—" if none).

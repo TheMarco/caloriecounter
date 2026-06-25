@@ -11,14 +11,19 @@ import NutritionCore
 
 struct CalendarView: View {
     let datesWithEntries: Set<String>
+    /// Provenance per day → a subtle filled (measured) vs hollow (estimated) dot.
+    var provenance: (String) -> DayProvenance = { _ in .none }
     let onSelect: (String) -> Void
 
     private let month: CalendarMonth?
     private let today: String
     private let weekdaySymbols: [String]
 
-    init(datesWithEntries: Set<String>, onSelect: @escaping (String) -> Void) {
+    init(datesWithEntries: Set<String>,
+         provenance: @escaping (String) -> DayProvenance = { _ in .none },
+         onSelect: @escaping (String) -> Void) {
         self.datesWithEntries = datesWithEntries
+        self.provenance = provenance
         self.onSelect = onSelect
         self.today = LocalDate.today()
         let parts = today.split(separator: "-").compactMap { Int($0) }
@@ -51,6 +56,7 @@ struct CalendarView: View {
     @ViewBuilder
     private func dayCell(_ key: String, day: Int) -> some View {
         let hasEntries = datesWithEntries.contains(key)
+        let prov = provenance(key)
         let isToday = key == today
         Button {
             onSelect(key)
@@ -67,13 +73,37 @@ struct CalendarView: View {
                                 .shadow(color: DS.Macro.calories.tint.opacity(0.5), radius: 6)
                         }
                     }
-                Circle()
-                    .fill(hasEntries ? DS.Macro.calories.tint : .clear)
-                    .frame(width: 5, height: 5)
+                provenanceDot(prov, hasEntries: hasEntries)
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(day)\(hasEntries ? ", has entries" : "")")
+        .accessibilityLabel("\(day)\(accessibilitySuffix(prov, hasEntries: hasEntries))")
+    }
+
+    /// A subtle, judgment-free provenance mark: a solid dot for measured days, a
+    /// softer dot for mixed, a hollow ring for estimate-only days.
+    @ViewBuilder
+    private func provenanceDot(_ prov: DayProvenance, hasEntries: Bool) -> some View {
+        let tint = DS.Macro.calories.tint
+        switch prov {
+        case .allExact:
+            Circle().fill(tint).frame(width: 5, height: 5)
+        case .mixed:
+            Circle().fill(tint.opacity(0.45)).frame(width: 5, height: 5)
+        case .estimated:
+            Circle().strokeBorder(tint.opacity(0.75), lineWidth: 1).frame(width: 5, height: 5)
+        case .none:
+            Circle().fill(hasEntries ? tint : .clear).frame(width: 5, height: 5)
+        }
+    }
+
+    private func accessibilitySuffix(_ prov: DayProvenance, hasEntries: Bool) -> String {
+        switch prov {
+        case .allExact:  return ", measured entries"
+        case .mixed:     return ", measured and estimated entries"
+        case .estimated: return ", estimated entries"
+        case .none:      return hasEntries ? ", has entries" : ""
+        }
     }
 }

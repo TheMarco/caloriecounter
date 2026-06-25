@@ -15,8 +15,8 @@ final class HistoryUITests: XCTestCase {
         app.launchArguments += ["-uitest"]
         app.launch()
 
-        let historyTab = app.tabBars.buttons["History"]
-        XCTAssertTrue(historyTab.waitForExistence(timeout: 10), "History tab should exist")
+        let historyTab = app.buttons["History"]
+        XCTAssertTrue(historyTab.waitForExistence(timeout: 10), "History dock button should exist")
         historyTab.tap()
 
         // Range selector, the Weight section, and (after scrolling past the charts)

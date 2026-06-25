@@ -1,6 +1,8 @@
 //
 //  SettingsUITests.swift
-//  Smoke test: the Settings tab renders targets, units, security, and export.
+//  Smoke tests for Settings — now reached via the top-right gear (it's no longer a
+//  tab). `-screen-settings` opens the Settings sheet straight away; one test taps
+//  the gear itself to prove that entry point.
 //
 
 import XCTest
@@ -9,19 +11,40 @@ final class SettingsUITests: XCTestCase {
 
     override func setUp() { continueAfterFailure = false }
 
+    /// Launch with the Settings sheet already open.
+    private func launchInSettings() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest", "-screen-settings"]
+        app.launch()
+        return app
+    }
+
+    /// Advance the setup wizard from its first step (Welcome) to the Goal step.
+    private func advanceToGoal(_ app: XCUIApplication) {
+        XCTAssertTrue(app.staticTexts["Welcome"].waitForExistence(timeout: 5), "Wizard opens on Welcome")
+        app.buttons["Continue"].tap()                                   // → Try a Meal
+        XCTAssertTrue(app.staticTexts["Try a Meal"].waitForExistence(timeout: 5))
+        app.buttons["Continue"].tap()                                   // → Your Goal
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
+    }
+
     @MainActor
-    func testSettingsTabRenders() {
+    func testSettingsGearOpensSettings() {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest"]
         app.launch()
 
-        let settingsTab = app.tabBars.buttons["Settings"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: 10), "Settings tab should exist")
-        settingsTab.tap()
+        let gear = app.buttons["Settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "A Settings gear should exist on Today")
+        gear.tap()
+        XCTAssertTrue(app.staticTexts["Daily Targets"].waitForExistence(timeout: 5), "Gear opens Settings")
+    }
 
-        XCTAssertTrue(app.staticTexts["Daily Targets"].waitForExistence(timeout: 5), "Targets section should render")
+    @MainActor
+    func testSettingsRenders() {
+        let app = launchInSettings()
+        XCTAssertTrue(app.staticTexts["Daily Targets"].waitForExistence(timeout: 10), "Targets section should render")
         XCTAssertTrue(app.staticTexts["Units"].exists, "Units section should render")
-        // Scroll to the data section and confirm the export/reset controls built.
         let reset = app.buttons["Reset targets to defaults"]
         app.swipeUp()
         XCTAssertTrue(reset.waitForExistence(timeout: 5), "Data section should render after scrolling")
@@ -29,39 +52,26 @@ final class SettingsUITests: XCTestCase {
 
     @MainActor
     func testCaloriesTargetCanBeTyped() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uitest"]
-        app.launch()
-
-        app.tabBars.buttons["Settings"].tap()
+        let app = launchInSettings()
         let field = app.textFields["Calories"]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "Calories should be an editable field")
 
-        // Tapping puts the caret at the end; clear the existing value, then type the new one.
         field.tap()
         let existing = field.value as? String ?? ""
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
         field.typeText("1800")
-        app.buttons["Done"].tap()
+        app.buttons["Done"].firstMatch.tap()
 
         XCTAssertEqual(field.value as? String, "1800", "Typed calorie target should stick")
     }
 
     @MainActor
     func testAppleHealthSectionRenders() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uitest"]
-        app.launch()
-
-        app.tabBars.buttons["Settings"].tap()
+        let app = launchInSettings()
         app.swipeUp(); app.swipeUp()
-        // The dense controls now live behind a single "Apple Health" row.
         let healthRow = app.staticTexts["Apple Health"]
         XCTAssertTrue(healthRow.waitForExistence(timeout: 5), "Apple Health row should render")
         healthRow.tap()
-
-        // Opt-in controls present on the detail screen (toggle flip + persistence is
-        // covered by unit tests).
         XCTAssertTrue(app.switches["Sync nutrition to Apple Health"].waitForExistence(timeout: 3),
                       "Nutrition sync toggle should exist on the detail screen")
         XCTAssertTrue(app.buttons["Remove this app’s data from Apple Health"].exists,
@@ -70,18 +80,13 @@ final class SettingsUITests: XCTestCase {
 
     @MainActor
     func testAboutShowsDataSourceAttribution() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uitest"]
-        app.launch()
-
-        app.tabBars.buttons["Settings"].tap()
+        let app = launchInSettings()
         let about = app.buttons["About"]
         app.swipeUp(); app.swipeUp()
         XCTAssertTrue(about.waitForExistence(timeout: 5), "About row should be reachable")
         about.tap()
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 5), "About should open")
 
-        // Data Sources is near the bottom of the (lazily-rendered) list.
         let off = app.staticTexts.containing(
             NSPredicate(format: "label CONTAINS %@", "Open Food Facts")).firstMatch
         app.swipeUp(); app.swipeUp()
@@ -92,16 +97,12 @@ final class SettingsUITests: XCTestCase {
 
     @MainActor
     func testGoalWizardCanBeCancelled() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uitest"]
-        app.launch()
-
-        app.tabBars.buttons["Settings"].tap()
+        let app = launchInSettings()
         let setBtn = app.buttons["Set targets from a goal"]
         XCTAssertTrue(setBtn.waitForExistence(timeout: 10))
         setBtn.tap()
 
-        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5), "Wizard should open")
+        XCTAssertTrue(app.staticTexts["Welcome"].waitForExistence(timeout: 5), "Wizard should open on Welcome")
         app.buttons["Cancel"].tap()
         XCTAssertTrue(app.staticTexts["Daily Targets"].waitForExistence(timeout: 5),
                       "Cancel should return to Settings without forcing the wizard")
@@ -109,39 +110,23 @@ final class SettingsUITests: XCTestCase {
 
     @MainActor
     func testFullResetReturnsToSetupWizard() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uitest"]
-        app.launch()
-
-        let settingsTab = app.tabBars.buttons["Settings"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: 10))
-        settingsTab.tap()
-
-        // Reach the danger-zone button at the bottom.
+        let app = launchInSettings()
         let erase = app.buttons["Erase All Data & Start Over"]
         app.swipeUp(); app.swipeUp()
         XCTAssertTrue(erase.waitForExistence(timeout: 5), "Erase button should render")
         erase.tap()
 
-        // Confirm the destructive action, then the setup wizard should appear.
         let confirm = app.buttons["Erase Everything"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Confirmation should appear")
         confirm.tap()
 
-        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5),
-                      "Setup wizard should relaunch after a full reset")
+        XCTAssertTrue(app.staticTexts["Welcome"].waitForExistence(timeout: 5),
+                      "Setup wizard should relaunch (on Welcome) after a full reset")
     }
 
     @MainActor
     func testOnboardingUnitsCanBeSwitched() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-uitest"]
-        app.launch()
-
-        // Reach the setup wizard via a full reset.
-        let settingsTab = app.tabBars.buttons["Settings"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: 10))
-        settingsTab.tap()
+        let app = launchInSettings()
         app.swipeUp(); app.swipeUp()
         let erase = app.buttons["Erase All Data & Start Over"]
         XCTAssertTrue(erase.waitForExistence(timeout: 5))
@@ -150,11 +135,9 @@ final class SettingsUITests: XCTestCase {
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         confirm.tap()
 
-        // Step 0: pick a goal → Continue. Step 1: Diet Style (has a default) →
-        // Continue. Step 2: the "About You" body step.
-        let goal = app.staticTexts["Maintain weight"]
-        XCTAssertTrue(goal.waitForExistence(timeout: 5))
-        goal.tap()
+        // Welcome → Try a Meal → Your Goal → pick a goal → Diet → About You.
+        advanceToGoal(app)
+        app.staticTexts["Maintain weight"].tap()
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["Diet Style"].waitForExistence(timeout: 5), "Diet Style step should appear")
         XCTAssertTrue(app.staticTexts["Keto"].exists, "Diet styles should be listed")

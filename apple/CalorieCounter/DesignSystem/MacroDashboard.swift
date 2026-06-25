@@ -32,12 +32,13 @@ struct MacroRing: View {
         ZStack {
             Circle().stroke(macro.tint.opacity(trackOpacity), lineWidth: lineWidth)
 
-            // Base fill — completes the full ring once the target is reached.
+            // Base fill — completes the full ring once the target is reached. A
+            // whisper of glow (calmer than a halo) lifts it off the track.
             Circle()
                 .trim(from: 0, to: over ? 1 : clamped)
                 .stroke(macro.ringGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .shadow(color: macro.tint.opacity(0.18), radius: lineWidth * 0.15)
+                .shadow(color: macro.tint.opacity(0.10), radius: lineWidth * 0.12)
 
             // Overage arc — wraps back over the ring in warning red so going over
             // the limit is unmistakable (more excess → more red).

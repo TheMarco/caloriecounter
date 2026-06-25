@@ -11,6 +11,9 @@ import NutritionCore
 
 struct SettingsView: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.dismiss) private var dismiss
+    /// When presented as a sheet (from the gear), show a Done button to dismiss.
+    var showsDoneButton: Bool = false
 
     @State private var exportURL: URL?
     @State private var showResetConfirm = false
@@ -29,6 +32,13 @@ struct SettingsView: View {
             }
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    if showsDoneButton {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { dismiss() }
+                        }
+                    }
+                }
                 .keyboardDoneToolbar()
                 .task { await prepareExport() }
                 .confirmationDialog("Reset all targets to the defaults?", isPresented: $showResetConfirm, titleVisibility: .visible) {
@@ -95,6 +105,13 @@ struct SettingsView: View {
                     ForEach(AppearanceMode.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
+            }
+
+            Section {
+                Toggle("Haptics", isOn: $settings.hapticsEnabled)
+                    .onChange(of: settings.hapticsEnabled) { _, on in Haptics.enabled = on }
+            } footer: {
+                Text("Subtle taps when a food is recognized, adjusted, saved, or undone.")
             }
 
             Section {

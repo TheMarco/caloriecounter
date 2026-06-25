@@ -15,7 +15,7 @@ struct BarcodeScannerView: View {
     let onParsed: (ParsedFood) -> Void
 
     @State private var resolving = false
-    @State private var errorMessage: String?
+    @State private var errorInfo: CaptureErrorInfo?
 
     var body: some View {
         Group {
@@ -42,10 +42,12 @@ struct BarcodeScannerView: View {
         }
         .navigationTitle("Scan Barcode")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Lookup failed", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
+        .overlay {
+            if let errorInfo {
+                CaptureErrorCard(info: errorInfo,
+                                 onRetry: { self.errorInfo = nil },   // resume aiming
+                                 onDismiss: { self.errorInfo = nil })
+            }
         }
     }
 
@@ -57,7 +59,7 @@ struct BarcodeScannerView: View {
             do {
                 onParsed(try await container.barcodeResolver.resolve(code: code, units: container.settings.units))
             } catch {
-                errorMessage = "We couldn’t find nutrition for that barcode. Try Photo or Type instead."
+                errorInfo = .from(.classify(error, fallback: .barcodeNotFound))
             }
         }
     }

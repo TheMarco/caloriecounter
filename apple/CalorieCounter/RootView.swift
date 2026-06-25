@@ -33,9 +33,11 @@ struct RootView: View {
         }
         .task {
             await container.bootstrap()   // (no-op normally; seeds in -demo)
+            Haptics.enabled = container.settings.hapticsEnabled   // mirror the saved preference
             ready = true
-            showWizard = !container.settings.hasCompletedSetup
-                && !AppContainer.isUITest && !AppContainer.isDemo
+            showWizard = AppContainer.forcesOnboarding
+                || (!container.settings.hasCompletedSetup
+                    && !AppContainer.isUITest && !AppContainer.isDemo)
             if lockEnabled {
                 lock.lock()
                 await lock.authenticate()

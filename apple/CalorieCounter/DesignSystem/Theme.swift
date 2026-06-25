@@ -137,7 +137,7 @@ struct AppBackground: View {
 /// scales with Dynamic Type, since the tab bar grows with its label text. Applied to
 /// the Today / History / Settings scroll containers; tune the base here in one place.
 private struct TabBarBottomClearance: ViewModifier {
-    @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = 72
+    @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = 84
     func body(content: Content) -> some View {
         content.contentMargins(.bottom, clearance, for: .scrollContent)
     }

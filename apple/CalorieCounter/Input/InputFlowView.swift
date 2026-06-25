@@ -11,7 +11,8 @@ import NutritionCore
 
 struct InputFlowView: View {
     let method: InputMethod
-    let onSaved: () -> Void
+    /// Receives the saved entry so the host can offer a one-tap undo.
+    let onSaved: (Entry) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var parsed: ParsedFood?
@@ -20,8 +21,8 @@ struct InputFlowView: View {
         NavigationStack {
             captureView
                 .navigationDestination(item: $parsed) { food in
-                    FoodConfirmView(parsed: food, method: method) {
-                        onSaved()
+                    FoodConfirmView(parsed: food, method: method) { entry in
+                        onSaved(entry)
                         dismiss()
                     }
                 }

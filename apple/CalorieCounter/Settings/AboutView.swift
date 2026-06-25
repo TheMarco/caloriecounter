@@ -30,6 +30,13 @@ struct AboutView: View {
             }
 
             Section {
+                PrivacyAtAGlance()
+                    .listRowBackground(Color.clear)
+            } header: {
+                Text("What stays on device")
+            }
+
+            Section {
                 Label("Your food log, weights, targets, and settings are stored only on this device.", systemImage: "lock.shield")
                 Label("Typed, spoken, and photographed foods are analyzed by OpenAI — only the food text or photo is sent, with no name, account, or device ID attached.", systemImage: "sparkles")
                 Label("Voice is transcribed on-device; only the recognized words are sent.", systemImage: "mic")

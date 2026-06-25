@@ -73,6 +73,42 @@ struct TodayModelTests {
         #expect(model.totals.calories == 120)
     }
 
+    @Test("usuals surfaces frequently-logged foods, excluding what's already on today's plate")
+    func usuals() async throws {
+        let store = try makeStore()
+        func e(_ food: String, _ day: String, _ ts: TimeInterval) -> Entry {
+            Entry(id: "\(food)-\(ts)", date: day, timestamp: Date(timeIntervalSince1970: ts),
+                  food: food, quantity: 1, unit: "g", kcal: 100, fat: 0, carbs: 0, protein: 0, method: .text)
+        }
+        try await store.add(e("Coffee", "2026-06-20", 1))
+        try await store.add(e("Coffee", "2026-06-21", 2))
+        try await store.add(e("Eggs", "2026-06-21", 3))
+        try await store.add(e("Eggs", "2026-06-22", 4))   // already logged today → excluded
+
+        let model = TodayModel(store: store, date: "2026-06-22")
+        await model.load()
+        #expect(model.usuals.map(\.food) == ["Coffee"])
+    }
+
+    @Test("relog adds a fresh copy for today; restore brings a deleted entry back")
+    func relogAndRestore() async throws {
+        let store = try makeStore()
+        let model = TodayModel(store: store, date: "2026-06-22")
+        await model.load()
+
+        let prior = Entry(id: "old", date: "2026-06-10", timestamp: Date(timeIntervalSince1970: 1),
+                          food: "Latte", quantity: 1, unit: "cup", kcal: 120, fat: 5, carbs: 10, protein: 6, method: .text)
+        let fresh = await model.relog(prior)
+        #expect(fresh.id != "old")                 // new identity
+        #expect(fresh.date == "2026-06-22")        // logged for today
+        #expect(model.entries.map(\.food) == ["Latte"])
+
+        await model.deleteEntry(id: fresh.id)
+        #expect(model.entries.isEmpty)
+        await model.restore(fresh)                 // undo
+        #expect(model.entries.map(\.id) == [fresh.id])
+    }
+
     @Test("progress(for:) maps each macro total against its target")
     func progressForTargets() async throws {
         let store = try makeStore()
