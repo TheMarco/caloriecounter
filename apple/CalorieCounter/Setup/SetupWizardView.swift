@@ -54,9 +54,24 @@ struct SetupWizardView: View {
                     }
                     .padding(.horizontal, DS.screenPadding)
                     .padding(.top, 8)
+                    .padding(.bottom, 44)
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .keyboardDoneToolbar()
+                // When content overflows (e.g. long copy at large text), fade it into
+                // the action bar instead of hard-clipping mid-sentence — the cutoff
+                // reads as "more below", not broken. A no-op when content fits (the
+                // faded zone is just empty space above the footer).
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.9),
+                            .init(color: .clear, location: 1.0),
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
                 footer
             }
         }
