@@ -21,16 +21,16 @@ struct QuickAddBar: View {
                 Button {
                     onSelect(method)
                 } label: {
-                    VStack(spacing: 6) {
+                    VStack(spacing: 5) {
                         Image(systemName: method.systemImage)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(.primary)
                         Text(shortLabel(method))
-                            .font(.caption.weight(.semibold))
+                            .font(.caption2.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 10)
                 }
                 .buttonStyle(.glass)
                 .accessibilityLabel(method.label)

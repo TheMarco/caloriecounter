@@ -69,12 +69,13 @@ struct TodayView: View {
             }
             Section {
                 QuickAddBar { activeInput = $0 }
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 4)
                     .clearRow()
             }
             Section {
                 MacroDashboard(totals: model.totals, targets: container.settings.targets, offset: model.offset)
-                    .padding(.top, 24)
+                    .padding(.top, 34)
+                    .padding(.bottom, 12)
                     .clearRow()
             }
             Section {
