@@ -31,9 +31,11 @@ extension InputMethod {
     }
 }
 
-/// A single logged food, as a floating glass card.
+/// A single logged food, as a matte content card.
 struct EntryCard: View {
     let entry: Entry
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         HStack(spacing: 14) {
@@ -73,11 +75,12 @@ struct EntryCard: View {
         .padding(14)
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(DS.contentFill(scheme))
                 .overlay {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(.white.opacity(0.06), lineWidth: 1)
+                        .stroke(DS.cardBorder(scheme, contrast), lineWidth: 1)
                 }
+                .shadow(color: scheme == .dark ? .clear : .black.opacity(0.05), radius: 7, y: 2)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(entry.food), \(quantity) \(entry.unit), \(Int(entry.kcal)) calories")
@@ -97,10 +100,12 @@ struct EntryCard: View {
     }
 }
 
-/// Exercise / adjustment offset, as a tappable glass pill.
+/// Exercise / adjustment offset, as a tappable matte content card.
 struct OffsetChip: View {
     let offset: Double
     let onTap: () -> Void
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         Button(action: onTap) {
@@ -131,11 +136,12 @@ struct OffsetChip: View {
             .padding(14)
             .background {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(DS.contentFill(scheme))
                     .overlay {
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .stroke(.white.opacity(0.06), lineWidth: 1)
+                            .stroke(DS.cardBorder(scheme, contrast), lineWidth: 1)
                     }
+                    .shadow(color: scheme == .dark ? .clear : .black.opacity(0.05), radius: 7, y: 2)
             }
         }
         .buttonStyle(.plain)

@@ -50,6 +50,14 @@ enum DS {
         scheme == .dark ? Color(hex: 0x0C0D10) : Color(hex: 0xF4F5F7)
     }
 
+    /// MATTE content-surface fill — the design rule: glass is for chrome/transient
+    /// surfaces (dock, tray, toasts), MATTE is for anything that holds information
+    /// (cards, rows, charts, chips). A solid, calm, readable surface lifted subtly
+    /// off the backdrop — never translucent, so data never feels mushy or slippery.
+    static func contentFill(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color(hex: 0x16181D) : .white
+    }
+
     /// Card/separator border that stays visible in both schemes (a white edge is
     /// invisible on a light backdrop) and strengthens when Increase Contrast is on.
     static func cardBorder(_ scheme: ColorScheme, _ contrast: ColorSchemeContrast) -> Color {
@@ -160,7 +168,8 @@ extension View {
     func tabBarBottomClearance() -> some View { modifier(TabBarBottomClearance()) }
 }
 
-/// A content card with a glassy, layered look (used for grouped content).
+/// A MATTE content card (data deserves a solid, calm surface — not glass). Used for
+/// grouped content everywhere: insights, plan, weight, charts, banners.
 struct SoftCard<Content: View>: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.colorSchemeContrast) private var contrast
@@ -172,13 +181,12 @@ struct SoftCard<Content: View>: View {
             .padding(padding)
             .background {
                 RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(DS.contentFill(scheme))
                     .overlay {
                         RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
                             .stroke(DS.cardBorder(scheme, contrast), lineWidth: 1)
                     }
-                    // In light mode the material barely separates from a light
-                    // backdrop; a soft shadow lifts the card so it reads as a surface.
+                    // A soft shadow lifts the card off the backdrop (light mode mainly).
                     .shadow(color: scheme == .dark ? .clear : .black.opacity(0.06),
                             radius: 9, y: 3)
             }

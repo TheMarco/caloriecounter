@@ -69,9 +69,9 @@ struct CaptureErrorCard: View {
             .frame(maxWidth: 340)
             .background {
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(.white.opacity(0.08), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.2), radius: 20, y: 8)
+                    .fill(DS.contentFill(scheme))
+                    .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(DS.cardBorder(scheme, .standard), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.3), radius: 22, y: 10)
             }
             .padding(32)
         }

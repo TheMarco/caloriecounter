@@ -309,7 +309,7 @@ struct SetupWizardView: View {
         .padding(16)
         .background {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(DS.contentFill(colorScheme))
                 .overlay {
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .stroke(selected ? color.opacity(0.7) : DS.cardBorder(colorScheme, colorSchemeContrast),

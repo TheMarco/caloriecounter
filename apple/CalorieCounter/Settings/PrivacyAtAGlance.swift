@@ -64,7 +64,7 @@ struct PrivacyAtAGlance: View {
                 .frame(maxWidth: .infinity)
                 .background {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .fill(DS.contentFill(scheme))
                         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(DS.cardBorder(scheme, .standard), lineWidth: 1))
                 }
 

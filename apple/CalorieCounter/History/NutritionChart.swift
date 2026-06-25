@@ -31,6 +31,8 @@ struct NutritionChart: View {
     /// A rich summary for a day key (kcal + macros) shown when a bar is selected.
     var daySummary: (String) -> String? = { _ in nil }
 
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var selectedDate: Date?
 
     private var isEmpty: Bool { points.allSatisfy { $0.value == 0 } }
@@ -109,8 +111,9 @@ struct NutritionChart: View {
             .font(.caption2.weight(.medium))
             .foregroundStyle(.primary)
             .padding(.horizontal, 8).padding(.vertical, 5)
-            .background(Capsule().fill(.ultraThinMaterial))
-            .overlay(Capsule().stroke(.white.opacity(0.08), lineWidth: 1))
+            .background(Capsule().fill(DS.contentFill(scheme)))
+            .overlay(Capsule().stroke(DS.cardBorder(scheme, contrast), lineWidth: 1))
+            .shadow(color: .black.opacity(scheme == .dark ? 0.3 : 0.12), radius: 6, y: 2)
             .fixedSize()
     }
 

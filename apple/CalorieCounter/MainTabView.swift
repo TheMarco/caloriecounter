@@ -58,7 +58,7 @@ struct MainTabView: View {
             // dismiss. Only the dock sits above it.
             if showCapture {
                 Rectangle()
-                    .fill(.black.opacity(0.22))
+                    .fill(.black.opacity(0.5))   // strong enough that content can't compete with the tray
                     .ignoresSafeArea()
                     .contentShape(.rect)
                     .onTapGesture { closeCapture() }

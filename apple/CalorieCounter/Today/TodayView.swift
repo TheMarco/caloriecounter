@@ -11,6 +11,8 @@ import NutritionCore
 
 struct TodayView: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
     /// Shows a transient undo toast (hosted by the dock container).
     var presentUndo: (String, @escaping () -> Void) -> Void = { _, _ in }
     /// Opens Settings (the top-right gear).
@@ -158,8 +160,8 @@ struct TodayView: View {
                                 .foregroundStyle(DS.Macro.calories.tint)
                         }
                         .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(Capsule().fill(.ultraThinMaterial))
-                        .overlay(Capsule().stroke(.white.opacity(0.06), lineWidth: 1))
+                        .background(Capsule().fill(DS.contentFill(scheme)))
+                        .overlay(Capsule().stroke(DS.cardBorder(scheme, contrast), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Log \(usual.food), \(Int(usual.kcal)) calories")

@@ -93,7 +93,7 @@ struct MealCard<Accessory: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(DS.contentFill(scheme))
                 .overlay {
                     RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
                         .stroke(DS.cardBorder(scheme, contrast), lineWidth: 1)

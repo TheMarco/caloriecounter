@@ -24,11 +24,8 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                AppBackground()
-                settingsForm(settings: container.settings)
-                    .scrollContentBackground(.hidden)
-            }
+            // Native grouped-list surfaces: solid, calm, readable — not glass.
+            settingsForm(settings: container.settings)
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
