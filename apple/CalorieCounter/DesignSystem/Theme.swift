@@ -132,13 +132,19 @@ struct AppBackground: View {
     }
 }
 
-extension View {
-    /// Bottom inset so scrollable content can scroll clear of the floating Liquid
-    /// Glass tab bar (which sits over content and doesn't reserve safe area). Applied
-    /// to the Today / History / Settings scroll containers. Tune here in one place.
-    func tabBarBottomClearance() -> some View {
-        contentMargins(.bottom, 72, for: .scrollContent)
+/// Bottom inset so scrollable content can scroll clear of the floating Liquid Glass
+/// tab bar (which sits over content and doesn't reserve safe area). The base value
+/// scales with Dynamic Type, since the tab bar grows with its label text. Applied to
+/// the Today / History / Settings scroll containers; tune the base here in one place.
+private struct TabBarBottomClearance: ViewModifier {
+    @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = 72
+    func body(content: Content) -> some View {
+        content.contentMargins(.bottom, clearance, for: .scrollContent)
     }
+}
+
+extension View {
+    func tabBarBottomClearance() -> some View { modifier(TabBarBottomClearance()) }
 }
 
 /// A content card with a glassy, layered look (used for grouped content).

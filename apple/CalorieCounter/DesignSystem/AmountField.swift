@@ -118,7 +118,7 @@ struct AmountField: UIViewRepresentable {
             let bar = UIToolbar()
             bar.sizeToFit()
             let check = UIBarButtonItem(image: UIImage(systemName: "checkmark.circle.fill"),
-                                        style: .done, target: self, action: #selector(dismissKeyboard))
+                                        style: .plain, target: self, action: #selector(dismissKeyboard))
             check.tintColor = UIColor(red: 0x57 / 255.0, green: 0xB5 / 255.0, blue: 0x8C / 255.0, alpha: 1)
             check.accessibilityLabel = "Done"
             bar.items = [UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil), check]
