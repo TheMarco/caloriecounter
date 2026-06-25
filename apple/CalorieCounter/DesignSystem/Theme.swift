@@ -122,6 +122,15 @@ struct AppBackground: View {
     }
 }
 
+extension View {
+    /// Bottom inset so scrollable content can scroll clear of the floating Liquid
+    /// Glass tab bar (which sits over content and doesn't reserve safe area). Applied
+    /// to the Today / History / Settings scroll containers. Tune here in one place.
+    func tabBarBottomClearance() -> some View {
+        contentMargins(.bottom, 72, for: .scrollContent)
+    }
+}
+
 /// A content card with a glassy, layered look (used for grouped content).
 struct SoftCard<Content: View>: View {
     @ViewBuilder var content: Content

@@ -122,6 +122,7 @@ struct HistoryView: View {
         .listStyle(.plain)
         .listRowSpacing(10)
         .scrollContentBackground(.hidden)
+        .tabBarBottomClearance()
         .scrollEdgeEffectStyle(.soft, for: .top)
         .refreshable { await model.load() }
     }
