@@ -15,12 +15,22 @@ struct MacroRing: View {
     var lineWidth: CGFloat = 16
     var animate: Bool = true
 
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    /// Unfilled-track opacity. Lighter backdrops and Increase Contrast need a
+    /// stronger track so the ring's progress reads clearly.
+    private var trackOpacity: Double {
+        let base = scheme == .dark ? 0.16 : 0.24
+        return contrast == .increased ? min(base + 0.12, 0.5) : base
+    }
+
     var body: some View {
         let over = fraction > 1
         let clamped = max(0, min(fraction, 1))
         let overage = over ? min(fraction - 1, 1) : 0   // how far past 100%, wrapped once
         ZStack {
-            Circle().stroke(macro.tint.opacity(0.16), lineWidth: lineWidth)
+            Circle().stroke(macro.tint.opacity(trackOpacity), lineWidth: lineWidth)
 
             // Base fill — completes the full ring once the target is reached.
             Circle()

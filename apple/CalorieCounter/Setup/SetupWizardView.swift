@@ -13,6 +13,8 @@ struct SetupWizardView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     /// Whether the user can back out without finishing (true when re-run from
     /// Settings; false for mandatory first-launch onboarding).
     var allowsCancel: Bool = false
@@ -210,8 +212,10 @@ struct SetupWizardView: View {
                 .fill(.ultraThinMaterial)
                 .overlay {
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(selected ? color.opacity(0.7) : .white.opacity(0.06), lineWidth: selected ? 2 : 1)
+                        .stroke(selected ? color.opacity(0.7) : DS.cardBorder(colorScheme, colorSchemeContrast),
+                                lineWidth: selected ? 2 : 1)
                 }
+                .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.05), radius: 7, y: 2)
         }
     }
 

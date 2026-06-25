@@ -38,6 +38,16 @@ enum DS {
     static let cardRadius: CGFloat = 28
     static let chipRadius: CGFloat = 20
 
+    /// Card/separator border that stays visible in both schemes (a white edge is
+    /// invisible on a light backdrop) and strengthens when Increase Contrast is on.
+    static func cardBorder(_ scheme: ColorScheme, _ contrast: ColorSchemeContrast) -> Color {
+        let base = scheme == .dark ? Color.white : Color.black
+        let opacity: Double = scheme == .dark
+            ? (contrast == .increased ? 0.18 : 0.08)
+            : (contrast == .increased ? 0.22 : 0.12)
+        return base.opacity(opacity)
+    }
+
     /// Over-target signal: a warm, unmistakable red that still fits the muted
     /// palette. Used for the overage ring arc and "X over" labels.
     static let over = Color(hex: 0xE0594F)
@@ -133,6 +143,8 @@ extension View {
 
 /// A content card with a glassy, layered look (used for grouped content).
 struct SoftCard<Content: View>: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
     @ViewBuilder var content: Content
     var padding: CGFloat = 18
 
@@ -144,8 +156,12 @@ struct SoftCard<Content: View>: View {
                     .fill(.ultraThinMaterial)
                     .overlay {
                         RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
-                            .stroke(.white.opacity(0.08), lineWidth: 1)
+                            .stroke(DS.cardBorder(scheme, contrast), lineWidth: 1)
                     }
+                    // In light mode the material barely separates from a light
+                    // backdrop; a soft shadow lifts the card so it reads as a surface.
+                    .shadow(color: scheme == .dark ? .clear : .black.opacity(0.06),
+                            radius: 9, y: 3)
             }
     }
 }
