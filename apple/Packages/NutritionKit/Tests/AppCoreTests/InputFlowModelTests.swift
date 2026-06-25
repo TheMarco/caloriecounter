@@ -156,7 +156,7 @@ struct TextInputModelTests {
                                   food: "Chicken Breast", quantity: 150, unit: "g",
                                   kcal: 248, fat: 5, carbs: 0, protein: 46, method: .text))
         let model = TextInputModel(store: store, parser: StubParser(result: .init(food: "x", quantity: 1, unit: "g", kcal: 0)),
-                                   foodSearch: StaticFoodSearch(), units: .metric)
+                                   units: .metric)
         model.query = "chick"
         await model.updateSuggestions()
         #expect(model.suggestions.map(\.food) == ["Chicken Breast"])
@@ -166,33 +166,9 @@ struct TextInputModelTests {
     func parseRoutes() async throws {
         let result = ParsedFood(food: "Oatmeal", quantity: 1, unit: "bowl", kcal: 300)
         let model = TextInputModel(store: try makeStore(), parser: StubParser(result: result),
-                                   foodSearch: StaticFoodSearch(), units: .metric)
+                                   units: .metric)
         model.query = "a bowl of oatmeal"
         #expect(try await model.parse() == result)
-    }
-
-    @Test("a settled query surfaces branded product matches from the search seam")
-    func productMatches() async throws {
-        let match = ParsedFood(food: "Chobani Greek Yogurt", quantity: 1, unit: "serving",
-                               kcal: 120, nutritionConfidence: .barcode)
-        let model = TextInputModel(store: try makeStore(),
-                                   parser: StubParser(result: .init(food: "x", quantity: 1, unit: "g", kcal: 0)),
-                                   foodSearch: StaticFoodSearch(results: [match]),
-                                   units: .metric, searchDebounceMilliseconds: 0)
-        model.query = "greek yogurt"
-        await model.searchProducts()
-        #expect(model.productMatches == [match])
-    }
-
-    @Test("short queries don't trigger a product search")
-    func productMatchesShortQuery() async throws {
-        let model = TextInputModel(store: try makeStore(),
-                                   parser: StubParser(result: .init(food: "x", quantity: 1, unit: "g", kcal: 0)),
-                                   foodSearch: StaticFoodSearch(results: [.init(food: "X", quantity: 1, unit: "g", kcal: 1)]),
-                                   units: .metric, searchDebounceMilliseconds: 0)
-        model.query = "ab"
-        await model.searchProducts()
-        #expect(model.productMatches.isEmpty)
     }
 
 }

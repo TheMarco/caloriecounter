@@ -72,10 +72,3 @@ public protocol PhotoParsing: Sendable {
 public protocol BarcodeResolving: Sendable {
     func resolve(code: String, units: UnitSystem) async throws -> ParsedFood
 }
-
-/// Free-text product name → branded matches from a nutrition database (OpenFoodFacts).
-/// Surfaced as optional, tappable suggestions in the type-food flow — generic/homemade
-/// foods still fall through to the cloud estimate. Returns [] on no match or offline.
-public protocol FoodSearching: Sendable {
-    func search(_ query: String, units: UnitSystem) async throws -> [ParsedFood]
-}

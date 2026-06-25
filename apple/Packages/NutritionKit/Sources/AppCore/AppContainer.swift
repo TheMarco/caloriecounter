@@ -29,8 +29,6 @@ public final class AppContainer {
     public let foodParser: any FoodParsing
     public let photoParser: any PhotoParsing
     public let barcodeResolver: any BarcodeResolving
-    /// Free-text product search (OFF) surfacing branded matches in the type flow.
-    public let foodSearch: any FoodSearching
     public let settings: SettingsStore
     /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
     public let healthSync: any HealthSyncing
@@ -188,7 +186,6 @@ public final class AppContainer {
         foodParser: any FoodParsing,
         photoParser: any PhotoParsing,
         barcodeResolver: any BarcodeResolving,
-        foodSearch: any FoodSearching,
         settings: SettingsStore,
         healthSync: any HealthSyncing
     ) {
@@ -198,7 +195,6 @@ public final class AppContainer {
         self.foodParser = foodParser
         self.photoParser = photoParser
         self.barcodeResolver = barcodeResolver
-        self.foodSearch = foodSearch
         self.settings = settings
         self.healthSync = healthSync
         self.isHealthAvailable = healthSync.isAvailable()
@@ -249,8 +245,6 @@ public final class AppContainer {
             foodParser: offline ? HeuristicFoodParser() : cloudParser,
             photoParser: APIPhotoParser(client: client),
             barcodeResolver: barcode,
-            // Real product search online; an empty stub in tests/demo (no network).
-            foodSearch: offline ? StaticFoodSearch() : OpenFoodFactsResolver(),
             settings: SettingsStore(defaultUnits: .deviceDefault),
             healthSync: offline ? MockHealthSyncService() : AppleHealthKitService()
         )

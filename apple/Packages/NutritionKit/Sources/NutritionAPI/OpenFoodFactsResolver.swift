@@ -4,7 +4,7 @@
 // Killer Bread lists nutrition "per slice") — so a scan defaults to "1 serving"
 // with the package's own numbers and the serving size in the notes. Falls back to
 // per-100g when OFF has no serving data, then to `.missingNutriments` (which lets
-// AppCore ask Foundation Models to estimate from the product name).
+// AppCore ask the cloud food parser to estimate from the product name).
 
 import Foundation
 import NutritionCore
@@ -17,7 +17,7 @@ public enum OpenFoodFactsError: Error, Sendable, Equatable {
     case missingNutriments(productName: String)
 }
 
-public struct OpenFoodFactsResolver: BarcodeResolving, FoodSearching {
+public struct OpenFoodFactsResolver: BarcodeResolving {
     private let session: URLSession
     private let baseURL: URL
     /// OFF asks API clients to identify themselves; use the app's real host.
@@ -53,43 +53,6 @@ public struct OpenFoodFactsResolver: BarcodeResolving, FoodSearching {
             throw OpenFoodFactsError.missingNutriments(productName: name)
         }
         return food
-    }
-
-    /// Free-text search against OFF's product database. Returns branded matches
-    /// (newest/most-complete first as OFF ranks them), each mapped to a ParsedFood
-    /// with `.barcode` confidence. Products without usable nutriments are dropped.
-    /// Returns [] for blank queries; throws only on a transport error (callers
-    /// treat a throw as "no suggestions" so the type flow degrades gracefully).
-    public func search(_ query: String, units: UnitSystem) async throws -> [ParsedFood] {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 3 else { return [] }
-
-        var components = URLComponents(string: "\(baseURL.absoluteString)/cgi/search.pl")
-        components?.queryItems = [
-            URLQueryItem(name: "search_terms", value: trimmed),
-            URLQueryItem(name: "search_simple", value: "1"),
-            URLQueryItem(name: "action", value: "process"),
-            URLQueryItem(name: "json", value: "1"),
-            URLQueryItem(name: "page_size", value: "12"),
-            // Only fetch the fields we map — keeps the response small.
-            URLQueryItem(name: "fields", value: "product_name,product_name_en,brands,serving_size,serving_quantity,nutriments"),
-        ]
-        guard let url = components?.url else { return [] }
-        var request = URLRequest(url: url)
-        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            return []
-        }
-
-        let payload = try JSONDecoder().decode(OFFSearchResponse.self, from: data)
-        return (payload.products ?? []).compactMap { product in
-            let name = Self.displayName(for: product)
-            guard name != "Unknown Product", let nutriments = product.nutriments else { return nil }
-            return parsedFood(name: name, nutriments: nutriments,
-                              servingGrams: product.servingQuantity, servingSize: product.servingSize)
-        }
     }
 
     /// A product's best display name (name → English name → brand).
@@ -156,12 +119,6 @@ public struct OpenFoodFactsResolver: BarcodeResolving, FoodSearching {
 }
 
 // MARK: - OFF response decoding
-
-/// The `/cgi/search.pl` response: a list of products (same shape as a single
-/// product lookup), reusing `OFFResponse.Product` for decoding.
-private struct OFFSearchResponse: Decodable {
-    let products: [OFFResponse.Product]?
-}
 
 private struct OFFResponse: Decodable {
     let status: Int?

@@ -43,7 +43,6 @@ struct WorkoutOffsetTests {
             store: store, keychain: keychain, apiClient: APIClient(tokens: keychain),
             foodParser: StubFoodParser(), photoParser: StubPhotoParser(),
             barcodeResolver: StubBarcode(),
-            foodSearch: StaticFoodSearch(),
             settings: settings, healthSync: MockHealthSyncService(
                 available: healthAvailable, seededWorkouts: seededWorkouts))
         return (container, settings)
