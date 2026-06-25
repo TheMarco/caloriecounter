@@ -38,9 +38,11 @@ enum DS {
     static let cardRadius: CGFloat = 28
     static let chipRadius: CGFloat = 20
 
-    /// The height the floating dock occupies at the bottom — shared by the scroll
-    /// clearance and the background shelf so they always agree.
-    static let dockClearance: CGFloat = 116
+    /// The height reserved at the bottom for the floating dock + its fade — shared by
+    /// the scroll clearance and the background shelf so they always agree. Generous
+    /// enough for a tall, gradual fade above the bar (content dissolves into the
+    /// background well before it reaches the dock).
+    static let dockClearance: CGFloat = 160
 
     /// The app's base backdrop color (matches `AppBackground`'s base), used to paint
     /// the dock's background shelf so content fades into the background behind it.

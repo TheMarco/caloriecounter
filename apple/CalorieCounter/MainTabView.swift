@@ -100,13 +100,13 @@ struct MainTabView: View {
         let bg = DS.appBackgroundBase(scheme)
         return LinearGradient(
             stops: [
-                .init(color: bg.opacity(0), location: 0),
-                .init(color: bg.opacity(0.96), location: 0.32),
-                .init(color: bg, location: 0.6),
+                .init(color: bg.opacity(0), location: 0),       // tall, gradual fade in…
+                .init(color: bg.opacity(0.9), location: 0.34),
+                .init(color: bg, location: 0.42),               // …solid only where the dock sits
             ],
             startPoint: .top, endPoint: .bottom
         )
-        .frame(height: DS.dockClearance + 28)   // covers the dock + a soft fade above
+        .frame(height: DS.dockClearance)
         .frame(maxHeight: .infinity, alignment: .bottom)
         .ignoresSafeArea()
         .allowsHitTesting(false)
