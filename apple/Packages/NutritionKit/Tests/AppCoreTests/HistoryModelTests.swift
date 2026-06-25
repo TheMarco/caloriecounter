@@ -112,6 +112,26 @@ struct HistoryModelTests {
         #expect(i.hasData)
     }
 
+    @Test("History uses net calories — the chart bar and insight average subtract the day's offset")
+    func netCaloriesInHistory() async throws {
+        let store = try makeStore()
+        let keys = LocalDate.lastDays(2)
+        try await store.add(Entry(id: "big", date: keys[1], timestamp: Date(timeIntervalSince1970: 0),
+                                  food: "Big day", quantity: 1, unit: "g", kcal: 2500, fat: 0, carbs: 0, protein: 0, method: .text))
+        try await store.setOffset(500, on: keys[1])   // logged a 500 kcal workout
+
+        let model = HistoryModel(store: store, range: .week)
+        await model.load()
+        let targets = MacroTargets(calories: 2000, fat: 65, carbs: 250, protein: 100)
+
+        // Chart bar is net (2500 − 500 = 2000), so an on-target day reads on-target.
+        let point = model.series(.calories, targets: targets).first { $0.date == keys[1] }
+        #expect(point?.value == 2000)                  // not the raw 2500
+        #expect(point?.isOverTarget == false)          // raw 2500 would have flagged over
+        // The insight average uses net too.
+        #expect(model.insights(targets: targets).avgCalories == 2000)
+    }
+
     @Test("RangeInsights reports no data when nothing was logged")
     func rangeInsightsEmpty() {
         let targets = MacroTargets(calories: 2000, fat: 65, carbs: 250, protein: 100)

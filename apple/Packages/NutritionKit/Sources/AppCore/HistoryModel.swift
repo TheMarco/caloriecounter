@@ -74,15 +74,16 @@ public struct RangeInsights: Sendable, Equatable {
     public static func from(days: [DayTotals], targets: MacroTargets) -> RangeInsights {
         let logged = days.filter { $0.totals.calories > 0 }
         let n = logged.count
-        func avg(_ value: (MacroTotals) -> Double) -> Double {
-            n > 0 ? logged.reduce(0) { $0 + value($1.totals) } / Double(n) : 0
+        func avg(_ value: (DayTotals) -> Double) -> Double {
+            n > 0 ? logged.reduce(0) { $0 + value($1) } / Double(n) : 0
         }
         return RangeInsights(
             loggedDays: n,
             totalDays: days.count,
-            avgCalories: avg { $0.calories },
+            // Net calories (food minus the day's exercise offset), matching Today.
+            avgCalories: avg { $0.netCalories },
             calorieGoal: targets.calories,
-            avgProtein: avg { $0.protein },
+            avgProtein: avg { $0.totals.protein },
             proteinGoal: targets.protein,
             proteinShortDays: logged.filter { $0.totals.protein < targets.protein }.count
         )
@@ -134,7 +135,9 @@ public final class HistoryModel {
     /// Per-day points for `macro`, flagged when over `targets` (chart coloring).
     public func series(_ macro: MacroKind, targets: MacroTargets) -> [MacroSeriesPoint] {
         days.map { day in
-            let value = macro.value(in: day.totals)
+            // Calories track NET (food minus the day's exercise offset), matching
+            // Today and MacroMath; the other macros aren't affected by offsets.
+            let value = macro == .calories ? day.netCalories : macro.value(in: day.totals)
             return MacroSeriesPoint(date: day.date, value: value, isOverTarget: value > macro.target(in: targets))
         }
     }
