@@ -25,6 +25,7 @@
 		5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E9485996765BF65226D3DA /* RootView.swift */; };
 		5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */; };
 		6AB698C6BAA50C2D4457A833 /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7013E812483F373BC90E6E /* Motion.swift */; };
+		7A876EFF65F27245E12EE9CD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71394550BEED427BFC12CD71 /* LaunchScreen.storyboard */; };
 		7BD50311C99265FE48D8E855 /* PhotoCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E553463A5AD63E4A2680AA /* PhotoCaptureView.swift */; };
 		87C0F7CD667BADEC1257684F /* WeightConflictSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 141F83104F5F734B31527E9E /* WeightConflictSheet.swift */; };
 		88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9712F7B63B8E377089201042 /* NutritionChart.swift */; };
@@ -89,6 +90,7 @@
 		669EEFDFC8D9324904A67FC0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		6D22B5247DB607D50552B4C4 /* EntryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRow.swift; sourceTree = "<group>"; };
 		6D408ED847960B3129EF3A94 /* SetupWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizardView.swift; sourceTree = "<group>"; };
+		71394550BEED427BFC12CD71 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		7501B40D45CD5098BFDEE24A /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
 		7802482394DF8F98400A488D /* CalorieOffsetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieOffsetView.swift; sourceTree = "<group>"; };
 		7895DEB8085C5E8D0717534C /* AppleHealthSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleHealthSettings.swift; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 				2F66CA15A40627DDC1C287DC /* Today */,
 				A98C554F7A317C8F684DFC1A /* Assets.xcassets */,
 				13439DAEBE09C5BB791DBCC3 /* CalorieCounterApp.swift */,
+				71394550BEED427BFC12CD71 /* LaunchScreen.storyboard */,
 				D1487B1E2EF3F13601523B41 /* MainTabView.swift */,
 				7EC385AB13F18847AA9397B0 /* PrivacyInfo.xcprivacy */,
 				11E9485996765BF65226D3DA /* RootView.swift */,
@@ -366,6 +369,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E7E099335EC69BB628C05B6 /* Assets.xcassets in Resources */,
+				7A876EFF65F27245E12EE9CD /* LaunchScreen.storyboard in Resources */,
 				C6668E361704D3A7B56A2D3A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
