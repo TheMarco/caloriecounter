@@ -55,10 +55,15 @@ final class SettingsUITests: XCTestCase {
 
         app.tabBars.buttons["Settings"].tap()
         app.swipeUp(); app.swipeUp()
-        XCTAssertTrue(app.staticTexts["Apple Health"].waitForExistence(timeout: 5), "Apple Health section should render")
-        // Opt-in controls present (toggle flip + persistence is covered by unit tests).
+        // The dense controls now live behind a single "Apple Health" row.
+        let healthRow = app.staticTexts["Apple Health"]
+        XCTAssertTrue(healthRow.waitForExistence(timeout: 5), "Apple Health row should render")
+        healthRow.tap()
+
+        // Opt-in controls present on the detail screen (toggle flip + persistence is
+        // covered by unit tests).
         XCTAssertTrue(app.switches["Sync nutrition to Apple Health"].waitForExistence(timeout: 3),
-                      "Nutrition sync toggle should exist")
+                      "Nutrition sync toggle should exist on the detail screen")
         XCTAssertTrue(app.buttons["Remove this app’s data from Apple Health"].exists,
                       "The destructive remove action should be present")
     }
