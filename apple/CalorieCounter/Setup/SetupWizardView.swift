@@ -82,12 +82,16 @@ struct SetupWizardView: View {
                 }
             }
             Text(title)
-                .font(.largeTitle.weight(.bold))
+                // A full largeTitle eats ~half the screen at AX sizes; shrink it (and
+                // drop the helper subtitle) so the step's actual content gets the room.
+                .font(dynamicTypeSize.isAccessibilitySize ? .title2.weight(.bold) : .largeTitle.weight(.bold))
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            if !dynamicTypeSize.isAccessibilitySize {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.horizontal, DS.screenPadding)
         .padding(.top, 16)
@@ -172,8 +176,12 @@ struct SetupWizardView: View {
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.headline)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                // At accessibility text sizes the detail lines balloon the card past
+                // the fold; the titles alone carry the message, so drop them there.
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer(minLength: 0)
         }
