@@ -1,8 +1,8 @@
 //
 //  Theme.swift
 //  The visual design system: macro palette + gradients, type, spacing, and the
-//  shared backdrop. iOS 26 Liquid Glass for chrome/floating controls; vibrant
-//  gradient rings and glass cards for content.
+//  shared backdrop. The rule throughout: iOS 26 Liquid Glass is for chrome and
+//  temporary surfaces; content sits on calm matte cards (DS.contentFill).
 //
 
 import SwiftUI

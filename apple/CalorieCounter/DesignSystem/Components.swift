@@ -1,7 +1,7 @@
 //
 //  Components.swift
-//  Shared glass content components: entry cards, the exercise-offset chip, and
-//  the empty state.
+//  Shared matte content components: entry cards, the exercise-offset chip, the
+//  settings gear affordance, and the empty state.
 //
 
 import SwiftUI
