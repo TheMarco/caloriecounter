@@ -33,7 +33,10 @@ struct WeightChart: View {
                 if let date = LocalDate.date(from: p.date) {
                     let value = units.weightForDisplay(kg: p.weightKg)
                     LineMark(x: .value("Day", date, unit: .day), y: .value("Weight", value))
-                        .interpolationMethod(.catmullRom)
+                        // Linear, not catmullRom/cardinal: a smooth spline overshoots
+                        // on a steep change between sparse weigh-ins and draws the line
+                        // outside the plot frame. Straight segments are also more honest.
+                        .interpolationMethod(.linear)
                         .foregroundStyle(DS.Macro.carbs.linearGradient)
                         .lineStyle(StrokeStyle(lineWidth: 2.5))
                     PointMark(x: .value("Day", date, unit: .day), y: .value("Weight", value))
