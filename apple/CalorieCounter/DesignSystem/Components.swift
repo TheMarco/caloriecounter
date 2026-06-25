@@ -176,37 +176,26 @@ extension View {
     }
 }
 
-/// Inviting empty state for a day with no entries: one warm invitation and a single
-/// primary action. The four capture methods live one tap deeper (the action opens
-/// the log cluster), so the screen reads calm, not like a wall of buttons.
+/// Dock-aware empty state: one short invitation that points to the dock's "+".
+/// No paragraph, no duplicated log button — the "+" below is the action.
 struct EmptyDayCard: View {
-    var onLog: () -> Void = {}
-
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 10) {
             Image(systemName: "fork.knife.circle.fill")
-                .font(.system(size: 46))
+                .font(.system(size: 44))
                 .foregroundStyle(DS.Macro.calories.linearGradient)
-            VStack(spacing: 5) {
-                Text("Nothing logged yet")
-                    .font(.headline)
-                Text("Start whenever you're ready — it only takes a tap.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Button(action: onLog) {
-                Label("Log your first meal", systemImage: "plus.circle.fill")
-                    .font(.callout.weight(.semibold))
-                    .padding(.vertical, 4)
-            }
-            .buttonStyle(.glassProminent)
-            .tint(DS.Macro.calories.tint)
-            .padding(.top, 2)
+            Text("Start with a meal")
+                .font(.headline)
+            // A soft cue toward the "+" in the dock below.
+            Image(systemName: "chevron.compact.down")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(DS.Macro.calories.tint.opacity(0.5))
+                .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 30)
         .padding(.horizontal, 20)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Use the plus button in the dock to log your first meal")
     }
 }

@@ -33,7 +33,6 @@
 		995199EE02AB7604CA1A9C3A /* EditEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */; };
 		A12A420D891564464675F02D /* VoiceInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8189A60D879FAE780A7725F /* VoiceInputView.swift */; };
 		A3FA286ED6071A989FA39511 /* OnboardingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BD65A7B1EA4B0A512F64AF /* OnboardingUITests.swift */; };
-		A48E968389CACFE47538901E /* CaptureFan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E35F7B98EDE85FBBFA9D808 /* CaptureFan.swift */; };
 		A4FBB6F4B1C370C38E2D8271 /* MealCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82B0AC3D955CC22BD110CF0 /* MealCard.swift */; };
 		ABEB17C57DFB81148435231E /* TextInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9366EAA330B5AAA386831D /* TextInputView.swift */; };
 		ACA30AE547692CAF055E751A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C5697DE6B2C053E73E22A8 /* Components.swift */; };
@@ -72,7 +71,6 @@
 		05BD65A7B1EA4B0A512F64AF /* OnboardingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingUITests.swift; sourceTree = "<group>"; };
 		0B0DBFA2A2394895AD33DEDF /* AmountField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmountField.swift; sourceTree = "<group>"; };
 		0D99C2BB3D32E6512C3E5431 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
-		0E35F7B98EDE85FBBFA9D808 /* CaptureFan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFan.swift; sourceTree = "<group>"; };
 		0EAA48BF0C24E262B95F2D6E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceUITests.swift; sourceTree = "<group>"; };
 		112D6BD7659DB63FB7F6ED37 /* EditEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEntryView.swift; sourceTree = "<group>"; };
@@ -193,7 +191,6 @@
 				0B0DBFA2A2394895AD33DEDF /* AmountField.swift */,
 				C571B11FF044E4B39045E284 /* CaptureDock.swift */,
 				DEDA73A1CD570C73B77B91E2 /* CaptureErrorCard.swift */,
-				0E35F7B98EDE85FBBFA9D808 /* CaptureFan.swift */,
 				11C5697DE6B2C053E73E22A8 /* Components.swift */,
 				212E881285C06FBE917A6E9C /* ConfidenceBadge.swift */,
 				0D99C2BB3D32E6512C3E5431 /* Haptics.swift */,
@@ -403,7 +400,6 @@
 				3CAFC351BE6D1FDD1FE8D3DF /* CalorieOffsetView.swift in Sources */,
 				FD01AEFF1C21DEB7CC698ED7 /* CaptureDock.swift in Sources */,
 				09C2191B754CBF2C474DE5B3 /* CaptureErrorCard.swift in Sources */,
-				A48E968389CACFE47538901E /* CaptureFan.swift in Sources */,
 				ACA30AE547692CAF055E751A /* Components.swift in Sources */,
 				98A6C4B3D3A155AB9E9EB704 /* ConfidenceBadge.swift in Sources */,
 				D58BBFD2CE034AC0862F40BA /* DayDetailView.swift in Sources */,

@@ -43,7 +43,7 @@ final class ConfirmFlowUITests: XCTestCase {
         undo.tap()
 
         // Undo removes the just-logged entry, restoring the empty state.
-        XCTAssertTrue(app.staticTexts["Nothing logged yet"].waitForExistence(timeout: 5),
+        XCTAssertTrue(app.staticTexts["Start with a meal"].waitForExistence(timeout: 5),
                       "Undo should remove the entry and restore the empty state")
     }
 }

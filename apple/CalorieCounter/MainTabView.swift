@@ -38,8 +38,7 @@ struct MainTabView: View {
             Group {
                 switch tab {
                 case .today:
-                    TodayView(onRequestLog: openCapture,
-                              presentUndo: presentUndo,
+                    TodayView(presentUndo: presentUndo,
                               onOpenSettings: { showSettings = true },
                               justLoggedId: justLoggedId)
                 case .history:
@@ -47,20 +46,27 @@ struct MainTabView: View {
                 }
             }
 
-            // The capture fan dims the content and rises above the dock.
+            // Soft dim behind the dock while the capture tools are showing — tap to
+            // dismiss. Only the dock sits above it.
             if showCapture {
-                CaptureFan(
-                    onSelect: { method in closeCapture(); activeInput = method },
-                    onDismiss: closeCapture
-                )
-                .transition(.opacity)
-                .zIndex(1)
+                Rectangle()
+                    .fill(.black.opacity(0.22))
+                    .ignoresSafeArea()
+                    .contentShape(.rect)
+                    .onTapGesture { closeCapture() }
+                    .transition(.opacity)
+                    .zIndex(1)
             }
 
-            // The dock always floats on top (its + becomes × while the fan is open).
-            CaptureDock(tab: $tab, captureOpen: showCapture, onPlus: toggleCapture)
-                .padding(.bottom, 4)
-                .zIndex(2)
+            // The dock floats on top and expands its own capture tools upward.
+            CaptureDock(
+                tab: $tab,
+                captureOpen: showCapture,
+                onPlus: toggleCapture,
+                onSelect: { method in closeCapture(); activeInput = method }
+            )
+            .padding(.bottom, 4)
+            .zIndex(2)
         }
         .animation(.spring(response: 0.34, dampingFraction: 0.86), value: showCapture)
         .sheet(item: $activeInput) { method in
@@ -82,7 +88,6 @@ struct MainTabView: View {
 
     // MARK: - Capture fan
 
-    private func openCapture() { showCapture = true }
     private func closeCapture() { showCapture = false }
     private func toggleCapture() { showCapture.toggle() }
 

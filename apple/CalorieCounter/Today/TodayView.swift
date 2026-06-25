@@ -11,8 +11,6 @@ import NutritionCore
 
 struct TodayView: View {
     @Environment(AppContainer.self) private var container
-    /// Opens the capture fan (the dock's + flow), e.g. from the empty state.
-    var onRequestLog: () -> Void = {}
     /// Shows a transient undo toast (hosted by the dock container).
     var presentUndo: (String, @escaping () -> Void) -> Void = { _, _ in }
     /// Opens Settings (the top-right gear).
@@ -106,7 +104,7 @@ struct TodayView: View {
             }
             Section {
                 if model.entries.isEmpty {
-                    EmptyDayCard { onRequestLog() }.clearRow()
+                    EmptyDayCard().clearRow()
                 } else {
                     ForEach(model.entries) { entry in
                         Button { editingEntry = entry } label: { EntryCard(entry: entry) }
