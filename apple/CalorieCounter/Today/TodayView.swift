@@ -137,9 +137,9 @@ struct TodayView: View {
         .listStyle(.plain)
         .listRowSpacing(10)
         .scrollContentBackground(.hidden)
-        .tabBarBottomClearance()
         .scrollEdgeEffectStyle(.soft, for: .top)
         .refreshable { await model.load() }
+        .tabBarBottomClearance()
     }
 
     // MARK: - Usuals

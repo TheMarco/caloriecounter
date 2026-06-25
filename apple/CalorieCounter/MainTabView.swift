@@ -13,6 +13,7 @@ import NutritionCore
 struct MainTabView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var tab: RootTab
     @State private var showCapture = false
@@ -35,7 +36,11 @@ struct MainTabView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // The selected screen.
+            // The selected screen. At accessibility sizes the scroll content reserves
+            // REAL space for the dock (see `tabBarBottomClearance`) so it ends above the
+            // bar and tall content can't share its vertical zone — it scrolls within the
+            // space above the dock instead of being swallowed behind it. At standard
+            // sizes the dock floats over the content, with the scrim masking the overlap.
             Group {
                 switch tab {
                 case .today:
@@ -50,9 +55,14 @@ struct MainTabView: View {
             // A clean background "shelf": content fades into the app background as it
             // nears the bottom, so nothing readable sits behind the floating dock —
             // intentional bottom chrome, not a hard black band. (Paired with the
-            // scroll clearance so the last card also rests above the dock.)
-            dockShelf
-                .zIndex(0.5)
+            // scroll clearance so the last card also rests above the dock.) Only at
+            // standard sizes: at accessibility sizes the content reserves real space and
+            // ends ABOVE the dock, so there's nothing behind it to fade — and a scrim
+            // there would only dim the content's clean bottom edge.
+            if !typeSize.isAccessibilitySize {
+                dockShelf
+                    .zIndex(0.5)
+            }
 
             // Soft dim behind the dock while the capture tools are showing — tap to
             // dismiss. Only the dock sits above it.

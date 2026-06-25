@@ -55,6 +55,14 @@ enum DS {
     static let dockSolidBand: CGFloat = 124
     static let dockFade: CGFloat = 48
 
+    /// At accessibility text sizes the dock stops floating OVER the scroll content and
+    /// reserves this much REAL space beneath it, so tall content (the macro summary,
+    /// the weekly insight) scrolls within the area ABOVE the bar instead of being
+    /// swallowed behind it. Tall enough to clear the whole floating dock — the capsule
+    /// plus the raised "+" jewel — so the scroll area ends cleanly above it. Fixed: the
+    /// dock doesn't grow with Dynamic Type.
+    static let dockReserve: CGFloat = 132
+
     /// The app's base backdrop color (matches `AppBackground`'s base), used to paint
     /// the dock's background shelf so content fades into the background behind it.
     static func appBackgroundBase(_ scheme: ColorScheme) -> Color {
@@ -170,9 +178,26 @@ struct AppBackground: View {
 /// reserved space grows alongside the content. The matching shelf height lives in
 /// `DS.dockClearance`.
 private struct TabBarBottomClearance: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = DS.dockClearance
     func body(content: Content) -> some View {
-        content.contentMargins(.bottom, clearance, for: .scrollContent)
+        if typeSize.isAccessibilitySize {
+            // Reserve REAL space by shrinking the scroll view's FRAME (a sibling spacer
+            // in a VStack), not just insetting its scroll offsets — a List/ScrollView
+            // otherwise renders edge-to-edge and draws content under the dock regardless
+            // of contentMargins/safeAreaInset. With a smaller frame the scroll area ends
+            // ABOVE the dock, so tall content (the macro summary, the weekly insight)
+            // scrolls within the space above the bar instead of being swallowed behind it.
+            // (Must be applied as the LAST modifier so it wraps the fully-built scroll view.)
+            VStack(spacing: 0) {
+                content
+                Color.clear.frame(height: DS.dockReserve)
+            }
+        } else {
+            // Standard sizes: the dock floats over the content; reserve enough scroll
+            // clearance that the last card can still scroll fully clear of it.
+            content.contentMargins(.bottom, clearance, for: .scrollContent)
+        }
     }
 }
 
