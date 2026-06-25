@@ -70,14 +70,14 @@ struct PrivacyAtAGlance: View {
 
             // Two small footnotes for the remaining nuances.
             HStack(spacing: 14) {
-                footnote("mic.fill", "Voice stays on-device")
+                footnote("mic.fill", "Voice is transcribed on-device")
                 footnote("heart.text.square.fill", "Health is optional")
             }
             .padding(.top, 2)
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("What stays on device. Your food log, corrections, weights, targets, and settings stay on this phone. Only the food text or photo you submit is sent to OpenAI to estimate nutrition — with no account and nothing that identifies you. Voice stays on-device; Apple Health is optional.")
+        .accessibilityLabel("What stays on device. Your food log, corrections, weights, targets, and settings stay on this phone. Only the food text or photo you submit is sent to OpenAI to estimate nutrition — with no account and nothing that identifies you. Voice is transcribed on-device, then handled like typed text; Apple Health is optional.")
     }
 
     private func footnote(_ symbol: String, _ text: String) -> some View {
