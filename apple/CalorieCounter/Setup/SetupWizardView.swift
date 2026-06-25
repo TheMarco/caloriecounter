@@ -102,12 +102,16 @@ struct SetupWizardView: View {
                 // explanatory text keep their room and simply scroll.
                 .font(dynamicTypeSize.isAccessibilitySize ? .title2.weight(.bold) : .largeTitle.weight(.bold))
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text(subtitle)
-                // Smaller (not dropped) at AX so it doesn't eat the room the step's
-                // actual content needs — the text is still there.
-                .font(dynamicTypeSize.isAccessibilitySize ? .footnote : .subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // On the welcome step at AX, the subtitle is generic intro chrome ("a few
+            // things to know") and duplicates the trust card right below it — drop it
+            // there so the actual trust points fit. (The privacy copy itself is the
+            // card and is never dropped; other steps keep their guiding subtitle.)
+            if !(dynamicTypeSize.isAccessibilitySize && step == 0) {
+                Text(subtitle)
+                    .font(dynamicTypeSize.isAccessibilitySize ? .footnote : .subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.horizontal, DS.screenPadding)
         .padding(.top, 16)
@@ -167,43 +171,62 @@ struct SetupWizardView: View {
     /// any body data — the "no account, on-device, optional Health, estimates not
     /// judgment" story that otherwise only lives in About.
     private var welcomeStep: some View {
-        SoftCard {
-            VStack(alignment: .leading, spacing: dynamicTypeSize.isAccessibilitySize ? 12 : 16) {
-                trustPoint("lock.fill", "No account, ever",
-                           "Nothing to sign up for — just open the app and track.",
-                           short: "Nothing to sign up for.")
-                Divider()
-                trustPoint("iphone", "Your log stays on your phone",
-                           "Entries, weights, and targets live on this device, not a server.",
-                           short: "Stored on this device, not a server.")
-                Divider()
-                trustPoint("heart.text.square.fill", "Apple Health is optional",
-                           "It stays off until you choose to turn it on.",
-                           short: "Off until you turn it on.")
-                Divider()
-                trustPoint("sparkles", "Estimates, not judgment",
-                           "Calories and macros are a guide to help you — adjust anything, anytime.",
-                           short: "A guide to help you — adjust anytime.")
+        let ax = dynamicTypeSize.isAccessibilitySize
+        return SoftCard {
+            VStack(alignment: .leading, spacing: ax ? 14 : 16) {
+                ForEach(Array(Self.trustPoints.enumerated()), id: \.offset) { i, point in
+                    if i > 0 && !ax { Divider() }   // dividers add height; drop them at AX
+                    trustPointRow(point)
+                }
             }
         }
     }
 
-    /// One trust point. At accessibility sizes it goes compact — smaller icon and
-    /// title (sizing), and a shorter detail string — so several points fit instead of
-    /// one. Not omission: the privacy context is still present, just concise.
-    private func trustPoint(_ icon: String, _ title: String, _ detail: String, short: String) -> some View {
-        let ax = dynamicTypeSize.isAccessibilitySize
-        return HStack(alignment: .top, spacing: ax ? 11 : 14) {
-            Image(systemName: icon)
-                .font(ax ? .footnote.weight(.semibold) : .title3)
-                .foregroundStyle(DS.Macro.calories.tint)
-                .frame(width: ax ? 22 : 30)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(ax ? .subheadline.weight(.semibold) : .headline)
-                Text(ax ? short : detail).font(.caption).foregroundStyle(.secondary)
+    private struct TrustPoint { let icon, title, detail, axLine: String }
+
+    /// The privacy promise. At standard sizes each is icon · bold title · caption
+    /// detail; at accessibility sizes that title-over-detail column wraps too hard to
+    /// fit more than one, so `axLine` says the same thing in a single concise sentence.
+    private static let trustPoints: [TrustPoint] = [
+        .init(icon: "lock.fill", title: "No account, ever",
+              detail: "Nothing to sign up for — just open the app and track.",
+              axLine: "No account — nothing to sign up for."),
+        .init(icon: "iphone", title: "Your log stays on your phone",
+              detail: "Entries, weights, and targets live on this device, not a server.",
+              axLine: "Your log stays on this device, not a server."),
+        .init(icon: "heart.text.square.fill", title: "Apple Health is optional",
+              detail: "It stays off until you choose to turn it on.",
+              axLine: "Apple Health is optional — off until you turn it on."),
+        .init(icon: "sparkles", title: "Estimates, not judgment",
+              detail: "Calories and macros are a guide to help you — adjust anything, anytime.",
+              axLine: "Calories are a guide to help you, not judgment."),
+    ]
+
+    @ViewBuilder
+    private func trustPointRow(_ p: TrustPoint) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: p.icon)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DS.Macro.calories.tint)
+                Text(p.axLine)
+                    .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
+        } else {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: p.icon)
+                    .font(.title3)
+                    .foregroundStyle(DS.Macro.calories.tint)
+                    .frame(width: 30)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(p.title).font(.headline)
+                    Text(p.detail).font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
         }
     }
 
