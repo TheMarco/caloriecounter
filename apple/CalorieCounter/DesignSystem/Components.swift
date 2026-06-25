@@ -176,26 +176,27 @@ extension View {
     }
 }
 
-/// Dock-aware empty state: one short invitation that points to the dock's "+".
-/// No paragraph, no duplicated log button — the "+" below is the action.
+/// Dock-aware empty state: one short, quiet invitation that points to the dock's
+/// "+". No green bubble competing with the +, no paragraph, no duplicated button.
 struct EmptyDayCard: View {
     var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "fork.knife.circle.fill")
-                .font(.system(size: 44))
-                .foregroundStyle(DS.Macro.calories.linearGradient)
+        VStack(spacing: 8) {
             Text("Start with a meal")
                 .font(.headline)
+                .foregroundStyle(.primary)
+            Text("Tap the + below to log your first food.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             // A soft cue toward the "+" in the dock below.
             Image(systemName: "chevron.compact.down")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(DS.Macro.calories.tint.opacity(0.5))
+                .foregroundStyle(.tertiary)
+                .padding(.top, 2)
                 .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 30)
+        .padding(.vertical, 28)
         .padding(.horizontal, 20)
         .accessibilityElement(children: .combine)
-        .accessibilityHint("Use the plus button in the dock to log your first meal")
     }
 }

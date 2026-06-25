@@ -38,6 +38,16 @@ enum DS {
     static let cardRadius: CGFloat = 28
     static let chipRadius: CGFloat = 20
 
+    /// The height the floating dock occupies at the bottom — shared by the scroll
+    /// clearance and the background shelf so they always agree.
+    static let dockClearance: CGFloat = 116
+
+    /// The app's base backdrop color (matches `AppBackground`'s base), used to paint
+    /// the dock's background shelf so content fades into the background behind it.
+    static func appBackgroundBase(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color(hex: 0x0C0D10) : Color(hex: 0xF4F5F7)
+    }
+
     /// Card/separator border that stays visible in both schemes (a white edge is
     /// invisible on a light backdrop) and strengthens when Increase Contrast is on.
     static func cardBorder(_ scheme: ColorScheme, _ contrast: ColorSchemeContrast) -> Color {
@@ -119,7 +129,7 @@ struct AppBackground: View {
 
     var body: some View {
         ZStack {
-            (scheme == .dark ? Color(hex: 0x0C0D10) : Color(hex: 0xF4F5F7))
+            DS.appBackgroundBase(scheme)
                 .ignoresSafeArea()
 
             // A single, very subtle accent glow at the top.
@@ -132,14 +142,13 @@ struct AppBackground: View {
     }
 }
 
-/// Bottom inset so scrollable content can scroll clear of the floating Liquid Glass
-/// tab bar (which sits over content and doesn't reserve safe area). The base value
-/// scales with Dynamic Type, since the tab bar grows with its label text. Applied to
-/// the Today / History / Settings scroll containers; tune the base here in one place.
+/// Reserves scroll space for the floating dock so the LAST card can scroll fully
+/// above it (paired with `MainTabView`'s background shelf, which covers anything
+/// passing behind the bar mid-scroll). Applied to the Today / History scroll
+/// containers; the height scales with Dynamic Type (the dock's + grows the "Log"
+/// caption at AX sizes). The matching shelf height lives in `DS.dockClearance`.
 private struct TabBarBottomClearance: ViewModifier {
-    // Reserve enough that the LAST tappable/readable row rests above the dock (incl.
-    // the raised +), so nothing competes with the bar — only background sits behind it.
-    @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = 104
+    @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = DS.dockClearance
     func body(content: Content) -> some View {
         content.contentMargins(.bottom, clearance, for: .scrollContent)
     }

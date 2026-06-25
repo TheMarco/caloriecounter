@@ -12,6 +12,7 @@ import NutritionCore
 
 struct MainTabView: View {
     @Environment(AppContainer.self) private var container
+    @Environment(\.colorScheme) private var scheme
 
     @State private var tab: RootTab
     @State private var showCapture = false
@@ -45,6 +46,13 @@ struct MainTabView: View {
                     HistoryView(onOpenSettings: { showSettings = true })
                 }
             }
+
+            // A clean background "shelf": content fades into the app background as it
+            // nears the bottom, so nothing readable sits behind the floating dock —
+            // intentional bottom chrome, not a hard black band. (Paired with the
+            // scroll clearance so the last card also rests above the dock.)
+            dockShelf
+                .zIndex(0.5)
 
             // Soft dim behind the dock while the capture tools are showing — tap to
             // dismiss. Only the dock sits above it.
@@ -84,6 +92,24 @@ struct MainTabView: View {
             isPresented: Binding(get: { pendingUndo != nil }, set: { if !$0 { pendingUndo = nil } }),
             message: pendingUndo?.message ?? "Logged", bottomPadding: 110
         ) { pendingUndo?.perform() }
+    }
+
+    /// The background shelf behind the dock — a short scrim that fades content into
+    /// the app's base backdrop, solid where the bar actually sits.
+    private var dockShelf: some View {
+        let bg = DS.appBackgroundBase(scheme)
+        return LinearGradient(
+            stops: [
+                .init(color: bg.opacity(0), location: 0),
+                .init(color: bg.opacity(0.96), location: 0.32),
+                .init(color: bg, location: 0.6),
+            ],
+            startPoint: .top, endPoint: .bottom
+        )
+        .frame(height: DS.dockClearance + 28)   // covers the dock + a soft fade above
+        .frame(maxHeight: .infinity, alignment: .bottom)
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 
     // MARK: - Capture fan

@@ -28,7 +28,6 @@ struct SettingsView: View {
                 AppBackground()
                 settingsForm(settings: container.settings)
                     .scrollContentBackground(.hidden)
-                    .tabBarBottomClearance()
             }
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
