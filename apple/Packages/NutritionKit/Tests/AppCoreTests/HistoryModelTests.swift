@@ -94,6 +94,33 @@ struct HistoryModelTests {
         #expect(model.datesWithEntries == [keys[3]])
     }
 
+    @Test("RangeInsights averages only logged days and counts protein shortfalls")
+    func rangeInsights() {
+        let targets = MacroTargets(calories: 2000, fat: 65, carbs: 250, protein: 100)
+        let days = [
+            DayTotals(date: "2026-06-20", totals: MacroTotals(calories: 1800, protein: 120), offset: 0),
+            DayTotals(date: "2026-06-21", totals: MacroTotals(calories: 2200, protein: 80), offset: 0),
+            DayTotals(date: "2026-06-22", totals: .zero, offset: 0),   // not logged
+        ]
+        let i = RangeInsights.from(days: days, targets: targets)
+        #expect(i.loggedDays == 2)               // the blank day is excluded from averages
+        #expect(i.totalDays == 3)
+        #expect(i.avgCalories == 2000)           // (1800 + 2200) / 2
+        #expect(i.avgProtein == 100)             // (120 + 80) / 2
+        #expect(i.proteinShortDays == 1)         // only the 80g day is under 100
+        #expect(i.calorieDelta == 0)
+        #expect(i.hasData)
+    }
+
+    @Test("RangeInsights reports no data when nothing was logged")
+    func rangeInsightsEmpty() {
+        let targets = MacroTargets(calories: 2000, fat: 65, carbs: 250, protein: 100)
+        let i = RangeInsights.from(days: [DayTotals(date: "2026-06-22", totals: .zero, offset: 0)], targets: targets)
+        #expect(!i.hasData)
+        #expect(i.loggedDays == 0)
+        #expect(i.avgCalories == 0)
+    }
+
     @Test("MacroKind reads each macro's value, target, and label correctly")
     func macroKindMapping() {
         let totals = MacroTotals(calories: 500, fat: 10, carbs: 20, protein: 30)

@@ -54,6 +54,41 @@ public struct WeightPoint: Sendable, Equatable, Identifiable {
     public var id: String { date }
 }
 
+/// At-a-glance numbers for the History "Insights" card, computed purely over the
+/// loaded range so it's unit-tested without the chart UI. Averages cover only the
+/// days that were actually logged — a blank day shouldn't drag the average down.
+public struct RangeInsights: Sendable, Equatable {
+    public let loggedDays: Int
+    public let totalDays: Int
+    public let avgCalories: Double
+    public let calorieGoal: Double
+    public let avgProtein: Double
+    public let proteinGoal: Double
+    /// Logged days whose protein fell below target.
+    public let proteinShortDays: Int
+
+    public var hasData: Bool { loggedDays > 0 }
+    /// Average daily calories minus the goal (negative = under goal).
+    public var calorieDelta: Double { avgCalories - calorieGoal }
+
+    public static func from(days: [DayTotals], targets: MacroTargets) -> RangeInsights {
+        let logged = days.filter { $0.totals.calories > 0 }
+        let n = logged.count
+        func avg(_ value: (MacroTotals) -> Double) -> Double {
+            n > 0 ? logged.reduce(0) { $0 + value($1.totals) } / Double(n) : 0
+        }
+        return RangeInsights(
+            loggedDays: n,
+            totalDays: days.count,
+            avgCalories: avg { $0.calories },
+            calorieGoal: targets.calories,
+            avgProtein: avg { $0.protein },
+            proteinGoal: targets.protein,
+            proteinShortDays: logged.filter { $0.totals.protein < targets.protein }.count
+        )
+    }
+}
+
 @Observable
 @MainActor
 public final class HistoryModel {
@@ -107,6 +142,11 @@ public final class HistoryModel {
     /// Local days within the loaded range that have any logged food (calendar dots).
     public var datesWithEntries: Set<String> {
         Set(days.filter { $0.totals.calories > 0 }.map(\.date))
+    }
+
+    /// Summary numbers for the Insights card over the currently-loaded range.
+    public func insights(targets: MacroTargets) -> RangeInsights {
+        RangeInsights.from(days: days, targets: targets)
     }
 }
 

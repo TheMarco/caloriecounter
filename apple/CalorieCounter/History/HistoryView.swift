@@ -43,6 +43,7 @@ struct HistoryView: View {
 
     private func content(_ model: HistoryModel) -> some View {
         @Bindable var model = model
+        let insights = model.insights(targets: container.settings.targets)
         return List {
             Section {
                 Picker("Range", selection: $model.range) {
@@ -51,6 +52,22 @@ struct HistoryView: View {
                 .pickerStyle(.segmented)
                 .onChange(of: model.range) { _, _ in Task { await model.load() } }
                 .clearRow()
+            }
+
+            if insights.hasData {
+                Section {
+                    SoftCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            insightRow("calendar", DS.Macro.calories.tint,
+                                       "Logged \(insights.loggedDays) of \(insights.totalDays) days in this range.")
+                            insightRow("flame.fill", DS.Macro.calories.tint, caloriesSentence(insights))
+                            insightRow("bolt.heart.fill", DS.Macro.protein.tint, proteinSentence(insights))
+                        }
+                    }
+                    .clearRow()
+                } header: {
+                    sectionHeader("Insights")
+                }
             }
 
             Section {
@@ -133,6 +150,40 @@ struct HistoryView: View {
             .foregroundStyle(.primary)
             .textCase(nil)
             .padding(.leading, 4)
+    }
+
+    // MARK: - Insights
+
+    private func insightRow(_ icon: String, _ color: Color, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(color)
+                .frame(width: 22)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// Plain, non-judgmental: state the average and how it sits against the goal.
+    private func caloriesSentence(_ i: RangeInsights) -> String {
+        let avg = Int(i.avgCalories.rounded())
+        let delta = Int(abs(i.calorieDelta).rounded())
+        if delta < 25 {
+            return "You're averaging \(avg) kcal a day — right around your \(Int(i.calorieGoal)) goal."
+        }
+        let dir = i.calorieDelta < 0 ? "under" : "over"
+        return "You're averaging \(avg) kcal a day — about \(delta) \(dir) your \(Int(i.calorieGoal)) goal."
+    }
+
+    private func proteinSentence(_ i: RangeInsights) -> String {
+        if i.proteinShortDays == 0 {
+            return "Protein hit your \(Int(i.proteinGoal))g target every logged day."
+        }
+        return "Protein was under your \(Int(i.proteinGoal))g target on \(i.proteinShortDays) of \(i.loggedDays) logged days."
     }
 
     /// The latest measurement in the user's units, e.g. "82.5 kg" (or "—" if none).
