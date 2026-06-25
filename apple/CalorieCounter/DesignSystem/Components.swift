@@ -176,6 +176,25 @@ extension View {
     }
 }
 
+/// The Settings gear for the top-right toolbar — a quiet affordance, not a floating
+/// feature button: a thin glyph at ~78% of the label color, no glass bubble/glow,
+/// with a full 44pt tap target.
+struct SettingsGearButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "gearshape")
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(.primary.opacity(0.78))
+                .frame(width: 44, height: 44)        // keep the tap target generous…
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)                          // …drop the iOS 26 glass capsule
+        .accessibilityLabel("Settings")
+    }
+}
+
 /// Dock-aware empty state: one short, quiet invitation that points to the dock's
 /// "+". No green bubble competing with the +, no paragraph, no duplicated button.
 struct EmptyDayCard: View {

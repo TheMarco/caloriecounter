@@ -40,9 +40,9 @@ struct TodayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { onOpenSettings() } label: { Image(systemName: "gearshape") }
-                        .accessibilityLabel("Settings")
+                    SettingsGearButton(action: onOpenSettings)
                 }
+                .sharedBackgroundVisibility(.hidden)   // no glass capsule — a quiet affordance
             }
             .task(id: container.dataVersion) {
                 let m = model ?? TodayModel(store: container.store)
