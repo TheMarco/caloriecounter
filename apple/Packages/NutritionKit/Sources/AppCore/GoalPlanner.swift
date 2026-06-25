@@ -46,7 +46,9 @@ public enum ActivityLevel: String, CaseIterable, Codable, Sendable, Identifiable
 }
 
 public enum WeightGoal: String, CaseIterable, Codable, Sendable, Identifiable {
-    case radicalLoss, steadyLoss, maintain, gain
+    // Order is the order shown in onboarding — lead with the sustainable option,
+    // not the most aggressive one. (rawValues are unchanged, so stored goals decode.)
+    case steadyLoss, maintain, radicalLoss, gain
     public var id: String { rawValue }
 
     public var label: String {

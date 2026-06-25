@@ -32,7 +32,7 @@ struct SetupWizardView: View {
     @State private var activity: ActivityLevel = .moderate
 
     private var units: UnitSystem { container.settings.units }
-    private let stepCount = 5
+    private let stepCount = 6
 
     private static let lbPerKg = 2.2046226
 
@@ -44,10 +44,11 @@ struct SetupWizardView: View {
                 ScrollView {
                     Group {
                         switch step {
-                        case 0: goalStep
-                        case 1: dietStep
-                        case 2: bodyStep
-                        case 3: activityStep
+                        case 0: welcomeStep
+                        case 1: goalStep
+                        case 2: dietStep
+                        case 3: bodyStep
+                        case 4: activityStep
                         default: planStep
                         }
                     }
@@ -114,31 +115,69 @@ struct SetupWizardView: View {
             }
             .buttonStyle(.glassProminent)
             .tint(DS.Macro.calories.tint)
-            .disabled(step == 0 && goal == nil)
+            .disabled(step == 1 && goal == nil)
         }
         .padding(DS.screenPadding)
     }
 
     private var title: String {
         switch step {
-        case 0: return "Your Goal"
-        case 1: return "Diet Style"
-        case 2: return "About You"
-        case 3: return "Activity"
+        case 0: return "Welcome"
+        case 1: return "Your Goal"
+        case 2: return "Diet Style"
+        case 3: return "About You"
+        case 4: return "Activity"
         default: return "Your Plan"
         }
     }
     private var subtitle: String {
         switch step {
-        case 0: return "What are you working toward?"
-        case 1: return "How do you like to eat?"
-        case 2: return "We use this to estimate your needs."
-        case 3: return "How active are you day to day?"
+        case 0: return "A few things to know before we begin."
+        case 1: return "What are you working toward?"
+        case 2: return "How do you like to eat?"
+        case 3: return "We use this to estimate your needs."
+        case 4: return "How active are you day to day?"
         default: return "Tuned to your goal — adjust anytime in Settings."
         }
     }
 
     // MARK: - Steps
+
+    /// Trust prelude: set people at ease about privacy and tone before asking for
+    /// any body data — the "no account, on-device, optional Health, estimates not
+    /// judgment" story that otherwise only lives in About.
+    private var welcomeStep: some View {
+        SoftCard {
+            VStack(alignment: .leading, spacing: 16) {
+                trustPoint("lock.fill", "No account, ever",
+                           "Nothing to sign up for — just open the app and track.")
+                Divider()
+                trustPoint("iphone", "Your log stays on your phone",
+                           "Entries, weights, and targets live on this device, not a server.")
+                Divider()
+                trustPoint("heart.text.square.fill", "Apple Health is optional",
+                           "It stays off until you choose to turn it on.")
+                Divider()
+                trustPoint("sparkles", "Estimates, not judgment",
+                           "Calories and macros are a guide to help you — adjust anything, anytime.")
+            }
+        }
+    }
+
+    private func trustPoint(_ icon: String, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(DS.Macro.calories.tint)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.headline)
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+    }
 
     private var goalStep: some View {
         VStack(spacing: 12) {
