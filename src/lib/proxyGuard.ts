@@ -5,12 +5,19 @@
 
 import type { NextRequest } from "next/server";
 import { limitProxyByDevice, withinDailyCeiling } from "./ratelimit";
+import { productionConfigError } from "./configCheck";
 
 export type GuardResult =
   | { ok: true; keyId: string }
   | { ok: false; status: number; error: string };
 
 export async function guardProxy(req: NextRequest): Promise<GuardResult> {
+  const misconfig = productionConfigError();
+  if (misconfig) {
+    console.error(`[FATAL CONFIG] Refusing proxy request — ${misconfig}`);
+    return { ok: false, status: 503, error: "The service is temporarily unavailable." };
+  }
+
   const keyId = req.headers.get("x-device-id") ?? "";
   if (!keyId) return { ok: false, status: 401, error: "Unauthorized" };
 

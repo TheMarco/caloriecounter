@@ -52,6 +52,14 @@ configured) the backend falls back to an in-memory store so `npm run dev` works.
   `src/app/api/attest/*`, and `src/middleware.ts`. On the app side:
   `Packages/NutritionKit/Sources/NutritionAPI/{AppAttesting,APIClient}.swift`.
 
+## Fail-loud in production
+
+If a production deploy is missing the JWT secret or Redis, the backend does **not**
+silently degrade — the attest routes and the proxy gate return **`503`** and log
+`[FATAL CONFIG] Refusing requests — <reason>` (see `src/lib/configCheck.ts`). So if the
+app suddenly can't log food right after a deploy, check the function logs: the message
+names exactly which env var is missing. (In development the guard is a no-op.)
+
 ## One-time setup checklist
 
 These steps require your accounts and can't be done from code:

@@ -9,10 +9,14 @@ import { APP_ATTEST, consumeChallenge, saveDevice } from "@/lib/appAttest";
 import { mintDeviceToken } from "@/lib/attestToken";
 import { limitAttestByIp } from "@/lib/ratelimit";
 import { clientIp } from "@/lib/clientIp";
+import { guardConfig } from "@/lib/configCheck";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const misconfig = guardConfig();
+  if (misconfig) return misconfig;
+
   if (!(await limitAttestByIp(clientIp(req)))) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

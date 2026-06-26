@@ -14,12 +14,16 @@ import { APP_ATTEST, consumeChallenge, getDevice, updateSignCount } from "@/lib/
 import { mintDeviceToken } from "@/lib/attestToken";
 import { limitAttestByIp } from "@/lib/ratelimit";
 import { clientIp } from "@/lib/clientIp";
+import { guardConfig } from "@/lib/configCheck";
 
 export const runtime = "nodejs";
 
 const DEV_BYPASS_KEY_ID = "dev-bypass-device";
 
 export async function POST(req: NextRequest) {
+  const misconfig = guardConfig();
+  if (misconfig) return misconfig;
+
   // ── Dev-only bypass for the Simulator ──
   const bypass = process.env.ATTEST_DEV_BYPASS;
   if (process.env.NODE_ENV !== "production" && bypass && req.headers.get("x-attest-dev-bypass") === bypass) {

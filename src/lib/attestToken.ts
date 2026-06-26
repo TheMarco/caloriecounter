@@ -13,6 +13,11 @@ const SECRET = new TextEncoder().encode(
     "dev-attest-secret-change-me",
 );
 
+/** True when no signing secret is configured, so the insecure built-in default
+ *  is in use — tokens would be forgeable. Used to fail loudly in production. */
+export const usingDefaultJwtSecret =
+  !process.env.ATTEST_JWT_SECRET && !process.env.NEXTAUTH_SECRET;
+
 /** Token lifetime in seconds (default 30 min). */
 const TTL_SECONDS = Number(process.env.ATTEST_TOKEN_TTL_SECONDS) || 30 * 60;
 
