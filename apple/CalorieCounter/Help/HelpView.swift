@@ -31,7 +31,7 @@ struct HelpView: View {
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.primary.opacity(0.8))
                                     .padding(.horizontal, 4)
-                                SoftCard {
+                                HelpCard {
                                     VStack(spacing: 16) {
                                         ForEach(section.rows) { row in
                                             HelpRow(icon: row.icon, tint: row.tint,
@@ -144,8 +144,29 @@ private struct HelpItem: Identifiable {
     let text: String
 }
 
-/// One help topic on a matte card: a tinted glyph, a short title, and a one- or
-/// two-line explanation.
+/// A translucent, frosted panel. The Help guide is a temporary surface, so glass is
+/// on-brand here (vs. the opaque matte cards used for persistent content) — it lets the
+/// food photo show through softly while keeping the text readable on the material.
+private struct HelpCard<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .padding(18)
+            .background {
+                RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
+                    .fill(.regularMaterial)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
+                    .stroke(.white.opacity(0.10), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.12), radius: 10, y: 5)
+    }
+}
+
+/// One help topic on a card: a tinted glyph, a short title, and a one- or two-line
+/// explanation.
 private struct HelpRow: View {
     let icon: String
     let tint: Color
