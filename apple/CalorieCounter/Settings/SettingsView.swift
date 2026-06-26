@@ -69,6 +69,11 @@ struct SettingsView: View {
                 .sheet(isPresented: $showPaywall) { PaywallView() }
                 .manageSubscriptionsSheet(isPresented: $showManageSubscription)
         }
+        // Apply the appearance to THIS sheet directly. The presenter's
+        // preferredColorScheme (and a window override) don't re-theme an already-
+        // presented sheet, but because this view observes `appearance`, changing the
+        // picker re-renders it and flips the Settings pane's own theme live.
+        .preferredColorScheme(container.settings.appearance.colorScheme)
     }
 
     private func settingsForm(settings: SettingsStore) -> some View {
