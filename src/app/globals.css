@@ -302,3 +302,72 @@ body {
 .target-line-pulse {
   animation: targetLinePulse 3s ease-in-out infinite;
 }
+
+/* ───────────────────────────────────────────────────────────────────────
+   Calorie Tracker — marketing landing page
+   Mirrors the iOS app's design language: near-black backdrop (#0C0D10),
+   matte cards (#16181D), sage-green hero accent (#57B58C), macro accents.
+   ─────────────────────────────────────────────────────────────────────── */
+.ct {
+  --app: #0c0d10;
+  --surface: #16181d;
+  --calorie: #57b58c;
+  --calorie-2: #73c2a1;
+  --protein: #cc7c8c;
+  --carbs: #6e9ac8;
+  --fat: #cfa85c;
+  --over: #e0594f;
+  --ink: #f4f5f7;
+  --muted: #9aa0aa;
+  background: var(--app);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ct-card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+}
+
+.ct-grad {
+  background: linear-gradient(120deg, #8fd4b6 0%, #57b58c 55%, #4fae84 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ct-phone {
+  border-radius: 2.4rem;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 30px 70px -20px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.ct-phone img { display: block; width: 100%; height: auto; }
+
+/* Soft sage glow used behind the hero + section accents */
+.ct-glow {
+  background: radial-gradient(closest-side, rgba(87, 181, 140, 0.5), transparent);
+  filter: blur(40px);
+}
+
+@keyframes ctRise {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ct-rise { animation: ctRise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+@keyframes ctFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ct-float { animation: ctFloat 7s ease-in-out infinite; }
+}
+
+html { scroll-behavior: smooth; }

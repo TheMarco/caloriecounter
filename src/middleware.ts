@@ -111,20 +111,25 @@ export async function middleware(request: NextRequest) {
 
   // Public paths that don't require authentication
   const publicPaths = [
-    '/landing',
+    '/',             // Public marketing landing page
+    '/landing',      // Legacy password gate for the web PWA
     '/offline',      // PWA offline page
     '/api/auth',     // Login endpoint
     '/api/auth/check', // Auth check endpoint
   ];
 
-  // Static assets and Next.js internals
+  // Static assets and Next.js internals. The marketing page serves its imagery
+  // from /public (e.g. /hero-food.webp, /screenshots/...), which is NOT under
+  // /_next/, so allow any request that targets a static file by extension.
   const isStaticAsset =
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/icons/') ||
+    pathname.startsWith('/screenshots/') ||
     pathname === '/manifest.json' ||
     pathname === '/sw.js' ||
     pathname.startsWith('/workbox-') ||
-    pathname === '/favicon.ico';
+    pathname === '/favicon.ico' ||
+    /\.(webp|png|jpg|jpeg|gif|svg|ico|webmanifest|woff2?|ttf|otf|css|js|map|txt|xml)$/.test(pathname);
 
   // Allow public paths and static assets
   if (publicPaths.includes(pathname) || isStaticAsset) {

@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/providers/SessionProvider";
-import { PWAInstallBanner } from "@/components/PWAInstallBanner";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,9 +13,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_TITLE = "Calorie Tracker — Private, AI-powered calorie tracking";
+const SITE_DESC =
+  "Log meals by voice, photo, barcode, or text. AI does the math; your food diary never leaves your iPhone. No account, no tracking. $5.99/mo with 10 logs free. Coming soon to the App Store.";
+
 export const metadata: Metadata = {
-  title: "Calorie Counter",
-  description: "Lightning-fast calorie tracking PWA with barcode scanning and voice input",
+  metadataBase: new URL("https://caloriecounter.ai-created.com"),
+  title: SITE_TITLE,
+  description: SITE_DESC,
+  applicationName: "Calorie Tracker",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -32,22 +36,24 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Calorie Counter",
+    statusBarStyle: "black-translucent",
+    title: "Calorie Tracker",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "Calorie Counter",
-    title: "Calorie Counter",
-    description: "Lightning-fast calorie tracking PWA with barcode scanning and voice input",
+    siteName: "Calorie Tracker",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: [{ url: "/og.webp", width: 1200, height: 630, alt: "Calorie Tracker" }],
   },
   twitter: {
-    card: "summary",
-    title: "Calorie Counter",
-    description: "Lightning-fast calorie tracking PWA with barcode scanning and voice input",
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: ["/og.webp"],
   },
 };
 
@@ -108,8 +114,6 @@ export default function RootLayout({
         style={{ backgroundColor: '#000000', color: '#ffffff' }}
       >
         <SessionProvider>
-          <PWAInstallBanner />
-          <OfflineIndicator />
           {children}
         </SessionProvider>
         {process.env.NODE_ENV === 'development' && (
