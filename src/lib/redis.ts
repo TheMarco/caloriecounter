@@ -74,4 +74,22 @@ export const kv = {
     });
     return next;
   },
+
+  /** Add a (possibly fractional) amount to a counter, keeping it on a TTL window.
+   *  Used to accumulate per-device monthly OpenAI spend. Returns the new total. */
+  async incrByFloat(key: string, amount: number, ttlSeconds: number): Promise<number> {
+    if (upstash) {
+      const n = await upstash.incrbyfloat(key, amount);
+      await upstash.expire(key, ttlSeconds); // month-stamped key; refreshing TTL is harmless
+      return typeof n === "number" ? n : Number(n);
+    }
+    const current = memGet<number>(key) ?? 0;
+    const next = current + amount;
+    const existing = mem.get(key);
+    mem.set(key, {
+      value: next,
+      expiresAt: existing?.expiresAt ?? Date.now() + ttlSeconds * 1000,
+    });
+    return next;
+  },
 };

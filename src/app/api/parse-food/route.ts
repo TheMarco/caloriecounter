@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { ParseFoodResponse } from '@/types';
 import { guardProxy } from '@/lib/proxyGuard';
+import { recordSpend } from '@/lib/openaiCost';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -143,6 +144,9 @@ Examples:
       console.error('All models failed, last error:', lastError);
       throw lastError || new Error('All models failed');
     }
+
+    // Charge the call's real cost to the device's monthly budget.
+    await recordSpend(guard.keyId, completion);
 
     const responseText = completion.choices[0]?.message?.content?.trim();
     

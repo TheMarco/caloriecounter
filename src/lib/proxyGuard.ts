@@ -6,6 +6,7 @@
 import type { NextRequest } from "next/server";
 import { limitProxyByDevice, withinDailyCeiling } from "./ratelimit";
 import { productionConfigError } from "./configCheck";
+import { overMonthlyCap } from "./openaiCost";
 
 export type GuardResult =
   | { ok: true; keyId: string }
@@ -26,6 +27,9 @@ export async function guardProxy(req: NextRequest): Promise<GuardResult> {
   }
   if (!(await withinDailyCeiling(keyId))) {
     return { ok: false, status: 429, error: "Daily request limit reached." };
+  }
+  if (await overMonthlyCap(keyId)) {
+    return { ok: false, status: 429, error: "You’ve reached this month’s usage limit." };
   }
   return { ok: true, keyId };
 }

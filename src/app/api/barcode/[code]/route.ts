@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { BarcodeResponse } from '@/types';
 import OpenAI from 'openai';
 import { guardProxy } from '@/lib/proxyGuard';
+import { recordSpend } from '@/lib/openaiCost';
 
 export async function GET(
   request: NextRequest,
@@ -181,6 +182,9 @@ NEVER give results like 533 calories for 355ml beer - that's physically impossib
       console.error('All models failed, last error:', lastError);
       throw lastError || new Error('All models failed');
     }
+
+    // Charge the call's real cost to the device's monthly budget.
+    await recordSpend(guard.keyId, completion);
 
     const responseText = completion.choices[0]?.message?.content?.trim();
     if (!responseText) {

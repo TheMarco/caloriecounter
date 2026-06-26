@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { ParseFoodResponse } from '@/types';
 import { guardProxy } from '@/lib/proxyGuard';
+import { recordSpend } from '@/lib/openaiCost';
 
 // Fallback parsing without OpenAI (basic response)
 function fallbackParsing(): NextResponse<ParseFoodResponse> {
@@ -270,6 +271,9 @@ Realistic portion examples:
         error: `OpenAI API error: ${errorMessage}`,
       }, { status: statusCode });
     }
+
+    // Charge the call's real cost to the device's monthly budget.
+    await recordSpend(guard.keyId, completion);
 
     const responseText = completion.choices[0]?.message?.content?.trim();
 

@@ -35,8 +35,21 @@ Each proxy call:
 
 **Defense in depth — the bearer is not the only thing protecting the bill:**
 - Per-IP rate limit on `/api/attest/*` (enrollment is the costly path to abuse).
-- Per-device burst limit + a **hard daily call ceiling** on the proxy.
-- A **hard monthly budget cap on the OpenAI key** (set in the OpenAI dashboard).
+- Per-device burst limit + a hard daily call ceiling on the proxy.
+- A **per-device monthly spend cap** (default **$2/device/month**,
+  `OPENAI_MONTHLY_BUDGET_PER_DEVICE`). Each call's real cost is computed from its token
+  usage (`src/lib/openaiCost.ts`) and accumulated per device per month in Redis; once a
+  device hits the cap the proxy returns `429` until next month. Bounds worst-case cost per
+  user — normal use is a few cents/month, so it's invisible to real users.
+- A **hard monthly budget cap on the OpenAI key** (OpenAI dashboard) — the account-wide
+  backstop. Keep this too: the per-device cap protects against any one device; the account
+  cap is your absolute ceiling across all devices.
+
+> "Device" ≈ "user" (there are no accounts). Two devices = two allowances, and a reinstall
+> mints a new App Attest key → a fresh allowance. That's bounded ($2 per reinstall) and not
+> "normal usage," but it's why the OpenAI account-wide cap stays as the real ceiling.
+> ⚠️ The per-token prices in `openaiCost.ts` are a safety input, not billing — verify them
+> against current OpenAI pricing.
 
 Rate-limit state and device records live in **Upstash Redis**. Locally (no Redis
 configured) the backend falls back to an in-memory store so `npm run dev` works.
