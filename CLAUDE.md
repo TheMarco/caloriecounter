@@ -49,30 +49,56 @@ service-worker cleanup script in `layout.tsx`). It's styled to match the iOS app
 src/
 ├── app/
 │   ├── api/
-│   │   ├── auth/route.ts            # POST password → sets signed `calorie-auth` cookie
-│   │   ├── auth/check/route.ts      # GET → reports cookie validity
-│   │   ├── barcode/[code]/route.ts  # Barcode lookup (Open Food Facts + OpenAI)
-│   │   ├── parse-food/route.ts      # Text/voice food parsing (OpenAI, with a fallback)
-│   │   └── parse-photo/route.ts     # Photo analysis with the Vision API
+│   │   ├── attest/challenge/route.ts  # One-time App Attest challenge
+│   │   ├── attest/register/route.ts   # Verify attestation, enroll device, mint JWT
+│   │   ├── attest/token/route.ts      # Verify assertion (or dev bypass), mint JWT
+│   │   ├── barcode/[code]/route.ts    # Barcode lookup (Open Food Facts + OpenAI)
+│   │   ├── parse-food/route.ts        # Text/voice food parsing (OpenAI, with a fallback)
+│   │   └── parse-photo/route.ts       # Photo analysis with the Vision API
 │   ├── page.tsx          # Marketing landing page (static)
 │   ├── layout.tsx        # Root layout + metadata/OG; unregisters any legacy SW
 │   └── not-found.tsx     # 404 (marketing-themed)
-├── lib/auth.ts           # HMAC cookie signing/verification + password check
-├── middleware.ts         # Guards /api/* (see below)
+├── lib/
+│   ├── appAttest.ts      # App Attest config + challenge/device Redis records
+│   ├── attestToken.ts    # Bearer JWT mint/verify (jose)
+│   ├── redis.ts          # Upstash client + in-memory dev fallback
+│   ├── ratelimit.ts      # Per-IP / per-device limits + daily ceiling
+│   ├── proxyGuard.ts     # Per-request gate for the proxy routes
+│   └── clientIp.ts
+├── middleware.ts         # Verifies the bearer JWT on /api/* (see below)
 └── types/index.ts        # API request/response DTOs
 ```
 
-### Auth model
-`middleware.ts` only runs on `/api/:path*`. `/api/auth*` is public; every other API
-route requires a valid signed **`calorie-auth`** cookie or returns `401`. The iOS app
-authenticates by POSTing the shared password to `/api/auth`, then replays the cookie on
-`/api/parse-*` and `/api/barcode/*`. The marketing page and all static assets are public
-(middleware doesn't run on them).
+### Auth model (Apple App Attest)
+The proxy routes (`/api/parse-*`, `/api/barcode/*`) require a short-lived **bearer JWT**;
+`middleware.ts` (Edge runtime) verifies `Authorization: Bearer <jwt>` and forwards a
+server-set `x-device-id` (overwriting any client value, so it can't be spoofed). The iOS
+app obtains the token via App Attest — **no account, no shipped secret**:
+- `POST /api/attest/challenge` → one-time challenge (Redis, 5-min TTL)
+- `POST /api/attest/register` → verify the Secure-Enclave attestation
+  (`node-app-attest`) against Apple's App Attest root CA, store the device public key +
+  sign counter, return the first JWT
+- `POST /api/attest/token` → verify an assertion, require the counter to strictly
+  increase, return a fresh JWT
+
+`/api/attest/*` is public (per-IP rate limited). The marketing page + static assets are
+public (middleware only runs on `/api/*`). Abuse controls live in `ratelimit.ts`: per-IP
+limit on the attest endpoints, per-device burst limit + a hard daily ceiling on the proxy
+(Upstash; in-memory fallback when Redis isn't configured). A **DEBUG-only dev bypass**
+(`ATTEST_DEV_BYPASS`, honored only when `NODE_ENV != production`) lets the iOS Simulator
+get a token without attestation. These routes run on the **Node runtime**
+(`export const runtime = "nodejs"`) because attestation verification needs Node crypto.
 
 ### Environment Variables
-- `OPENAI_API_KEY` — food parsing and photo analysis (required for the proxy to work).
-- `AUTH_PASSWORD` — the shared proxy password the iOS app sends to `/api/auth`.
-- `NEXTAUTH_SECRET` (or `AUTH_SECRET`) — HMAC secret used to sign/verify the cookie.
+- `OPENAI_API_KEY` — food parsing and photo analysis. **Set a hard monthly budget cap on
+  the key** — that's the real bill protection.
+- `ATTEST_JWT_SECRET` (or `NEXTAUTH_SECRET`) — HMAC secret that signs/verifies the JWT.
+- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — device keys, challenges, rate
+  limits (in-memory fallback if unset — dev only).
+- `APP_ATTEST_TEAM_ID` / `APP_ATTEST_BUNDLE_ID` — default to this app's IDs.
+- `ATTEST_DEV_BYPASS` — DEBUG-only Simulator bypass; **never set in production**.
+
+See `.env.example` for the full list and notes.
 
 ### Path Alias
 `@/*` maps to `./src/*` for imports.

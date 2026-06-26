@@ -37,23 +37,29 @@ npm run build
 npm start
 ```
 
-## 🔒 Environment Variables
+## 🔒 Backend security
+
+The iOS app authenticates to the proxy with **Apple App Attest** (no account, no shipped
+secret) — see [`SECURITY.md`](SECURITY.md) for the architecture and the one-time setup
+checklist (Upstash, OpenAI budget cap, the App Attest capability, and on-device testing).
 
 | Variable | Purpose |
 | --- | --- |
-| `OPENAI_API_KEY` | Food parsing and photo analysis (required for the proxy). |
-| `AUTH_PASSWORD` | Shared password the iOS app POSTs to `/api/auth` to obtain its session cookie. |
-| `NEXTAUTH_SECRET` (or `AUTH_SECRET`) | HMAC secret used to sign/verify the `calorie-auth` cookie. |
+| `OPENAI_API_KEY` | Food parsing and photo analysis. **Set a hard monthly budget cap on the key.** |
+| `ATTEST_JWT_SECRET` (or `NEXTAUTH_SECRET`) | Signs/verifies the short-lived bearer token. |
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Device keys, challenges, rate limits (in-memory fallback in dev). |
+| `APP_ATTEST_TEAM_ID` / `APP_ATTEST_BUNDLE_ID` | App Attest identity (default to this app's IDs). |
+| `ATTEST_DEV_BYPASS` | DEBUG-only Simulator bypass — **never set in production.** |
 
 Never commit real secrets. Use `.env.local` locally (git-ignored) and the host's
-environment variables in production.
+environment variables in production. See `.env.example` for the full list.
 
 ## 📁 Project Structure (web)
 
 ```
 src/
 ├── app/
-│   ├── api/              # iOS backend: auth, parse-food, parse-photo, barcode
+│   ├── api/              # iOS backend: attest/*, parse-food, parse-photo, barcode
 │   ├── page.tsx          # Marketing landing page (static)
 │   ├── layout.tsx        # Metadata / OpenGraph
 │   └── globals.css       # Tailwind + the `.ct` design-system styles
