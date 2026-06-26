@@ -1,18 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const SITE_TITLE = "Calorie Tracker — Private, AI-powered calorie tracking";
+const SITE_TITLE = "The Last Calorie Tracker — Private, AI-powered calorie tracking";
 const SITE_DESC =
   "Log meals by voice, photo, barcode, or text. AI does the math; your food diary never leaves your iPhone. No account, no tracking. $5.99/mo with 10 logs free. Coming soon to the App Store.";
 
@@ -20,7 +9,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://caloriecounter.ai-created.com"),
   title: SITE_TITLE,
   description: SITE_DESC,
-  applicationName: "Calorie Tracker",
+  applicationName: "The Last Calorie Tracker",
   icons: {
     icon: [
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -37,10 +26,10 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Calorie Tracker",
+    siteName: "The Last Calorie Tracker",
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: [{ url: "/og.webp", width: 1200, height: 630, alt: "Calorie Tracker" }],
+    images: [{ url: "/og.webp", width: 1200, height: 630, alt: "The Last Calorie Tracker" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -64,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ backgroundColor: "#0c0d10", color: "#f4f5f7" }}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
         style={{ backgroundColor: "#0c0d10", color: "#f4f5f7" }}
       >
         {children}

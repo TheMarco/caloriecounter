@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 //
-// Calorie Tracker — marketing landing page.
+// The Last Calorie Tracker — marketing landing page.
 // A static, SEO-friendly server component styled to match the iOS app: near-black
 // backdrop, matte cards, sage-green accent, the app's own food-photo hero.
 //
@@ -63,7 +63,7 @@ const PRIVACY_ROWS = [
   ["Apple Health data", "Read/written locally", "Never to any server"],
 ];
 
-// Monthly price signal, sorted high → low; Calorie Tracker highlighted at the bottom.
+// Monthly price signal, sorted high → low; The Last Calorie Tracker highlighted at the bottom.
 const COMPARISON = [
   { app: "MyFitnessPal Premium+", price: 24.99, label: "$24.99/mo", verdict: "Dramatically cheaper" },
   { app: "SnapCal", price: 15.99, label: "$14.99–$16.99/mo", verdict: "Much cheaper" },
@@ -71,14 +71,14 @@ const COMPARISON = [
   { app: "Cal AI", price: 9.99, label: "~$9.99/mo", verdict: "Beats the common price" },
   { app: "Lose It Premium", price: 9.99, label: "~$9.99/mo", verdict: "Cheaper monthly" },
   { app: "YAZIO Pro", price: 6.99, label: "~$6.99/mo", verdict: "Slightly cheaper" },
-  { app: "Calorie Tracker", price: 5.99, label: "$5.99/mo", verdict: "Best value", self: true },
+  { app: "The Last Calorie Tracker", price: 5.99, label: "$5.99/mo", verdict: "Best value", self: true },
 ];
 const MAX_PRICE = 24.99;
 
 const FAQ = [
   { q: "Do I need to create an account?", a: "No. There’s no sign-up, no email, and no password. You open the app and start logging — your data is yours, on your device." },
   { q: "It’s AI-powered — is my data being used to train models?", a: "Only the text or photo you submit for a single meal is sent to be parsed, with no name, account, or device ID attached. Under the AI provider’s API terms, that data isn’t used to train their models. Your diary itself is never uploaded." },
-  { q: "What happens after my 10 free logs?", a: "Logging continues with Calorie Tracker Pro — $5.99/month or $29.99/year. Everything you already logged stays, and you can browse it freely." },
+  { q: "What happens after my 10 free logs?", a: "Logging continues with The Last Calorie Tracker Pro — $5.99/month or $29.99/year. Everything you already logged stays, and you can browse it freely." },
   { q: "Does it work with Apple Health?", a: "Yes, optionally. You can sync meals, macros, and weigh-ins, import existing weight, and have finished workouts offered as a calorie offset — all opt-in and off until you turn it on." },
   { q: "Can I get my data out?", a: "Anytime. Export a full CSV of every entry, offset, and weigh-in from Settings, and import it back on a new device. No lock-in." },
 ];
@@ -123,7 +123,7 @@ export default function Home() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <a href="#top" className="flex items-center gap-2.5">
             <img src="/app-icon.webp" alt="" width={32} height={32} className="h-8 w-8 rounded-[9px]" />
-            <span className="text-[15px] font-semibold tracking-tight">Calorie Tracker</span>
+            <span className="text-[15px] font-semibold tracking-tight">The Last Calorie Tracker</span>
           </a>
           <nav className="hidden items-center gap-7 text-sm text-white/65 md:flex">
             <a href="#features" className="transition hover:text-white">Features</a>
@@ -154,7 +154,7 @@ export default function Home() {
               <span className="ct-grad">Keep it to yourself.</span>
             </h1>
             <p className="mt-5 max-w-md text-lg leading-relaxed text-white/70">
-              Calorie Tracker logs meals by voice, photo, barcode, or text — and AI does the math in
+              The Last Calorie Tracker logs meals by voice, photo, barcode, or text — and AI does the math in
               seconds. No account. No analytics. Your food diary never leaves your iPhone.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -173,7 +173,7 @@ export default function Home() {
             <div className="relative mx-auto flex max-w-md items-end justify-center gap-4">
               <PhoneShot src={`${SHOT}/app-09.webp`} alt="Confirming an AI-estimated meal" eager
                 className="ct-float w-[42%] translate-y-6 opacity-90" />
-              <PhoneShot src={`${SHOT}/app-01.webp`} alt="Calorie Tracker Today dashboard with calorie and macro rings" eager
+              <PhoneShot src={`${SHOT}/app-01.webp`} alt="The Last Calorie Tracker Today dashboard with calorie and macro rings" eager
                 className="w-[58%]" />
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function Home() {
               {[
                 ["Estimates, not judgment", "Numbers are presented as guides — no “good,” “bad,” “cheat,” or “fail” language, anywhere."],
                 ["One-tap adjustments", "Nudge any result with ½, 2×, Less, More, or swap the unit. Multi-item plates split into ingredients."],
-                ["It learns your corrections", "Fix an estimate once and Calorie Tracker remembers your numbers for next time — stored on your device."],
+                ["It learns your corrections", "Fix an estimate once and The Last Calorie Tracker remembers your numbers for next time — stored on your device."],
                 ["Barcodes are measured data", "Packaged foods use real label values, with an on-device “Verify with label” scan to make them stick."],
               ].map(([t, b]) => (
                 <li key={t} className="flex gap-3">
@@ -297,7 +297,7 @@ export default function Home() {
             </h2>
             <p className="mt-5 max-w-lg text-lg text-white/65">
               Most “AI calorie” apps want an account, then quietly build a profile of everything you eat.
-              Calorie Tracker does the opposite: the intelligence runs for you, and the record stays with you.
+              The Last Calorie Tracker does the opposite: the intelligence runs for you, and the record stays with you.
             </p>
             <div className="mt-8 overflow-hidden rounded-2xl border border-white/10">
               <table className="w-full text-left text-sm">
@@ -373,7 +373,7 @@ export default function Home() {
               The same AI calorie tracking. A fraction of the price.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-white/60">
-              At <span className="font-semibold text-white">$5.99/month</span>, Calorie Tracker sits below
+              At <span className="font-semibold text-white">$5.99/month</span>, The Last Calorie Tracker sits below
               mainstream plans and far under the aggressive AI calorie apps — without skimping on features.
             </p>
           </div>
@@ -403,7 +403,7 @@ export default function Home() {
             Competitor pricing is approximate, gathered from public App Store listings and third-party
             write-ups, and varies by region and over time. Several rivals push annual plans (e.g. MyFitnessPal
             Premium+ ~$79.99/yr, Lose It ~$39.99/yr, Foodnoms ~$40/yr); Cal AI’s monthly is commonly $9.99
-            with a reported $5.99–$19.99 range. Calorie Tracker is a flat $5.99/month or $29.99/year.
+            with a reported $5.99–$19.99 range. The Last Calorie Tracker is a flat $5.99/month or $29.99/year.
           </p>
         </div>
       </section>
@@ -433,7 +433,7 @@ export default function Home() {
           <img src="/app-icon.webp" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-[18px] shadow-2xl" />
           <h2 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">Eat well. Stay private.</h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-white/65">
-            Calorie Tracker is coming soon to the App Store. Private by design, powered by AI, $5.99 a month.
+            The Last Calorie Tracker is coming soon to the App Store. Private by design, powered by AI, $5.99 a month.
           </p>
           <div className="mt-8 flex justify-center">
             <ComingSoonBadge />
@@ -447,17 +447,18 @@ export default function Home() {
           <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
             <div className="flex items-center gap-2.5">
               <img src="/app-icon.webp" alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />
-              <span className="font-semibold">Calorie Tracker</span>
+              <span className="font-semibold">The Last Calorie Tracker</span>
             </div>
             <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/55">
               <a href="#features" className="hover:text-white">Features</a>
               <a href="#privacy" className="hover:text-white">Privacy</a>
               <a href="#pricing" className="hover:text-white">Pricing</a>
               <a href="#value" className="hover:text-white">Value</a>
+              <a href="/privacy" className="hover:text-white">Privacy Policy</a>
             </nav>
           </div>
           <div className="mt-8 border-t border-white/5 pt-6 text-xs leading-relaxed text-white/40">
-            <p>© 2026 Unthinking AI, LLC. Built by Marco van Hylckama Vlieg. Calorie Tracker is not yet available; “coming soon to the App Store.”</p>
+            <p>© 2026 Unthinking AI, LLC. Built by Marco van Hylckama Vlieg. The Last Calorie Tracker is not yet available; “coming soon to the App Store.”</p>
             <p className="mt-2">
               Nutrition data from Open Food Facts (ODbL). Food analysis powered by OpenAI. Calorie and macro
               figures are estimates, not medical advice — consult a professional for dietary guidance.
@@ -472,7 +473,7 @@ export default function Home() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "MobileApplication",
-            name: "Calorie Tracker",
+            name: "The Last Calorie Tracker",
             applicationCategory: "HealthApplication",
             operatingSystem: "iOS",
             description:
