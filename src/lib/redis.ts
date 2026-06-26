@@ -6,11 +6,17 @@
 
 import { Redis } from "@upstash/redis";
 
+// Accept either the canonical Upstash names or the KV_* names that Vercel's
+// Upstash/KV integration injects — `KV_REST_API_URL` / `KV_REST_API_TOKEN` are
+// the same HTTPS REST endpoint + read-write token. (The `REDIS_URL` / `KV_URL`
+// values are redis:// TCP strings and are NOT used — @upstash/redis is HTTP, and
+// we deliberately avoid the read-only token since we INCR/SET/DEL.)
+const restUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const restToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
 /** The raw Upstash client, or null when not configured (dev fallback active). */
 export const upstash: Redis | null =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? Redis.fromEnv()
-    : null;
+  restUrl && restToken ? new Redis({ url: restUrl, token: restToken }) : null;
 
 export const usingMemoryStore = upstash === null;
 
