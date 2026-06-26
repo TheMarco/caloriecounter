@@ -38,9 +38,12 @@ Each proxy call:
 - Per-device burst limit + a hard daily call ceiling on the proxy.
 - A **per-device monthly spend cap** (default **$2/device/month**,
   `OPENAI_MONTHLY_BUDGET_PER_DEVICE`). Each call's real cost is computed from its token
-  usage (`src/lib/openaiCost.ts`) and accumulated per device per month in Redis; once a
-  device hits the cap the proxy returns `429` until next month. Bounds worst-case cost per
-  user — normal use is a few cents/month, so it's invisible to real users.
+  usage (`src/lib/openaiCost.ts`) and accumulated per device per month in Redis. Bounds
+  worst-case cost per user — normal use is a few cents/month, so it's invisible to real
+  users. **The limit is never surfaced to the user:** a capped (abusing) device gets the
+  same generic "We couldn't process that right now. Please try again later." that a
+  transient hiccup produces — no quota/limit message. Same for the burst + daily guards.
+  Trips are logged server-side (`[abuse] device …`) so they're visible to you, not them.
 - A **hard monthly budget cap on the OpenAI key** (OpenAI dashboard) — the account-wide
   backstop. Keep this too: the per-device cap protects against any one device; the account
   cap is your absolute ceiling across all devices.
