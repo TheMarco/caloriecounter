@@ -25,11 +25,17 @@ struct PaywallView: View {
     @State private var selectedID: String?
 
     private var sub: SubscriptionManager { container.subscription }
-    private var isPreview: Bool { ProcessInfo.processInfo.arguments.contains("-show-paywall") }
+    // Show placeholder plans when StoreKit has no real products loaded — the design
+    // preview (`-show-paywall`) and the free-tier gate demo (`-gate`), neither of which
+    // loads a live StoreKit configuration under `simctl`.
+    private var isPreview: Bool {
+        let args = ProcessInfo.processInfo.arguments
+        return args.contains("-show-paywall") || args.contains("-gate")
+    }
 
     var body: some View {
         ZStack {
-            AppBackground()
+            photoBackground
 
             ScrollView {
                 VStack(spacing: 28) {
@@ -45,25 +51,54 @@ struct PaywallView: View {
 
             closeButton
         }
+        // Follows the system theme: a light food photo + light cards in light mode,
+        // the dark photo + matte dark cards in dark mode (the image asset carries both
+        // variants). The scrim flips with it so text stays legible either way.
         .presentationDragIndicator(.visible)
         .task { await sub.refresh() }
         .onChange(of: sub.isSubscribed) { _, nowPro in if nowPro { dismiss() } }
         .onAppear { if selectedID == nil { selectedID = defaultPlanID } }
     }
 
+    /// Full-bleed food photo behind the paywall, deepened with a vertical scrim so the
+    /// hero title and footer legal text stay legible while the matte cards pop.
+    private var photoBackground: some View {
+        GeometryReader { proxy in
+            Image("PaywallBackground")
+                .resizable()
+                .scaledToFill()
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+        }
+        .ignoresSafeArea()
+        .overlay {
+            // A wash in the current scheme's base tone: lightens the light photo so
+            // dark text reads, deepens the dark photo so light text reads. Slightly
+            // stronger at top and bottom (behind the hero title and footer legal text).
+            let wash: Color = scheme == .dark ? .black : .white
+            let o: (Double) -> Double = { scheme == .dark ? $0 : $0 * 0.92 }
+            LinearGradient(
+                stops: [
+                    .init(color: wash.opacity(o(0.58)), location: 0.0),
+                    .init(color: wash.opacity(o(0.42)), location: 0.32),
+                    .init(color: wash.opacity(o(0.55)), location: 0.68),
+                    .init(color: wash.opacity(o(0.80)), location: 1.0),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+    }
+
     // MARK: - Hero
 
     private var hero: some View {
         VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(DS.Macro.calories.linearGradient)
-                    .frame(width: 84, height: 84)
-                    .shadow(color: DS.Macro.calories.tint.opacity(0.45), radius: 12, y: 4)
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 38, weight: .bold))
-                    .foregroundStyle(.white)
-            }
+            Image("AppLogo")
+                .resizable()
+                .frame(width: 88, height: 88)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.2), radius: 12, y: 4)
             VStack(spacing: 6) {
                 Text("CalorieCounter Pro")
                     .font(.largeTitle.weight(.bold))
@@ -295,8 +330,8 @@ private struct PaywallPlan: Identifiable {
     /// always come from App Store Connect.
     static let placeholders: [PaywallPlan] = [
         PaywallPlan(id: SubscriptionManager.monthlyID, name: "Monthly", price: "$5.99",
-                    perPeriod: "per month", badge: nil, trial: "7-day free trial", product: nil),
+                    perPeriod: "per month", badge: nil, trial: nil, product: nil),
         PaywallPlan(id: SubscriptionManager.yearlyID, name: "Yearly", price: "$29.99",
-                    perPeriod: "per year", badge: "Save 58%", trial: "7-day free trial", product: nil),
+                    perPeriod: "per year", badge: "Save 58%", trial: nil, product: nil),
     ]
 }

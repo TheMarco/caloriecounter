@@ -19,11 +19,7 @@
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "10000001",
-          "introductoryOffer" : {
-            "internalID" : "20000001",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "Unlimited food logging and every input method.",
@@ -45,11 +41,7 @@
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "10000002",
-          "introductoryOffer" : {
-            "internalID" : "20000002",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "Unlimited food logging and every input method, best value.",
