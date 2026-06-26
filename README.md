@@ -1,245 +1,90 @@
-# 🍎 Calorie Counter PWA
+# 🍎 Calorie Tracker
 
-A lightning-fast, modern Progressive Web App for tracking calories, macronutrients (fat, carbs, protein), and maintaining a healthy lifestyle. Built with cutting-edge web technologies and AI-powered food recognition.
+**Calorie Tracker** is a private, AI-powered calorie and macro tracker for iOS. Log
+meals by voice, photo, barcode, or text — AI does the math, and your food diary never
+leaves your iPhone. No account, no analytics, no tracking. *Coming soon to the App Store.*
 
-![Calorie Counter](public/icons/icon-192.png)
+This repository contains two things:
 
-## ✨ Features
+| Path | What it is |
+| --- | --- |
+| **`apple/`** | The native **iOS app** (SwiftUI, iOS 26, Swift 6). This is the product. See [`apple/CLAUDE.md`](apple/CLAUDE.md) and [`apple/FEATURES.md`](apple/FEATURES.md). |
+| **repo root** | A small **Next.js project** that serves the public **marketing landing page** at `/` and acts as the iOS app's **API backend** (the `/api/*` OpenAI proxy). |
 
-### 🎯 Core Functionality
-- **Multi-Nutrient Tracking**: Track calories, fat, carbohydrates, and protein
-- **Tabbed Interface**: Easy switching between different macro views
-- **Daily Goals**: Set and track personalized targets for each nutrient
-- **Progress Visualization**: Beautiful progress bars and statistics
+> **Note:** This used to be a local-first web PWA. That web app has been retired — the
+> product is iOS-only now. The web project's sole jobs are the marketing page and the
+> API proxy that keeps the OpenAI key off the device.
 
-### 📱 Input Methods
-- **Barcode Scanning**: Instant food recognition via camera
-- **Voice Input**: Say what you ate, get instant calorie estimates
-- **Text Input**: Type food descriptions for quick logging
-- **Smart Editing**: Modify quantities with automatic macro recalculation
+## 🛠️ Tech Stack (web)
 
-### 📊 Analytics & History
-- **Interactive Charts**: Visualize nutrition trends over time
-- **Tabbed History**: View charts for calories, fat, carbs, or protein
-- **Statistics Cards**: Daily averages, totals, and peak values
-- **Data Export**: Download your nutrition data as CSV
-
-### 🚀 Progressive Web App
-- **Offline Support**: Works without internet connection
-- **Install Anywhere**: Add to home screen on any device
-- **Fast Performance**: Optimized for speed and responsiveness
-- **Cross-Platform**: Works on iOS, Android, Windows, macOS, Linux
-
-### 🎨 User Experience
-- **Dark Theme**: Beautiful, eye-friendly dark interface
-- **Apple-Style Design**: Clean, modern aesthetics
-- **Mobile-First**: Optimized for touch devices
-- **Responsive**: Adapts to any screen size
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **Recharts** - Interactive data visualization
-
-### Backend & APIs
-- **OpenAI GPT** - AI-powered food recognition and nutrition analysis
-- **Next.js API Routes** - Serverless backend functions
-
-### Data & Storage
-- **IndexedDB** - Local-first data storage
-- **idb-keyval** - Simple IndexedDB wrapper
-- **PWA Service Worker** - Offline caching and performance
-
-### Development & Testing
-- **Jest** - Unit testing framework
-- **ESLint** - Code linting and quality
-- **Fake IndexedDB** - Testing utilities
+- **Next.js 15** (App Router) · **React 19** · **TypeScript**
+- **Tailwind CSS v4** — the landing page is styled to mirror the iOS app
+- **OpenAI API** — food parsing & photo analysis (server-side only)
+- **Open Food Facts** — barcode nutrition lookup
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- OpenAI API key
+```bash
+npm install
+cp .env.example .env.local   # then fill in the variables below
+npm run dev                  # http://localhost:3000
+```
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/caloriecounter.git
-   cd caloriecounter
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   **Get your OpenAI API key:**
-   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
-   - Create an account or sign in
-   - Generate a new API key
-   - Copy the key (starts with `sk-proj-...`)
-
-   **Add your API key to `.env.local`:**
-   ```bash
-   OPENAI_API_KEY="sk-proj-your-actual-api-key-here"
-   ```
-
-   ⚠️ **Important**: Never commit your `.env.local` file to version control!
-
-4. **Run development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open in browser**
-   Navigate to `http://localhost:3000`
-
-### Building for Production
+Production:
 
 ```bash
 npm run build
 npm start
 ```
 
-## 📱 Installation as PWA
+## 🔒 Environment Variables
 
-### Android (Chrome/Edge)
-1. Open the app in Chrome or Edge
-2. Tap the "Install" button in the custom banner
-3. Or use browser menu → "Add to Home screen"
+| Variable | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | Food parsing and photo analysis (required for the proxy). |
+| `AUTH_PASSWORD` | Shared password the iOS app POSTs to `/api/auth` to obtain its session cookie. |
+| `NEXTAUTH_SECRET` (or `AUTH_SECRET`) | HMAC secret used to sign/verify the `calorie-auth` cookie. |
 
-### iOS (Safari)
-1. Open the app in Safari
-2. Tap the Share button
-3. Select "Add to Home Screen"
+Never commit real secrets. Use `.env.local` locally (git-ignored) and the host's
+environment variables in production.
 
-### Desktop
-1. Open the app in Chrome, Edge, or Safari
-2. Look for the install icon in the address bar
-3. Click to install as a desktop app
-
-## 🎯 Usage Guide
-
-### Adding Food Entries
-1. **Barcode Scanning**: Tap the barcode icon, scan product
-2. **Voice Input**: Tap microphone, say what you ate
-3. **Text Input**: Tap text icon, type food description
-
-### Viewing Different Nutrients
-- Use the tabs at the top of the main card
-- Switch between Calories, Fat, Carbs, and Protein
-- Each tab shows progress toward your daily goal
-
-### Setting Goals
-1. Go to Settings
-2. Adjust daily targets for each nutrient
-3. Goals are used for progress calculations
-
-### Viewing History
-1. Navigate to History page
-2. Use tabs to switch between nutrient charts
-3. View statistics and trends over time
-
-### Exporting Data
-1. Go to Settings
-2. Tap "Download Data as CSV"
-3. File includes: date, calories, carbs, fat, protein
-
-## 🧪 Testing
-
-Run the test suite:
-```bash
-npm test
-```
-
-Run tests in watch mode:
-```bash
-npm run test:watch
-```
-
-## 🔒 Security & Environment Variables
-
-### API Key Security
-- **Never commit API keys** to version control
-- Use `.env.local` for local development (automatically ignored by Git)
-- Use platform environment variables for production deployment
-- The `.env` file in the repository contains only placeholder values
-
-### Required Environment Variables
-- `OPENAI_API_KEY`: Required for food recognition and nutrition analysis
-- Other variables are optional and for future features
-
-### Production Deployment
-When deploying to platforms like Vercel, Netlify, or similar:
-1. Add your `OPENAI_API_KEY` to the platform's environment variables
-2. Never include real API keys in your deployment files
-
-## 📁 Project Structure
+## 📁 Project Structure (web)
 
 ```
 src/
-├── app/                 # Next.js App Router pages
-├── components/          # Reusable UI components
-├── hooks/              # Custom React hooks
-├── types/              # TypeScript type definitions
-├── utils/              # Utility functions and helpers
-└── __tests__/          # Test files
+├── app/
+│   ├── api/              # iOS backend: auth, parse-food, parse-photo, barcode
+│   ├── page.tsx          # Marketing landing page (static)
+│   ├── layout.tsx        # Metadata / OpenGraph
+│   └── globals.css       # Tailwind + the `.ct` design-system styles
+├── lib/auth.ts           # Signed-cookie helpers + password check
+├── middleware.ts         # Guards /api/* (except /api/auth*)
+└── types/index.ts        # API DTOs
 
-public/
-├── icons/              # PWA icons (various sizes)
-├── manifest.json       # PWA manifest
-└── LICENSE             # License file
+public/                   # Landing-page imagery + favicons
 ```
 
-## 🤝 Contributing
-
-This project is currently not accepting external contributions. For commercial licensing or collaboration inquiries, please contact the author.
+The iOS app's structure is documented separately in `apple/CLAUDE.md`.
 
 ## 📄 License
 
-This software is licensed under a custom non-commercial license. See the [LICENSE](LICENSE) file for complete terms and conditions.
+This software is licensed under a custom non-commercial license. See the [LICENSE](LICENSE)
+file for complete terms.
 
-**Key Points:**
 - ✅ Free for personal, non-commercial use
-- ✅ Study, modify, and host for personal use
-- ❌ Commercial use requires permission
-- ❌ Cannot remove attribution
+- ❌ Commercial use requires permission; attribution may not be removed
 
 For commercial licensing, contact: info@ai-created.com
 
-## 📊 Data Sources
+## 📊 Data Sources & Attribution
 
-This app uses nutrition data sourced in part from USDA FoodData Central. FoodData Central data is public domain / CC0. USDA does not endorse this app.
-
-> U.S. Department of Agriculture, Agricultural Research Service, Beltsville Human Nutrition Research Center. FoodData Central. Available from https://fdc.nal.usda.gov/.
-
-See [ATTRIBUTION.md](ATTRIBUTION.md) for full details.
+Barcode nutrition data comes from **Open Food Facts** (ODbL); food analysis is powered by
+**OpenAI**. See [ATTRIBUTION.md](ATTRIBUTION.md) for full details and any additional sources.
 
 ## 👨‍💻 Author
 
-**Marco van Hylckama Vlieg**
-- 🌐 Website: [ai-created.com](https://ai-created.com/)
-- 📧 Email: info@ai-created.com
-- 💼 Specializing in AI-powered web applications
-
-## 🙏 Acknowledgments
-
-- OpenAI for GPT API powering food recognition
-- Next.js team for the excellent framework
-- Tailwind CSS for the utility-first styling system
-- Recharts for beautiful data visualization
+**Marco van Hylckama Vlieg** — [ai-created.com](https://ai-created.com/) · info@ai-created.com
 
 ---
 
-**Copyright © 2025 Marco van Hylckama Vlieg**
-Built with ❤️ using AI-assisted development
+**Copyright © 2026 Marco van Hylckama Vlieg.** Built with ❤️ using AI-assisted development.

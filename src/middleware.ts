@@ -105,71 +105,32 @@ async function verifyAuthToken(token: string): Promise<boolean> {
   }
 }
 
+// The website is now just the public marketing page plus the iOS app's API
+// backend. The only thing that needs protecting is the OpenAI proxy
+// (/api/parse-food, /api/parse-photo, /api/barcode/*). The iOS app authenticates
+// by POSTing the shared password to /api/auth and replaying the signed
+// `calorie-auth` cookie. Everything else — the landing page and its assets — is
+// public, so the matcher below only runs middleware on /api/* paths.
 export async function middleware(request: NextRequest) {
-  // Get the pathname
   const pathname = request.nextUrl.pathname;
 
-  // Public paths that don't require authentication
-  const publicPaths = [
-    '/',             // Public marketing landing page
-    '/landing',      // Legacy password gate for the web PWA
-    '/offline',      // PWA offline page
-    '/api/auth',     // Login endpoint
-    '/api/auth/check', // Auth check endpoint
-  ];
-
-  // Static assets and Next.js internals. The marketing page serves its imagery
-  // from /public (e.g. /hero-food.webp, /screenshots/...), which is NOT under
-  // /_next/, so allow any request that targets a static file by extension.
-  const isStaticAsset =
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/icons/') ||
-    pathname.startsWith('/screenshots/') ||
-    pathname === '/manifest.json' ||
-    pathname === '/sw.js' ||
-    pathname.startsWith('/workbox-') ||
-    pathname === '/favicon.ico' ||
-    /\.(webp|png|jpg|jpeg|gif|svg|ico|webmanifest|woff2?|ttf|otf|css|js|map|txt|xml)$/.test(pathname);
-
-  // Allow public paths and static assets
-  if (publicPaths.includes(pathname) || isStaticAsset) {
+  // Auth endpoints are public so a client can obtain / check the token.
+  if (pathname.startsWith('/api/auth')) {
     return NextResponse.next();
   }
 
-  // Check for authentication cookie with signed token
+  // Every other API route requires the signed cookie.
   const authCookie = request.cookies.get('calorie-auth');
   const isAuthenticated = authCookie?.value ? await verifyAuthToken(authCookie.value) : false;
 
-  // If authenticated and on landing page, redirect to main app
-  if (isAuthenticated && pathname === '/landing') {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // Block unauthenticated access to protected routes
   if (!isAuthenticated) {
-    // Block API routes (except auth)
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Redirect pages to landing
-    return NextResponse.redirect(new URL('/landing', request.url));
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  // Only guard the API backend; the marketing page and static assets are public.
+  matcher: ['/api/:path*'],
 };

@@ -2,12 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **This repo is dual-platform.** The root is the **Next.js web app** (documented
-> below); the **native iOS app** lives in `apple/` and has its own `apple/CLAUDE.md`
-> (build/test commands, NutritionKit architecture, conventions). When working under
-> `apple/`, follow that file. The web app here also serves as the iOS app's API
-> backend (the `/api/parse-*` proxy). A full feature map for the iOS app is in
-> `apple/FEATURES.md`.
+> **This repo is the home of an iOS app.** The **native iOS app** lives in `apple/`
+> and has its own `apple/CLAUDE.md` (build/test commands, NutritionKit architecture,
+> conventions) — when working under `apple/`, follow that file. A full feature map is
+> in `apple/FEATURES.md`.
+>
+> The **repo root is a small Next.js project** that does two things, and only two:
+> 1. Serves the public **marketing landing page** at `/` (`src/app/page.tsx`).
+> 2. Acts as the iOS app's **API backend** — the `/api/*` proxy that holds the
+>    OpenAI key server-side so the app never ships it.
+>
+> The former local-first **web PWA calorie tracker was retired** (the product is
+> iOS-only now). If you find references to web pages like `/history` / `/settings`,
+> IndexedDB, input hooks, SWR, or a service worker, they are gone — don't reintroduce
+> them.
 
 ## Build and Development Commands
 
@@ -16,76 +24,55 @@ npm run dev          # Start development server at localhost:3000
 npm run build        # Production build
 npm run start        # Start production server
 npm run lint         # Run ESLint
-
-# Testing
-npm test             # Run Jest unit tests
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Run tests with coverage report
-
-# E2E Testing (Playwright)
-npm run test:e2e         # Run Playwright tests
-npm run test:e2e:ui      # Run with Playwright UI
-npm run test:e2e:headed  # Run in headed browser mode
-npm run test:e2e:debug   # Debug mode
 ```
+
+There is no test suite in this project anymore (the web-app unit/e2e tests were
+removed with the PWA). The iOS app has its own tests — see `apple/CLAUDE.md`.
 
 ## Architecture Overview
 
 ### Tech Stack
 - **Next.js 15** with App Router, React 19, TypeScript
 - **Tailwind CSS v4** for styling
-- **IndexedDB** (via idb-keyval) for local-first data persistence
-- **OpenAI API** for food recognition (text/voice/photo) and barcode nutrition lookup
-- **SWR** for data fetching with caching
+- **OpenAI API** for food recognition (text/voice/photo); Open Food Facts for barcodes
 
-### Data Flow
-All food entries are stored locally in IndexedDB. The app is offline-capable via PWA service worker.
+### Marketing page
+`src/app/page.tsx` is a **static server component** (no client JS beyond a tiny
+service-worker cleanup script in `layout.tsx`). It's styled to match the iOS app via a
+`.ct` design-system block in `src/app/globals.css` (near-black `#0C0D10`, matte cards
+`#16181D`, sage-green `#57B58C` accent, macro colors). Imagery lives in `public/`
+(`hero-food.webp`, `app-icon.webp`, `og.webp`, `screenshots/app/*.webp`).
 
-**Entry creation flow:**
-1. User input (barcode/voice/text/photo) → API route parses with OpenAI → Confirmation dialog
-2. User confirms → Entry saved to IndexedDB via `src/utils/idb.ts`
-3. UI refreshes via hooks (`useTodayEntries`, `useDayEntries`)
-
-### Key Directories
+### API backend (what the iOS app calls)
 
 ```
 src/
 ├── app/
 │   ├── api/
-│   │   ├── barcode/[code]/route.ts  # Barcode lookup (OpenFoodFacts + OpenAI)
-│   │   ├── parse-food/route.ts      # Text/voice food parsing
-│   │   └── parse-photo/route.ts     # Photo analysis with Vision API
-│   ├── page.tsx          # Main entry tracking page
-│   ├── history/page.tsx  # Historical data and charts
-│   └── settings/page.tsx # User preferences
-├── components/           # React components
-├── hooks/                # Custom hooks for input methods and data
-├── lib/constants.ts      # App-wide constants and configuration
-├── types/index.ts        # TypeScript type definitions
-└── utils/
-    ├── idb.ts            # IndexedDB operations (entries, offsets, queries)
-    ├── api.ts            # API client utilities and SWR hooks
-    └── csvExport.ts      # Data export functionality
+│   │   ├── auth/route.ts            # POST password → sets signed `calorie-auth` cookie
+│   │   ├── auth/check/route.ts      # GET → reports cookie validity
+│   │   ├── barcode/[code]/route.ts  # Barcode lookup (Open Food Facts + OpenAI)
+│   │   ├── parse-food/route.ts      # Text/voice food parsing (OpenAI, with a fallback)
+│   │   └── parse-photo/route.ts     # Photo analysis with the Vision API
+│   ├── page.tsx          # Marketing landing page (static)
+│   ├── layout.tsx        # Root layout + metadata/OG; unregisters any legacy SW
+│   └── not-found.tsx     # 404 (marketing-themed)
+├── lib/auth.ts           # HMAC cookie signing/verification + password check
+├── middleware.ts         # Guards /api/* (see below)
+└── types/index.ts        # API request/response DTOs
 ```
 
-### Core Types (src/types/index.ts)
-- `Entry`: Food entry with id, date (YYYY-MM-DD), timestamp, food name, quantity, unit, kcal, macros (fat/carbs/protein), input method
-- `MacroTotals`: Aggregated nutrition totals
-- `MacroTargets`: Daily goal configuration
-
-### Input Hooks Pattern
-Each input method has a dedicated hook (`useBarcode`, `useVoiceInput`, `useTextInput`, `usePhoto`) that:
-- Manages input state (active, processing, errors)
-- Handles API calls to parse food
-- Shows confirmation dialog with parsed data
-- Saves confirmed entry to IndexedDB
-
-### IndexedDB Key Schema (src/utils/idb.ts)
-- `entry:{cuid}` - Individual food entries
-- `offset:{YYYY-MM-DD}` - Daily calorie offsets (for exercise/adjustments)
+### Auth model
+`middleware.ts` only runs on `/api/:path*`. `/api/auth*` is public; every other API
+route requires a valid signed **`calorie-auth`** cookie or returns `401`. The iOS app
+authenticates by POSTing the shared password to `/api/auth`, then replays the cookie on
+`/api/parse-*` and `/api/barcode/*`. The marketing page and all static assets are public
+(middleware doesn't run on them).
 
 ### Environment Variables
-Required: `OPENAI_API_KEY` - Used for food parsing and photo analysis
+- `OPENAI_API_KEY` — food parsing and photo analysis (required for the proxy to work).
+- `AUTH_PASSWORD` — the shared proxy password the iOS app sends to `/api/auth`.
+- `NEXTAUTH_SECRET` (or `AUTH_SECRET`) — HMAC secret used to sign/verify the cookie.
 
 ### Path Alias
 `@/*` maps to `./src/*` for imports.

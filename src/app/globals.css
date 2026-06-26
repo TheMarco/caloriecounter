@@ -1,213 +1,12 @@
 @import "tailwindcss";
 
-/* Prevent white flash by setting default dark background */
-html, body {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-}
+/* ───────────────────────────────────────────────────────────────────────
+   Calorie Tracker — marketing site
+   The web project is now a single public landing page (plus the iOS app's
+   API backend). Styling mirrors the iOS app: near-black backdrop (#0C0D10),
+   matte cards (#16181D), sage-green accent (#57B58C), macro accents.
+   ─────────────────────────────────────────────────────────────────────── */
 
-/* Beautiful gradient backgrounds - much darker like the screenshot */
-.gradient-bg {
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-}
-
-.gradient-bg-subtle {
-  background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 25%, #0e1420 50%, #0a1f35 75%, #2d1b69 100%);
-}
-
-/* Subtle moving gradient animation */
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.card-glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.card-glass-hover:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-/* Apple-inspired Design System */
-:root {
-  /* Light Mode Colors */
-  --background: #ffffff;
-  --background-secondary: #f8f9fa;
-  --background-tertiary: #f1f3f4;
-  --foreground: #1d1d1f;
-  --foreground-secondary: #424245;
-  --foreground-tertiary: #86868b;
-
-  /* Card & Surface Colors */
-  --card-background: #ffffff;
-  --card-background-hover: #f8f9fa;
-  --card-border: #e5e5e7;
-  --card-shadow: rgba(0, 0, 0, 0.04);
-  --card-shadow-hover: rgba(0, 0, 0, 0.08);
-
-  /* Interactive Elements */
-  --primary: #007aff;
-  --primary-hover: #0056cc;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f3f4;
-  --secondary-hover: #e8eaed;
-  --secondary-foreground: #1d1d1f;
-
-  /* Status Colors */
-  --success: #34c759;
-  --warning: #ff9500;
-  --error: #ff3b30;
-  --info: #007aff;
-
-  /* Input & Form Elements */
-  --input-background: #ffffff;
-  --input-border: #d1d1d6;
-  --input-border-focus: #007aff;
-  --input-placeholder: #86868b;
-
-  /* Spacing & Layout */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-
-  /* Typography */
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-}
-
-:root.dark {
-  /* Dark Mode Colors */
-  --background: #000000;
-  --background-secondary: #1c1c1e;
-  --background-tertiary: #2c2c2e;
-  --foreground: #ffffff;
-  --foreground-secondary: #ebebf5;
-  --foreground-tertiary: #8e8e93;
-
-  /* Card & Surface Colors */
-  --card-background: #1c1c1e;
-  --card-background-hover: #2c2c2e;
-  --card-border: #38383a;
-  --card-shadow: rgba(0, 0, 0, 0.3);
-  --card-shadow-hover: rgba(0, 0, 0, 0.4);
-
-  /* Interactive Elements */
-  --primary: #0a84ff;
-  --primary-hover: #409cff;
-  --primary-foreground: #ffffff;
-  --secondary: #2c2c2e;
-  --secondary-hover: #3a3a3c;
-  --secondary-foreground: #ffffff;
-
-  /* Status Colors */
-  --success: #30d158;
-  --warning: #ff9f0a;
-  --error: #ff453a;
-  --info: #0a84ff;
-
-  /* Input & Form Elements */
-  --input-background: #1c1c1e;
-  --input-border: #38383a;
-  --input-border-focus: #0a84ff;
-  --input-placeholder: #8e8e93;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-background-secondary: var(--background-secondary);
-  --color-background-tertiary: var(--background-tertiary);
-  --color-foreground: var(--foreground);
-  --color-foreground-secondary: var(--foreground-secondary);
-  --color-foreground-tertiary: var(--foreground-tertiary);
-  --color-card: var(--card-background);
-  --color-card-hover: var(--card-background-hover);
-  --color-card-border: var(--card-border);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-hover: var(--secondary-hover);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-info: var(--info);
-  --color-input: var(--input-background);
-  --color-input-border: var(--input-border);
-  --color-input-border-focus: var(--input-border-focus);
-  --color-input-placeholder: var(--input-placeholder);
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-/* Explicit Light Mode */
-:root.light {
-  --background: #ffffff;
-  --background-secondary: #f8f9fa;
-  --background-tertiary: #f1f3f4;
-  --foreground: #1d1d1f;
-  --foreground-secondary: #424245;
-  --foreground-tertiary: #86868b;
-  --card-background: #ffffff;
-  --card-background-hover: #f8f9fa;
-  --card-border: #e5e5e7;
-  --primary: #007aff;
-  --primary-hover: #0056cc;
-  --secondary: #f1f3f4;
-  --secondary-hover: #e8eaed;
-  --secondary-foreground: #1d1d1f;
-  --input-background: #ffffff;
-  --input-border: #d1d1d6;
-  --input-border-focus: #007aff;
-  --input-placeholder: #86868b;
-}
-
-/* System Dark Mode Preference */
-@media (prefers-color-scheme: dark) {
-  :root:not(.dark):not(.light) {
-    --background: #000000;
-    --background-secondary: #1c1c1e;
-    --background-tertiary: #2c2c2e;
-    --foreground: #ffffff;
-    --foreground-secondary: #ebebf5;
-    --foreground-tertiary: #8e8e93;
-    --card-background: #1c1c1e;
-    --card-background-hover: #2c2c2e;
-    --card-border: #38383a;
-    --primary: #0a84ff;
-    --primary-hover: #409cff;
-    --secondary: #2c2c2e;
-    --secondary-hover: #3a3a3c;
-    --secondary-foreground: #ffffff;
-    --input-background: #1c1c1e;
-    --input-border: #38383a;
-    --input-border-focus: #0a84ff;
-    --input-placeholder: #8e8e93;
-  }
-}
-
-/* Base Styles */
 * {
   box-sizing: border-box;
 }
@@ -216,98 +15,32 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Default to light mode to prevent flash */
-  background-color: #ffffff;
-  color: #1d1d1f;
-}
-
-/* iOS Safari 18.3.x Input Fix - Targets only affected iOS versions */
-@supports (-webkit-touch-callout: none) {
-  /* Only target iOS Safari to fix white text on white background issue */
-  input[type="number"],
-  input[type="text"] {
-    -webkit-text-fill-color: #ffffff !important;
-    color: #ffffff !important;
-  }
-
-  /* Ensure background remains consistent for non-focused inputs */
-  input[type="number"]:not(:focus),
-  input[type="text"]:not(:focus) {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-  }
+  scroll-behavior: smooth;
+  background-color: #0c0d10;
+  color: #f4f5f7;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-weight: var(--font-weight-regular);
-  line-height: 1.5;
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 100vh;
-  overflow-x: hidden;
+  margin: 0;
+  background: #0c0d10;
+  color: #f4f5f7;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
 }
 
-/* Apple-style Scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::selection {
+  background: #57b58c;
+  color: #06140d;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--foreground-tertiary);
-  border-radius: 4px;
-  opacity: 0.5;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  opacity: 0.8;
-}
-
-/* Focus Styles */
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid #57b58c;
   outline-offset: 2px;
 }
 
-/* Selection Styles */
-::selection {
-  background: var(--primary);
-  color: var(--primary-foreground);
-}
-
-/* Smooth Transitions */
-.transition-theme {
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Target line pulse animation for charts */
-@keyframes targetLinePulse {
-  0%, 100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.target-line-pulse {
-  animation: targetLinePulse 3s ease-in-out infinite;
-}
-
-/* ───────────────────────────────────────────────────────────────────────
-   Calorie Tracker — marketing landing page
-   Mirrors the iOS app's design language: near-black backdrop (#0C0D10),
-   matte cards (#16181D), sage-green hero accent (#57B58C), macro accents.
-   ─────────────────────────────────────────────────────────────────────── */
+/* Brand tokens + components scoped to the landing page wrapper. */
 .ct {
   --app: #0c0d10;
   --surface: #16181d;
@@ -369,5 +102,3 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   .ct-float { animation: ctFloat 7s ease-in-out infinite; }
 }
-
-html { scroll-behavior: smooth; }
