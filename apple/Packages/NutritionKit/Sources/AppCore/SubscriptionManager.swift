@@ -41,7 +41,9 @@ public final class SubscriptionManager {
     /// `-gate`: pin as a non-subscriber so the free-tier paywall can actually be
     /// exercised even when a leftover entitlement exists (a StoreKit-test or sandbox
     /// purchase from a prior run). Products still load, so the paywall shows real plans.
-    private let pinnedUnsubscribed: Bool
+    /// Cleared the moment a genuine purchase or restore succeeds, so the gate simulation
+    /// never swallows a real entitlement (relaunching with `-gate` re-arms it).
+    private var pinnedUnsubscribed: Bool
     private var listener: Task<Void, Never>?
 
     public init(bypassed: Bool = false) {
@@ -106,8 +108,13 @@ public final class SubscriptionManager {
             case .success(let verification):
                 if case .verified(let txn) = verification {
                     await txn.finish()
-                    await updateEntitlement()
-                    return isSubscribed
+                    // A verified purchase is definitive: unlock now and drop any `-gate`
+                    // pin so it can't immediately re-flag us as unsubscribed. (The next
+                    // entitlement refresh then reads the real, now-active entitlement.)
+                    pinnedUnsubscribed = false
+                    isSubscribed = true
+                    entitlementResolved = true
+                    return true
                 }
                 return false
             case .userCancelled, .pending:
@@ -124,6 +131,7 @@ public final class SubscriptionManager {
     /// by App Review; entitlements normally restore automatically via the listener.
     public func restore() async {
         try? await AppStore.sync()
+        pinnedUnsubscribed = false   // an explicit restore wins over the gate simulation
         await updateEntitlement()
     }
 
