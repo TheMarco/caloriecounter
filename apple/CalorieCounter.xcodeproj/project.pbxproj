@@ -23,6 +23,7 @@
 		4ABE8178062C62F7527F38F9 /* AppleHealthSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7895DEB8085C5E8D0717534C /* AppleHealthSettings.swift */; };
 		4E7E099335EC69BB628C05B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A98C554F7A317C8F684DFC1A /* Assets.xcassets */; };
 		53A06130F5CBAD9F8ADA10DD /* VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD7875E9D981C02049D4DA4 /* VoiceUITests.swift */; };
+		59EC4C11B9A253B79010475B /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E16038D2477194207547ED6 /* HelpView.swift */; };
 		5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E9485996765BF65226D3DA /* RootView.swift */; };
 		5F4AC7C64A6A4BCA88DF44F9 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A388627B47BD4956D00E7332 /* BarcodeScannerView.swift */; };
 		60631DC6F416DB8E994CB4EF /* LabelComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189E6667994894E7E2C76E2E /* LabelComparisonView.swift */; };
@@ -90,6 +91,7 @@
 		2D40788EDBEB586B5F670A2F /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
 		31FEF4F62F3154FF83305493 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
 		40A1CA067B942AD2F09725D2 /* CalorieCounterUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CalorieCounterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E16038D2477194207547ED6 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		5C9366EAA330B5AAA386831D /* TextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputView.swift; sourceTree = "<group>"; };
 		637C47D228C9D45E809A840B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		669EEFDFC8D9324904A67FC0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -234,6 +236,7 @@
 			isa = PBXGroup;
 			children = (
 				639AC67818DC9F0BD583033F /* DesignSystem */,
+				D67A2EF2393C9BAE66C2FFFA /* Help */,
 				B3C638309D3B050052EDD08C /* History */,
 				13AE1E359945C06D2210D6F4 /* Input */,
 				12420AF49F3099D99D25743B /* Lock */,
@@ -271,6 +274,14 @@
 				D2D2FEBF032B9480A97D19E5 /* TryAMealStep.swift */,
 			);
 			path = Setup;
+			sourceTree = "<group>";
+		};
+		D67A2EF2393C9BAE66C2FFFA /* Help */ = {
+			isa = PBXGroup;
+			children = (
+				4E16038D2477194207547ED6 /* HelpView.swift */,
+			);
+			path = Help;
 			sourceTree = "<group>";
 		};
 		FAAD9FEA8E51F7F729D29A41 = {
@@ -428,6 +439,7 @@
 				09D05BC9144301D6C2778EAB /* EntryRow.swift in Sources */,
 				935CD8303DD3B941E9411CD5 /* FoodConfirmView.swift in Sources */,
 				04815578D1FDCD3581FE74A1 /* Haptics.swift in Sources */,
+				59EC4C11B9A253B79010475B /* HelpView.swift in Sources */,
 				B3D31995848299B852AA6EDF /* HistoryView.swift in Sources */,
 				CEC34B1A8BBD6C1C613C45EF /* InputFlowView.swift in Sources */,
 				60631DC6F416DB8E994CB4EF /* LabelComparisonView.swift in Sources */,

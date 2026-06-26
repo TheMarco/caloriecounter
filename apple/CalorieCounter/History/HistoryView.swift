@@ -12,6 +12,8 @@ struct HistoryView: View {
     @Environment(AppContainer.self) private var container
     /// Opens Settings (the top-right gear).
     var onOpenSettings: () -> Void = {}
+    /// Opens the Help guide (the top-left "?").
+    var onOpenHelp: () -> Void = {}
     @State private var model: HistoryModel?
     @State private var macro: MacroKind = .calories
     @State private var selectedDate: String?
@@ -30,6 +32,10 @@ struct HistoryView: View {
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    HelpButton(action: onOpenHelp)
+                }
+                .sharedBackgroundVisibility(.hidden)   // no glass capsule — a quiet affordance
                 ToolbarItem(placement: .topBarTrailing) {
                     SettingsGearButton(action: onOpenSettings)
                 }

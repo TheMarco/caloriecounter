@@ -19,6 +19,7 @@ struct MainTabView: View {
     @State private var showCapture = false
     @State private var activeInput: InputMethod?
     @State private var showSettings: Bool
+    @State private var showHelp: Bool
     @State private var pendingUndo: PendingUndo?
     /// The entry just logged — Today briefly haloes it as it lands.
     @State private var justLoggedId: String?
@@ -32,6 +33,7 @@ struct MainTabView: View {
         let args = ProcessInfo.processInfo.arguments
         _tab = State(initialValue: args.contains("-screen-history") ? .history : .today)
         _showSettings = State(initialValue: args.contains("-screen-settings"))
+        _showHelp = State(initialValue: args.contains("-screen-help"))
     }
 
     var body: some View {
@@ -47,9 +49,11 @@ struct MainTabView: View {
                 case .today:
                     TodayView(presentUndo: presentUndo,
                               onOpenSettings: { showSettings = true },
+                              onOpenHelp: { showHelp = true },
                               justLoggedId: justLoggedId)
                 case .history:
-                    HistoryView(onOpenSettings: { showSettings = true })
+                    HistoryView(onOpenSettings: { showSettings = true },
+                                onOpenHelp: { showHelp = true })
                 }
             }
 
@@ -99,6 +103,9 @@ struct MainTabView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(showsDoneButton: true)
+        }
+        .sheet(isPresented: $showHelp) {
+            HelpView()
         }
         .sheet(isPresented: $container.isPaywallPresented) {
             PaywallView()

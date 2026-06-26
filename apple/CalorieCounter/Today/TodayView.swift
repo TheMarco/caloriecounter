@@ -18,6 +18,8 @@ struct TodayView: View {
     var presentUndo: (String, @escaping () -> Void) -> Void = { _, _ in }
     /// Opens Settings (the top-right gear).
     var onOpenSettings: () -> Void = {}
+    /// Opens the Help guide (the top-left "?").
+    var onOpenHelp: () -> Void = {}
     /// The entry just logged (briefly haloed as it lands).
     var justLoggedId: String? = nil
 
@@ -42,6 +44,10 @@ struct TodayView: View {
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    HelpButton(action: onOpenHelp)
+                }
+                .sharedBackgroundVisibility(.hidden)   // no glass capsule — a quiet affordance
                 ToolbarItem(placement: .topBarTrailing) {
                     SettingsGearButton(action: onOpenSettings)
                 }

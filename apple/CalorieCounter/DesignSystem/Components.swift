@@ -201,6 +201,59 @@ struct SettingsGearButton: View {
     }
 }
 
+/// Top-left companion to the gear: a quiet question-mark that opens the Help guide.
+/// Matches the gear's size, weight, and muted tint so the two flank the title evenly.
+struct HelpButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "questionmark.circle")
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(.primary.opacity(0.78))
+                .frame(width: 44, height: 44)        // keep the tap target generous…
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)                          // …drop the iOS 26 glass capsule
+        .accessibilityLabel("Help")
+    }
+}
+
+/// The adaptive food-photo backdrop used on premium surfaces (the paywall and the Help
+/// guide). Full-bleed and theme-aware — the light scene in light mode, the dark scene in
+/// dark mode (one appearance-aware "PaywallBackground" asset) — under a scheme-matched
+/// wash that deepens toward the top and bottom so overlaid titles and fine print stay
+/// legible while the matte cards still pop.
+struct FoodPhotoBackground: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        GeometryReader { proxy in
+            Image("PaywallBackground")
+                .resizable()
+                .scaledToFill()
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+        }
+        .ignoresSafeArea()
+        .overlay {
+            let wash: Color = scheme == .dark ? .black : .white
+            // Light photos need a slightly gentler wash than dark ones to read as bright.
+            let o: (Double) -> Double = { scheme == .dark ? $0 : $0 * 0.94 }
+            LinearGradient(
+                stops: [
+                    .init(color: wash.opacity(o(0.62)), location: 0.0),
+                    .init(color: wash.opacity(o(0.50)), location: 0.30),
+                    .init(color: wash.opacity(o(0.55)), location: 0.68),
+                    .init(color: wash.opacity(o(0.88)), location: 1.0),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+    }
+}
+
 /// Dock-aware empty state: one short, quiet invitation that points to the dock's
 /// "+". No green bubble competing with the +, no paragraph, no duplicated button.
 struct EmptyDayCard: View {
