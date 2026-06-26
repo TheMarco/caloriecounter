@@ -86,6 +86,17 @@ schemes:
       config: Debug
       # StoreKit testing in Xcode/simulator without App Store Connect.
       storeKitConfiguration: CalorieCounter.storekit
+      # Dev/testing launch flags, pre-listed but OFF by default so they survive
+      # `xcodegen generate` — just tick one in Edit Scheme ▸ Run ▸ Arguments.
+      #   -subscribed   force Pro            -gate         force not-Pro, paywall fires
+      #   -demo         seed sample data     -show-paywall open the paywall on launch
+      #   -screen-help  open the Help sheet
+      commandLineArguments:
+        "-demo": false
+        "-subscribed": false
+        "-gate": false
+        "-show-paywall": false
+        "-screen-help": false
     test:
       config: Debug
       targets:
