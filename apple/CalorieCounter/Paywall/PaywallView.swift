@@ -35,7 +35,7 @@ struct PaywallView: View {
 
     var body: some View {
         ZStack {
-            photoBackground
+            FoodPhotoBackground()
 
             ScrollView {
                 VStack(spacing: 28) {
@@ -60,36 +60,6 @@ struct PaywallView: View {
         .onAppear { if selectedID == nil { selectedID = defaultPlanID } }
     }
 
-    /// Full-bleed food photo behind the paywall, deepened with a vertical scrim so the
-    /// hero title and footer legal text stay legible while the matte cards pop.
-    private var photoBackground: some View {
-        GeometryReader { proxy in
-            Image("PaywallBackground")
-                .resizable()
-                .scaledToFill()
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .clipped()
-        }
-        .ignoresSafeArea()
-        .overlay {
-            // A wash in the current scheme's base tone: lightens the light photo so
-            // dark text reads, deepens the dark photo so light text reads. Slightly
-            // stronger at top and bottom (behind the hero title and footer legal text).
-            let wash: Color = scheme == .dark ? .black : .white
-            let o: (Double) -> Double = { scheme == .dark ? $0 : $0 * 0.92 }
-            LinearGradient(
-                stops: [
-                    .init(color: wash.opacity(o(0.58)), location: 0.0),
-                    .init(color: wash.opacity(o(0.42)), location: 0.32),
-                    .init(color: wash.opacity(o(0.55)), location: 0.68),
-                    .init(color: wash.opacity(o(0.80)), location: 1.0),
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        }
-    }
-
     // MARK: - Hero
 
     private var hero: some View {
@@ -105,7 +75,7 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
                 Text("You've used your \(Constants.freeFoodEntryLimit) free entries. Go Pro for unlimited logging.")
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.9))   // sits on the photo — keep it high-contrast
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -252,16 +222,16 @@ struct PaywallView: View {
             .foregroundStyle(DS.Macro.calories.tint)
 
             Text("Subscriptions auto-renew until cancelled in Settings.")
-                .font(.caption2).foregroundStyle(.tertiary)
+                .font(.caption2).foregroundStyle(.primary.opacity(0.72))   // legible on the photo
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 6) {
                 Link("Terms of Use", destination: termsURL)
-                Text("·").foregroundStyle(.tertiary)
+                Text("·").foregroundStyle(.primary.opacity(0.6))
                 Link("Privacy Policy", destination: privacyURL)
             }
             .font(.caption2)
-            .tint(.secondary)
+            .tint(.primary.opacity(0.82))
         }
         .padding(.top, 6)
     }
