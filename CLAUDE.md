@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **This repo is dual-platform.** The root is the **Next.js web app** (documented
+> below); the **native iOS app** lives in `apple/` and has its own `apple/CLAUDE.md`
+> (build/test commands, NutritionKit architecture, conventions). When working under
+> `apple/`, follow that file. The web app here also serves as the iOS app's API
+> backend (the `/api/parse-*` proxy). A full feature map for the iOS app is in
+> `apple/FEATURES.md`.
+
 ## Build and Development Commands
 
 ```bash

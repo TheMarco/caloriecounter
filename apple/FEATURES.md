@@ -1,223 +1,280 @@
-# CalorieCounter (iOS) — Complete Feature Guide
+# CalorieCounter — Feature Reference
 
-A local‑first calorie and macro tracker for **iOS 26**. Your nutrition log lives
-only on your device. Food *estimates* come from a cloud AI service (OpenAI) when
-you type, speak, or photograph a meal; voice is transcribed **on‑device** (only
-the recognized words are sent). Your log, weights, and targets never leave the phone.
+A privacy-first calorie & macro tracker. This document describes the **native iOS app** (SwiftUI, iOS 26, under `apple/`) in detail, with a section on the **web app** (Next.js, repo root) at the end.
 
----
-
-## 1. Philosophy & Privacy
-
-- **Local‑first storage.** Entries, weights, and settings live in a local
-  SwiftData store with no iCloud/CloudKit sync. The biometric‑lock token is kept
-  in the Keychain, device‑only, non‑syncing. Your log never leaves the phone.
-- **Cloud estimates, no identity.** Typed, spoken, and photographed foods are
-  analyzed by **OpenAI** — only the food text or photo is sent, with no name,
-  account, or device ID attached, so requests can't be tied back to you. Under
-  OpenAI's API terms the data isn't used to train their models.
-- **Barcodes via OpenFoodFacts.** A barcode is looked up in OpenFoodFacts (a
-  public food database); when it has the product but no nutrition, the product
-  name is sent to the cloud parser for an estimate.
-- **Voice stays on‑device.** Speech is transcribed by Apple's on‑device
-  recognizer; only the recognized words go to the cloud parser.
-- **No account required.** Open the app and start tracking.
+Built by Marco van Hylckama Vlieg · © 2026 Unthinking AI, LLC.
 
 ---
 
-## 2. Onboarding — the Setup Wizard
+## Table of Contents
 
-A five‑step wizard runs on first launch (and is re‑runnable anytime from
-Settings). It turns who you are and what you want into concrete daily targets.
-
-1. **Your Goal** — pick a weight goal:
-   - Lose weight fast (~0.75 kg / 1.5 lb per week)
-   - Lose slow & steady (~0.5 kg / 1 lb per week)
-   - Maintain weight
-   - Gain responsibly (~0.25 kg / 0.5 lb per week)
-2. **Diet Style** — pick how your calories are split across macros (see §8):
-   Balanced, High Protein, Low Carb, Keto, High Carb, or Mediterranean. Each card
-   shows its macro split (e.g. "5% C · 25% P · 70% F" for Keto).
-3. **About You** — sex, age, weight, height. Includes a **Metric/Imperial
-   toggle**; weight and height re‑render instantly (kg↔lb, cm↔ft·in). Stats are
-   stored canonically so switching units is lossless.
-4. **Activity** — sedentary → extremely active.
-5. **Your Plan** — shows the computed calorie + macro targets and the maintenance
-   (TDEE) estimate. Finishing seeds your **starting weight** into weight history.
-
-**The math:** Mifflin–St Jeor BMR × an activity factor = TDEE; the weight goal
-applies a calorie delta; the diet style splits those calories across protein /
-carbs / fat. Results are rounded to tidy numbers (calories to 25, macros to 5)
-and never drop below a safe 1,200 kcal floor.
+1. [Design Philosophy](#1-design-philosophy)
+2. [Food Logging & Capture](#2-food-logging--capture)
+3. [AI Parsing & Smart Corrections](#3-ai-parsing--smart-corrections)
+4. [The Today Dashboard](#4-the-today-dashboard)
+5. [Calorie Offsets & Workout Integration](#5-calorie-offsets--workout-integration)
+6. [Quick Re-Log ("Your Usuals")](#6-quick-re-log-your-usuals)
+7. [History, Charts & Insights](#7-history-charts--insights)
+8. [Weight Tracking](#8-weight-tracking)
+9. [Setup Wizard & Goal Planning](#9-setup-wizard--goal-planning)
+10. [Apple Health Integration](#10-apple-health-integration)
+11. [Subscription — CalorieCounter Pro](#11-subscription--caloriecounter-pro)
+12. [Settings & Data Management](#12-settings--data-management)
+13. [Notifications](#13-notifications)
+14. [Design System & Accessibility](#14-design-system--accessibility)
+15. [Launch Experience](#15-launch-experience)
+16. [Storage, Architecture & Dev Modes](#16-storage-architecture--dev-modes)
+17. [Privacy Summary](#17-privacy-summary)
+18. [The Web App](#18-the-web-app)
 
 ---
 
-## 3. Logging Food — four methods
+## 1. Design Philosophy
 
-Capture buttons sit at the **top** of the Today screen (so they never clash with
-the tab bar). Each parses input and shows a confirmation screen before saving,
-where you can adjust the amount and the per‑ingredient breakdown.
-
-- **Scan (barcode).** Point at a product barcode (VisionKit DataScanner). Looks
-  it up in OpenFoodFacts and uses **per‑serving** nutrition when the label
-  provides it (e.g. per‑slice for bread). When OpenFoodFacts has the product but
-  no nutrition, the name is sent to the cloud parser for an estimate. Changing the
-  quantity/unit recalculates calories and macros live.
-- **Speak (voice).** Tap the mic and say what you ate ("two eggs and a slice of
-  toast"). Apple's **on‑device** recognizer transcribes it; the recognized text is
-  then sent to the cloud parser, which structures it into food + quantity +
-  nutrition with a per‑ingredient breakdown.
-- **Type (text).** Type a food description; the cloud parser returns the estimate
-  and breakdown. As you type, **previously‑eaten foods matching what you've typed
-  appear** (ranked by how often/recently you've logged them) — tap one to reuse
-  its exact nutrition and skip the cloud parse.
-- **Photo (meal).** Snap a square photo of your plate; it's sent to OpenAI's
-  vision model for a calorie + macro estimate. The estimate is a starting point —
-  you adjust the amount and ingredients on the confirmation screen before saving.
-
-**Units everywhere.** Your Metric/Imperial setting tells the parsers whether to
-describe foods in grams/ml or oz/lb/cups — so it affects *every* logging method,
-not just onboarding.
-
-**Editing.** Tap any entry to edit food, quantity, unit, calories, or macros;
-the unit picker offers compatible units and recomputes nutrition. Swipe to delete.
+- **No account, ever.** Open the app and start tracking. No sign-up, no email, no user ID.
+- **Local-first & private.** Your food log, weights, targets, and settings live on your device. The only thing that leaves the phone is the text/photo you submit for food analysis.
+- **Estimates, not judgment.** Calorie and macro figures are presented as guides. The app deliberately avoids moral language ("good/bad/cheat/fail") anywhere in insights or summaries.
+- **Optional everything.** Apple Health, biometric lock, voice, and photo are all opt-in and off until you turn them on.
 
 ---
 
-## 4. The Today Screen
+## 2. Food Logging & Capture
 
-- **Calorie ring** — a large gradient ring showing your **net** calories (food
-  minus any exercise/adjustment offset) against your goal, with the number and
-  "of X goal" beneath.
-- **Three macro rings** — protein, carbs, fat, each toward its target.
-- **Over‑limit is unmistakable.** When you exceed a target, the ring wraps a
-  warm‑red overage arc back over itself (more excess → more red), the number turns
-  red, and the label switches to "X over". Works for calories and each macro.
-- **Exercise / adjustment offset** — log calories burned (or any adjustment) for
-  the day; the calorie ring tracks net accordingly.
-- **Today's food list** — every entry with its nutrition; tap to edit, swipe to
-  delete.
-- Pull‑to‑refresh, and the screen **auto‑refreshes** whenever data changes
-  elsewhere (an import, a reset, a weigh‑in).
+Four capture methods plus one-tap re-logging. Every method ends in the same **confirm-and-adjust** screen before anything is saved. Capture lives in a floating dock at the bottom of the screen — tap the green **+** to raise the four tools (Scan / Speak / Type / Photo).
 
----
+### Text
+- Type a description ("2 eggs and toast"); the app parses it into a food with calories and macros.
+- Autocomplete suggests foods you've eaten before as you type (ranked by frequency/recency) — tap one to reuse its exact nutrition and skip the cloud parse.
 
-## 5. The History Screen
+### Voice
+- Tap the mic, speak naturally ("three slices of pizza and a side salad"), see a live transcript, then analyze.
+- **Speech is transcribed on-device** (Apple's speech recognition); only the resulting *text* is sent for parsing — never the audio.
 
-A scrollable, range‑aware view of your trends.
+### Barcode
+- Native VisionKit scanner (EAN-13/8, UPC-E, QR, Code128) with a centered viewfinder.
+- Looks the product up in **Open Food Facts** (global database, no account). Prefers the **per-serving** values printed on the package (e.g. per-slice for bread), falling back to per-100 g.
+- If the product exists but has no nutrition data, the app estimates from the product name instead of failing.
+- Barcode entries are treated as **measured data** (high confidence) — not subject to the AI "learning" corrections. Changing quantity/unit recalculates live.
 
-- **Range selector:** 7 Days · 30 Days · 90 Days · **All** (All spans from your
-  earliest entry to today).
-- **Weight section** (top): your current weight and a line graph of your weigh‑ins
-  over the selected range, plus a **Log** button (see §6).
-- **Nutrition trends:** a bar chart for the chosen macro (Calories / Fat / Carbs /
-  Protein) with a dashed goal line; bars that exceed the goal turn red. The chart
-  fits the **entire** selected range in view (no hidden horizontal scroll) with
-  auto‑strided date labels.
-- **This Month calendar:** dots mark days with logged food; tap a day to open its
-  detail screen (that day's entries and totals).
+### Photo
+- Square camera frame → take a photo of the meal. The image is center-cropped to 1024×1024 and analyzed by an **OpenAI vision model**.
+- **Portion context step** improves accuracy: pick a plate size (Small → XL), a serving type (Home / Restaurant / Fast-food / Snack), and an optional "I only ate about half" toggle.
+- Very dark / lens-covered shots are rejected before upload.
+- Multi-item plates are broken into editable components (e.g. chicken + rice + veggies).
+
+> **Confirm & adjust screen (all methods):** shows a meal card with a confidence badge (Barcode / Photo estimate / Typed estimate). You can edit the name, quantity, and unit; use one-tap chips (**½, 2×, Less, More, Swap unit**); and for multi-part meals, adjust, add, or remove individual ingredients before saving. Tap any saved entry later to edit; swipe to delete (with undo).
 
 ---
 
-## 6. Weight Tracking
+## 3. AI Parsing & Smart Corrections
 
-- **Log anytime** — tap **Log** in the History weight section and enter your
-  current weight in your units. It saves as today's measurement; re‑logging a day
-  updates it. No need to weigh in daily — it's a sparse series.
-- **Trend graph** — a line chart with a padded (non‑zero) y‑axis so small changes
-  are visible, and an x‑axis that spans the selected window so weekly weigh‑ins
-  still sit on a real date scale.
-- **Starts at onboarding** — your wizard weight becomes the first data point.
-- Stored canonically in kilograms; displayed in kg or lb per your unit setting.
+- **Cloud parsing** (text/voice/photo) uses OpenAI through the app's proxy. A primary model is used with an automatic fallback model for resilience. No name, account, or device ID is attached to requests.
+- **Heuristic offline fallback** exists for text (regex + common-portion tables) so parsing degrades gracefully in non-production/offline builds; production food analysis is online.
+- **Realistic portions & rounding:** the parser is instructed to use sensible serving sizes, respect your metric/imperial preference, round calories to the nearest 5 and macros to the nearest gram, and apply an **Atwater-floor correction** so calorie estimates can't fall below what the macros imply.
+- **It learns your corrections.** When you adjust an *estimated* food (text/voice/photo), the app remembers your numbers for that food + unit. The next time you log the same thing, it pre-applies what you taught it and notes that it remembered. Corrections never override *measured* data (barcodes). Stored locally in a `CorrectionRecord` table.
 
 ---
 
-## 7. Goals & Diet Styles (comprehensive)
+## 4. The Today Dashboard
 
-Two independent dimensions decide your targets:
+The home screen — your day at a glance.
 
-- **Weight goal → how much you eat** (calorie delta from maintenance): radical
-  loss, steady loss, maintain, or responsible gain.
-- **Diet style → what those calories are made of** (macro split):
-
-  | Style          | Carbs | Protein | Fat | Good for |
-  |----------------|------:|--------:|----:|----------|
-  | Balanced       |  40%  |   30%   | 30% | A flexible default |
-  | High Protein   |  30%  |   40%   | 30% | Building/keeping muscle |
-  | Low Carb       |  20%  |   35%   | 45% | Cutting carbs |
-  | Keto           |   5%  |   25%   | 70% | Ketogenic eating |
-  | High Carb      |  55%  |   25%   | 20% | Endurance / big training |
-  | Mediterranean  |  45%  |   25%   | 30% | Whole foods, healthy fats |
-
-Target ranges accommodate these extremes (fat up to 300 g, carbs as low as 20 g),
-so Keto and Low‑Carb produce realistic numbers. You can fine‑tune any target
-afterward in Settings.
+- **Hero calorie ring:** large central ring showing **net calories** (food eaten − exercise/adjustment offset, floored at 0) against your goal. Fills 0–100 %, then wraps a red "overage" arc if you go over. Center shows the net number, "net kcal" / "kcal", and "of X goal" or "X over."
+- **Three macro rings:** protein, carbs, and fat, each tracking consumed vs. target with the same fill-then-overage behavior, color-coded (protein = rose, carbs = blue, fat = gold).
+- **Over-limit is unmistakable:** the ring wraps a warm-red overage arc, the number turns red, and the label switches to "X over" — for calories and each macro.
+- **Food entry cards:** each logged item shows its capture-method icon, name, quantity/unit, calories, and colored macro pips. Tap to edit; swipe to edit or delete.
+- **Undo everywhere:** deleting (or quick-logging) raises an undo toast that fully restores the entry.
+- **Just-logged highlight:** a freshly added entry briefly glows green.
+- **Pull-to-refresh** reloads the day; the screen also auto-refreshes when data changes elsewhere (import, reset, weigh-in), and re-checks for new workout offsets when you return to the app.
 
 ---
 
-## 8. Settings
+## 5. Calorie Offsets & Workout Integration
 
-- **Set targets from a goal** — re‑run the setup wizard (with a **Cancel** to back
-  out without changing anything; only the mandatory first‑launch run can't be
-  cancelled).
-- **Daily Targets** — calories, fat, carbs, protein. Each is a **tappable, typeable
-  field** (number pad) that highlights while active; values snap into valid ranges
-  when you finish. A reliable "Done" pill sits above the keyboard, and swiping
-  down also dismisses it.
-- **Units** — Metric or Imperial (drives food‑logging units app‑wide).
-- **Appearance** — **Auto / Light / Dark** theme.
-- **Security** — require **Face ID / Touch ID** to open the app after it's
-  backgrounded.
-- **Your Data** — export and import (see §9).
-- **Erase All Data & Start Over** — wipes every entry, weight, and offset, resets
-  settings, and relaunches the setup wizard. Confirmed before it runs.
-- **About** — app icon, version, privacy summary, and data‑source credits.
+- **Manual offset chip** ("Exercise & Adjustments"): tap to add calories burned for the day via a stepper (0–5000 kcal, ±25) or exact entry. The offset reduces your net calories.
+- **Automatic workout offsets (Apple Health, opt-in):**
+  - After you finish a workout, the app offers to add its burned calories to that day's offset, via a **"Workout detected"** banner on Today (Add N kcal / Dismiss) and an optional local notification.
+  - Only "real" workouts qualify: at least **10 minutes** and **80 kcal**. Incidental movement is filtered out.
+  - Burned-calorie reading is **robust** — it resolves a workout's Active Energy from per-workout statistics, then associated samples, then the legacy total, so manually-added and third-party workouts aren't silently missed.
+  - Read-only: the app never writes workouts back to Health.
+  - A **permission primer** explains to tap "Turn On All" before the system prompt (Apple defaults the read switches to off), and a **"Check recent workouts"** troubleshooter in Settings reports exactly what Health returned and why each workout did or didn't qualify.
+  - Each workout is remembered as handled/notified so it's never offered twice (ledgers auto-prune after ~35 days).
 
 ---
 
-## 9. Data Export & Import (CSV)
+## 6. Quick Re-Log ("Your Usuals")
 
-- **Export** writes a complete, per‑entry backup: one row per logged food
-  (`date, time, food, quantity, unit, calories, fat, carbs, protein, method`) plus
-  a row per day's offset. Food names with commas are properly quoted.
-- **Import** auto‑detects the format from the header:
-  - the **per‑entry** format restores every individual food exactly;
-  - the older **daily‑totals** format still imports (one summary row per day), so
-    earlier exports keep working.
-- Importing is idempotent (deterministic IDs), so re‑importing the same file
-  doesn't create duplicates, and Today/History refresh automatically afterward.
-
-> Note: imported data appears in History only if its dates fall within the
-> selected range — History always looks backward from today's date.
+- A horizontal row on Today of up to **8** foods you log most often (ranked by frequency over the last 30 days, then recency), excluding anything already logged today.
+- Tap one to instantly re-log it with the same nutrition — no parsing step — with full undo and Health sync.
 
 ---
 
-## 10. Demo Mode
+## 7. History, Charts & Insights
 
-Launching with the `-demo` argument seeds ~2 months of realistic data — varied
-breakfasts/lunches/dinners/snacks, exercise offsets, and a weekly weigh‑in trend
-(~84 → 81.5 kg) — for screenshots and exploration, all in an in‑memory store.
+- **Range selector:** 7 days / 30 days / 90 days / All (All spans from your earliest entry).
+- **Weekly insights:** 1–3 plain, non-judgmental observations generated from the range, e.g. "You logged 6 of 7 days," "averaged 1,950 kcal, about 50 under your goal," and a protein note. Averages are computed **only over days you logged**, so blank days don't skew them.
+- **Macro trend chart:** switch between Calories / Protein / Carbs / Fat. Daily bars across the whole range (no hidden horizontal scroll), bars over target turn red, with a dashed goal line. Tap a bar for a day summary ("Mon 22 · 1,850 kcal · P95 C210 F60"). Calories shown are **net**.
+- **Weight chart:** line chart of weigh-ins over the range, auto-scaled (non-zero-based) so small changes are visible; honest linear interpolation for sparse data.
+- **Month calendar:** today highlighted; each logged day shows a **provenance dot** — filled (all measured), half (mixed), or hollow ring (all estimated). Tap any day to open its detail.
+- **Day detail:** the macro dashboard, offset, and food cards for any past day. You can delete entries from past days (syncs to Health).
 
----
-
-## 11. Design & Accessibility
-
-- **iOS 26 Liquid Glass** chrome: glass capture buttons, a minimizing tab bar,
-  and soft scroll‑edge effects, over a calm, tasteful muted palette.
-- **VoiceOver** labels and values throughout (rings announce "X of Y", and over‑
-  target states are spoken).
-- **Reduce Motion** respected (ring animations disable accordingly).
-- Light/Dark/Auto theming.
+> The app intentionally has **no streaks, scores, or adherence badges** — provenance and insights are factual, not motivational pressure.
 
 ---
 
-## 12. Under the Hood (for the curious)
+## 8. Weight Tracking
 
-- **Swift 6** with strict concurrency; a layered Swift Package (`NutritionKit`)
-  with protocol "seams" so features depend on abstractions, not frameworks.
-- **SwiftData** (`@ModelActor`) for local storage; **@Observable** view models.
-- **OpenAI** (via a thin proxy) for text and photo food parsing; a deterministic
-  heuristic stands in for UI‑test/demo builds (no network).
-- **VisionKit** (barcode scanning), **Speech** (on‑device voice transcription),
-  **LocalAuthentication** (biometric lock), **Swift Charts** (graphs).
-- Heavily unit‑ and UI‑tested.
+- Log a weigh-in from History in your unit system (kg or lb, one decimal). One measurement per calendar day; re-logging the same day updates it. No need to weigh in daily — it's a sparse series.
+- Weight is stored canonically in **kilograms** and displayed in your chosen units.
+- Your wizard weight becomes the first data point.
+- **Weight-drift nudge:** if your latest weight differs from the weight your plan was built on by **≥ 3 kg (~6–7 lb)**, Today shows a gentle "Refresh your plan?" banner that reopens the setup wizard pre-filled.
+- Optional two-way sync with Apple Health (write your weigh-ins, import existing ones — see below).
+
+---
+
+## 9. Setup Wizard & Goal Planning
+
+A guided onboarding (re-runnable any time from Settings) that computes personalized targets.
+
+**Steps:** Welcome (privacy promise) → Try a meal → **Goal** (required) → Diet style → Body (sex, age, weight, height — with a live Metric/Imperial toggle) → Activity level → Plan (review & save).
+
+**The math:**
+- **BMR — Mifflin–St Jeor:** `10·kg + 6.25·cm − 5·age + (male +5 / female −161)`
+- **TDEE:** `BMR × activity factor` — Sedentary 1.2, Light 1.375, Moderate 1.55, Active 1.725, Very Active 1.9
+- **Daily calories:** `max(1200, round(TDEE + goal delta, nearest 25))` — a 1,200 kcal safety floor
+  - Goal deltas: Lose fast (~0.75 kg/wk) −750 · Lose steady (~0.5 kg/wk) −500 · Maintain 0 · Gain (~0.25 kg/wk) +350 kcal
+- **Macros** from your diet style, as % of calories ÷ (4 kcal/g protein & carbs, 9 kcal/g fat), rounded to 5 g and clamped:
+
+  | Diet | Protein / Carbs / Fat | Good for |
+  |---|---|---|
+  | Balanced | 30 / 40 / 30 | A flexible default |
+  | High Protein | 40 / 30 / 30 | Building/keeping muscle |
+  | Low Carb | 35 / 20 / 45 | Cutting carbs |
+  | Keto | 25 / 5 / 70 | Ketogenic eating |
+  | High Carb | 25 / 55 / 20 | Endurance / heavy training |
+  | Mediterranean | 25 / 45 / 30 | Whole foods, healthy fats |
+
+- The Plan screen shows your maintenance (TDEE) estimate and an estimates-not-medical-advice disclaimer. Saving stores your targets and a profile (used for re-prefill and the drift nudge) and seeds an initial weigh-in.
+
+**Manual targets:** you can also edit Calories / Fat / Carbs / Protein directly in Settings as tappable number fields. Values are clamped to sane ranges (Calories 1000–5000; Fat 20–300 g; Carbs 20–500 g; Protein 30–300 g). Defaults are 2000 / 65 / 250 / 100. The ranges deliberately accommodate Keto/Low-Carb extremes.
+
+---
+
+## 10. Apple Health Integration
+
+Entirely opt-in, off by default, with four independent toggles (Settings → Apple Health):
+
+1. **Sync nutrition to Health** — writes each food as an `HKCorrelation(.food)` with calories + protein/carbs/fat, tagged so edits/deletes stay in sync.
+2. **Sync weight to Health** — writes your weigh-ins as body-mass samples (one per day).
+3. **Import weight from Health** — pulls existing weigh-ins in; if a day conflicts with a local value, a **conflict sheet** lets you pick "Use Apple Health" or "Keep current." New days import silently. Default lookback 365 days; re-runnable on demand.
+4. **Offset calories from workouts** — read-only workout/active-energy reads that power the automatic offsets in [section 5](#5-calorie-offsets--workout-integration).
+
+**Supporting actions:** last-sync timestamp, "Import now," **Repair sync** (re-push the last 30 days), **Disconnect** (stop syncing, keep written data), and **Remove this app's data from Health** (deletes only what CalorieCounter wrote). All app data carries a `CalorieCounter` source marker so it's identifiable and never touches other apps' data. Health data is never sent to any server.
+
+---
+
+## 11. Subscription — CalorieCounter Pro
+
+- **Free tier:** the first **10 food entries** are free. (Only food entries count — weights, offsets, and edits don't.)
+- After that, logging requires **CalorieCounter Pro**, presented via a branded paywall.
+- **Plans:** Monthly and Yearly, each with a **7-day free trial**. Real prices come from the App Store (localized); dev previews show $3.99/mo and $39.99/yr.
+- **No account.** Built on **StoreKit 2** with on-device entitlement checks — no backend, no login. **Restore Purchases** and **Manage Subscription** are available in Settings and on the paywall.
+- The free-entry counter is stored in **iCloud key-value storage**, so it survives reinstalls and follows your Apple ID across devices — still without an account. It's monotonic (deleting entries doesn't refund free slots).
+- Settings shows your status: **Pro · Active** with Manage, or **Free plan · X of 10 used** with Upgrade / Restore.
+
+---
+
+## 12. Settings & Data Management
+
+- **Daily targets** — edit calories & macros (tappable number fields, clamped on commit); "Reset targets to defaults."
+- **Units** — Metric or Imperial (defaults to your device locale; drives food-logging units app-wide).
+- **Appearance** — Light / Dark / System theme.
+- **Haptics** — subtle taps on recognize/adjust/save/undo (on by default).
+- **Security** — "Require Face ID / Touch ID": locks the app when it goes to the background. Local only; the lock token is held in the Keychain (device-only, non-syncing).
+- **Re-run setup wizard** — recompute targets from a goal (cancellable when re-run; only the first-launch run is mandatory).
+- **Export CSV** — full backup (every food entry + daily offsets + weigh-ins, including fiber/sodium/sugar and capture method) via the iOS share sheet. Names with commas are quoted.
+- **Import CSV** — restore a backup; auto-detects the per-entry or legacy daily-totals format and de-duplicates via stable IDs ("Imported X days of data"). Today/History refresh automatically.
+- **Erase All Data & Start Over** — two-step confirmation; wipes entries/offsets/weights, resets targets, and returns to onboarding.
+- **About** — version, a "what stays on device" privacy diagram, data-source credits (Open Food Facts under ODbL, OpenAI), and the medical disclaimer.
+
+> Note: imported data appears in History only if its dates fall within the selected range — History always looks backward from today.
+
+---
+
+## 13. Notifications
+
+- **Workout-complete notifications** (only if workout offsets are enabled): "You burned about X kcal in a Y-min Z. Tap to add it to your calories." Posted when Health wakes the app for a new qualifying workout.
+- Permission is requested **lazily** — only the first time a notification would actually fire, not when you flip the Settings toggle. Notifications are de-duplicated per workout.
+
+---
+
+## 14. Design System & Accessibility
+
+**Visual language**
+- **Glass for chrome, matte for content:** translucent iOS 26 "liquid glass" only for transient chrome (the floating dock, capture tray, undo toasts); solid matte surfaces for everything data-bearing (cards, dashboard) so your log stays calm and readable.
+- **Macro color identity:** calories = sage green (the hero), protein = rose, carbs = blue, fat = gold, over-target = an unmistakable red.
+- **Floating capture dock:** a custom bar with two quiet tabs (Today · History) and a raised green "+" jewel; Settings is a gear in the top-right. Tapping "+" rotates it to "×" and raises four capture tools (Scan / Speak / Type / Photo).
+
+**Accessibility (first-class)**
+- **Dynamic Type** throughout; at accessibility text sizes the UI *reflows rather than truncates*:
+  - the macro rings become a clear text + progress-bar summary;
+  - dock tabs go icon-only;
+  - meal-card badges and macro chips stack vertically;
+  - scroll content reserves real space so the last card ends **above** the dock instead of hiding behind it.
+- **VoiceOver:** descriptive labels and hints on every control ("Banana, 1 medium, 105 calories"; rings read net-of-goal, and over-target states are spoken).
+- **Contrast:** borders and text strengthen with Increase Contrast; meaning never relies on color alone.
+- **Reduce Motion:** spring/scale animations become quiet crossfades; ring animations disable accordingly.
+- **Semantic haptics:** distinct feedback for parsed / adjusted / saved / scan-success / uncertain, with a master toggle.
+
+---
+
+## 15. Launch Experience
+
+- A native launch screen (full-screen splash image) hands off invisibly to an **in-app splash** that continues the same image, held a **minimum of 2 seconds**, then **crossfades** (0.45 s) into the app.
+- During the splash the app bootstraps and — if biometric lock is on — authenticates, so you never see a half-loaded screen.
+
+---
+
+## 16. Storage, Architecture & Dev Modes
+
+- **Local database:** SwiftData, on-device only (no CloudKit), accessed through a Swift-6-safe `@ModelActor`.
+- **Records:** food entries, per-day exercise offsets, weigh-ins, and learned corrections — all keyed by **local calendar day** (`YYYY-MM-DD`, device timezone, no UTC). Stable IDs make import idempotent.
+- **Architecture:** an `@MainActor @Observable` `AppContainer` is the single dependency-injection root; UI talks to protocol "seams" (`HealthSyncing`, parsers, stores) so Health, networking, and persistence are all swappable and testable (real vs. mock). Built with **Swift 6** strict concurrency in a layered Swift package (`NutritionKit`), and heavily unit- and UI-tested.
+- **Frameworks:** VisionKit (barcode), Speech (on-device transcription), HealthKit, StoreKit 2, LocalAuthentication (biometric lock), Swift Charts (graphs).
+- **Dev/test flags:**
+  - `-demo` — seeds ~2 months of realistic data (varied meals, exercise offsets, a weekly weigh-in trend ~84 → 81.5 kg) in an in-memory store, for screenshots and exploration.
+  - `-show-paywall`, `-gate`, `-subscribed` — exercise the subscription/paywall states.
+  - Demo, UI-test, and unit-test builds bypass StoreKit and use mock services (no network).
+
+---
+
+## 17. Privacy Summary
+
+| Data | Where it lives | Leaves device? |
+|---|---|---|
+| Food log, corrections, weights, targets, settings | On device (SwiftData / UserDefaults) | No |
+| Biometric-lock token | Keychain (device-only) | No |
+| Free-entry counter | iCloud key-value (your Apple ID) | iCloud only, no account |
+| Food text / photo for analysis | Sent to OpenAI for parsing | Yes — only the submitted text/image |
+| Voice | Transcribed **on device**; only text is sent | Audio: no |
+| Barcodes | Looked up in Open Food Facts | The barcode number only |
+| Apple Health data | Read/written locally via HealthKit | Never to any server |
+
+No accounts, no analytics identity, no server-side profile. Under OpenAI's API terms, submitted data isn't used to train their models.
+
+---
+
+## 18. The Web App
+
+The repo root hosts the original **Next.js 15 / React 19** web app — the same calorie tracker with the same core flows (barcode / voice / text / photo capture → OpenAI parsing → confirm → local save), backed by **IndexedDB** instead of SwiftData.
+
+Web-specific traits:
+- **Installable PWA** (`manifest.json`): standalone display, app shortcuts ("Add Food," "View History"), home-screen icons.
+- **Offline-capable** via a service worker (Workbox): static assets precached; fonts CacheFirst; images stale-while-revalidate; API calls NetworkFirst with cache fallback; a dedicated `/offline` page.
+- API routes mirror the iOS parsers: `/api/parse-food`, `/api/parse-photo`, `/api/barcode/[code]`.
+
+The native iOS app adds what the web can't: Apple Health, on-device speech, biometric lock, VisionKit scanning, StoreKit subscriptions, native splash continuity, and the iOS 26 design system.
+
+---
+
+*Generated from the codebase. For build/run commands and architecture notes, see `CLAUDE.md`.*
