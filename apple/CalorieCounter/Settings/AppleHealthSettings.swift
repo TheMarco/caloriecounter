@@ -48,6 +48,8 @@ struct AppleHealthDetailView: View {
     @State private var showRemoveConfirm = false
     @State private var working = false
     @State private var statusMessage: String?
+    @State private var showWorkoutPrimer = false
+    @State private var workoutPrimerContinued = false
 
     var body: some View {
         @Bindable var settings = container.settings
@@ -69,10 +71,19 @@ struct AppleHealthDetailView: View {
                         }
                     Toggle("Offset calories from workouts", isOn: $settings.healthWorkoutOffsetEnabled)
                         .onChange(of: settings.healthWorkoutOffsetEnabled) { _, on in
-                            if on { requestAfterAnimation {
-                                await container.requestWorkoutAccess()
-                                await container.startWorkoutObservation()
-                            } }
+                            guard on else { return }
+                            Task {
+                                // Prime only when iOS will actually show its sheet (first
+                                // time). Otherwise just (re)start observing — it can't ask
+                                // again, and the primer with no system sheet would confuse.
+                                if await container.workoutAccessNeedsPrompt() {
+                                    workoutPrimerContinued = false
+                                    showWorkoutPrimer = true
+                                } else {
+                                    await container.requestWorkoutAccess()
+                                    await container.startWorkoutObservation()
+                                }
+                            }
                         }
                     if settings.healthWorkoutOffsetEnabled {
                         Text("After a longer walk or workout, we’ll offer to add its calories to that day’s offset. Reads workouts only — never written back. If your goal already assumes an activity level, offsetting can double-count.")
@@ -153,6 +164,24 @@ struct AppleHealthDetailView: View {
         .sheet(isPresented: $showConflicts) {
             WeightConflictSheet(conflicts: conflicts, units: container.settings.units)
         }
+        .sheet(isPresented: $showWorkoutPrimer, onDismiss: {
+            // Backed out without continuing → don't leave the switch on without access.
+            if !workoutPrimerContinued {
+                container.settings.healthWorkoutOffsetEnabled = false
+            }
+        }) {
+            WorkoutAccessPrimer(
+                onContinue: {
+                    workoutPrimerContinued = true
+                    showWorkoutPrimer = false
+                    Task {
+                        await container.requestWorkoutAccess()
+                        await container.startWorkoutObservation()
+                    }
+                },
+                onCancel: { showWorkoutPrimer = false }   // onDismiss flips the switch back
+            )
+        }
     }
 
     /// Run a HealthKit permission request just after the toggle's animation has
@@ -173,6 +202,95 @@ struct AppleHealthDetailView: View {
         } else {
             conflicts = found
             showConflicts = true
+        }
+    }
+}
+
+/// Pre-permission explainer shown right before the system HealthKit sheet when the
+/// user enables workout offsets. Apple's sheet defaults its read toggles to OFF, so
+/// this tells the user to tap "Turn On All" — without it, most people grant nothing
+/// and the feature silently does nothing. This is a plain explainer, never a replica
+/// of the system sheet (which Apple's guidelines require and recommend).
+private struct WorkoutAccessPrimer: View {
+    let onContinue: () -> Void
+    let onCancel: () -> Void
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 18) {
+                    ZStack {
+                        Circle()
+                            .fill(DS.Macro.calories.linearGradient)
+                            .frame(width: 66, height: 66)
+                            .shadow(color: DS.Macro.calories.tint.opacity(0.4), radius: 10, y: 4)
+                        Image(systemName: "figure.run")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.top, 4)
+
+                    VStack(spacing: 8) {
+                        Text("Offset workouts automatically")
+                            .font(.title2.weight(.bold))
+                            .multilineTextAlignment(.center)
+                        Text("After a workout, we’ll offer to add the calories you burned to that day — so your targets reflect your activity.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        primerRow("checkmark.circle.fill",
+                                  "On the next screen, tap **Turn On All**.")
+                        primerRow("heart.text.square.fill",
+                                  "It needs both **Workouts** and **Active Energy** — Apple leaves these off by default.")
+                        primerRow("lock.fill",
+                                  "Read-only. We never write workouts back to Health.")
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: DS.cardRadius, style: .continuous)
+                            .fill(DS.contentFill(scheme))
+                    )
+                }
+                .padding(24)
+            }
+
+            VStack(spacing: 12) {
+                Button(action: onContinue) {
+                    Text("Continue")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity).frame(height: 52)
+                        .background(Capsule().fill(DS.Macro.calories.linearGradient))
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+                Button("Not now", action: onCancel)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+            .padding(.bottom, 20)
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func primerRow(_ icon: String, _ markdown: LocalizedStringKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DS.Macro.calories.tint)
+                .frame(width: 24)
+            Text(markdown)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
     }
 }

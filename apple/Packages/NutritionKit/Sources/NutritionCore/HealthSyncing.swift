@@ -124,9 +124,16 @@ public protocol HealthSyncing: Sendable {
     /// with how its energy resolved and whether it qualifies — for the in-app
     /// "why didn't my workout show?" check. `[]` when unavailable/unauthorized.
     func probeRecentWorkouts(since start: Date) async -> [WorkoutProbe]
+
+    /// Whether requesting workout + active-energy READ access would actually present
+    /// the system prompt (`true`) versus the user having already answered it
+    /// (`false`). Lets callers show a priming explainer only when iOS will really ask
+    /// — iOS never re-presents the sheet once a type has been decided.
+    func workoutAccessNeedsPrompt() async -> Bool
 }
 
 public extension HealthSyncing {
-    /// Default for mocks/non-HealthKit conformers — the real one lives in NutritionHealth.
+    /// Defaults for mocks/non-HealthKit conformers — the real ones live in NutritionHealth.
     func probeRecentWorkouts(since start: Date) async -> [WorkoutProbe] { [] }
+    func workoutAccessNeedsPrompt() async -> Bool { false }
 }

@@ -81,6 +81,21 @@ public actor AppleHealthKitService: HealthSyncing {
         try await store.requestAuthorization(toShare: [], read: [workoutType, activeEnergyType])
     }
 
+    public func workoutAccessNeedsPrompt() async -> Bool {
+        guard isAvailable() else { return false }
+        // `.shouldRequest` means at least one of the two types is still undecided, so
+        // requesting will actually show the system sheet (where we want the primer).
+        // Only the completion-handler API exists, so bridge it to async.
+        let status: HKAuthorizationRequestStatus = await withCheckedContinuation { cont in
+            store.getRequestStatusForAuthorization(
+                toShare: [], read: [workoutType, activeEnergyType]
+            ) { status, _ in
+                cont.resume(returning: status)
+            }
+        }
+        return status == .shouldRequest
+    }
+
     public func authorizationSummary() async -> HealthAuthorizationSummary {
         guard isAvailable() else { return .unavailable }
         let nutrition = store.authorizationStatus(for: HKQuantityType(.dietaryEnergyConsumed)) == .sharingAuthorized

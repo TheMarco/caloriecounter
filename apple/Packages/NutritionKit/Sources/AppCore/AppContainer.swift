@@ -152,6 +152,14 @@ public final class AppContainer {
         try? await healthSync.requestWorkoutAccess()
     }
 
+    /// Whether flipping the workout-offset toggle would actually surface the iOS
+    /// permission sheet — so the UI shows its priming explainer only when the system
+    /// will really ask (iOS won't re-present it once answered).
+    public func workoutAccessNeedsPrompt() async -> Bool {
+        guard healthSync.isAvailable() else { return false }
+        return await healthSync.workoutAccessNeedsPrompt()
+    }
+
     /// Recent completed workouts not yet offered, newest-first. Empty unless the
     /// toggle is on AND HealthKit is available; already-handled workouts (accepted
     /// or dismissed) are filtered out so nothing is suggested twice.
