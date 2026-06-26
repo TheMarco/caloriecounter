@@ -1,6 +1,9 @@
 // Wire DTOs for the proxy endpoints and their mapping to/from the domain.
 //
-// `/api/auth`  ← AuthRequest{password}      → AuthResponse{success} (+ Set-Cookie)
+// App Attest token flow:
+//   `/api/attest/challenge` →                          ChallengeResponse{challengeId, challenge}
+//   `/api/attest/register`  ← AttestRegisterRequest →  TokenResponse{token, expiresAt}
+//   `/api/attest/token`     ← AttestAssertRequest  →   TokenResponse{token, expiresAt}
 // `/api/parse-photo` ← ParsePhotoRequest    → ParsePhotoResponse{success,data,error}
 //
 // The request `details` is the domain `PhotoDetails` verbatim: its Codable
@@ -11,13 +14,36 @@
 import Foundation
 import NutritionCore
 
-public struct AuthRequest: Codable, Sendable {
-    public let password: String
-    public init(password: String) { self.password = password }
+public struct ChallengeResponse: Codable, Sendable {
+    public let challengeId: String
+    public let challenge: String
 }
 
-public struct AuthResponse: Codable, Sendable {
-    public let success: Bool
+public struct AttestRegisterRequest: Codable, Sendable {
+    public let keyId: String
+    public let attestation: String   // base64 CBOR attestation object
+    public let challengeId: String
+    public init(keyId: String, attestation: String, challengeId: String) {
+        self.keyId = keyId
+        self.attestation = attestation
+        self.challengeId = challengeId
+    }
+}
+
+public struct AttestAssertRequest: Codable, Sendable {
+    public let keyId: String
+    public let assertion: String     // base64 CBOR assertion
+    public let challengeId: String
+    public init(keyId: String, assertion: String, challengeId: String) {
+        self.keyId = keyId
+        self.assertion = assertion
+        self.challengeId = challengeId
+    }
+}
+
+public struct TokenResponse: Codable, Sendable {
+    public let token: String
+    public let expiresAt: Double?
 }
 
 public struct ParsePhotoRequest: Codable, Sendable {

@@ -1,60 +1,50 @@
 // URLSession client for the proxy. An actor so concurrent callers serialize
-// safely. The web app authenticates with a signed `calorie-auth` cookie, so this
-// client:
-//   • login(password:) POSTs the password, reads the `calorie-auth` token from
-//     the Set-Cookie response header, and hands it to the token store (Keychain).
-//   • attaches `Cookie: calorie-auth=<token>` to every `requiresAuth` request.
-//   • on 401, purges the token via the store so the app routes to re-login.
+// safely. Authentication is a short-lived bearer token obtained via Apple App
+// Attest (no account, no shipped secret):
+//   • requiresAuth requests attach `Authorization: Bearer <jwt>`.
+//   • when there's no token, the client acquires one — by refreshing with an
+//     assertion if the device is already enrolled, or enrolling first
+//     (generateKey → challenge → attest → /register) otherwise.
+//   • a 401 purges the token and re-acquires once, transparently.
+//   • a 409 ("unknown device") forces re-enrollment.
 //
-// Cookie handling is disabled on the default session so the manually-managed
-// Cookie header is authoritative (no stale/auto cookies).
+// In development the optional `devBypassSecret` skips attestation (the iOS
+// Simulator can't do App Attest); the server honors it only when not in production.
 
 import Foundation
+import CryptoKit
 
 public actor APIClient {
-    public static let cookieName = "calorie-auth"
 
     private let environment: APIEnvironment
     private let session: URLSession
     private let tokens: TokenProviding
-    /// When set, a request that comes back unauthorized (no token yet, or the 24h
-    /// token expired) transparently logs in with this shared password and retries
-    /// once — so there's no login screen to present or babysit.
-    private let autoLoginPassword: String?
+    private let keyStore: (any AttestKeyStoring)?
+    private let attestor: (any AppAttesting)?
+    private let devBypassSecret: String?
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    public init(environment: APIEnvironment = .production, session: URLSession? = nil,
-                tokens: TokenProviding, autoLoginPassword: String? = nil) {
+    public init(environment: APIEnvironment = .production,
+                session: URLSession? = nil,
+                tokens: TokenProviding,
+                keyStore: (any AttestKeyStoring)? = nil,
+                attestor: (any AppAttesting)? = nil,
+                devBypassSecret: String? = nil) {
         self.environment = environment
         self.session = session ?? APIClient.makeDefaultSession()
         self.tokens = tokens
-        self.autoLoginPassword = autoLoginPassword
+        self.keyStore = keyStore
+        self.attestor = attestor
+        self.devBypassSecret = devBypassSecret
     }
 
-    /// Production session with cookie auto-handling OFF (we set the Cookie header
-    /// ourselves from the Keychain-backed token).
     public static func makeDefaultSession() -> URLSession {
         let config = URLSessionConfiguration.default
         config.httpShouldSetCookies = false
         config.httpCookieAcceptPolicy = .never
         config.httpCookieStorage = nil
         return URLSession(configuration: config)
-    }
-
-    // MARK: - Login (password → cookie token)
-
-    /// Exchange the shared password for the `calorie-auth` token and store it.
-    public func login(password: String) async throws {
-        let request = try await makeRequest(.authLogin, body: try encode(AuthRequest(password: password)))
-        let (data, http) = try await performRaw(request)
-        if let error = APIError.from(status: http.statusCode, data: data, headers: http.allHeaderFields) {
-            throw error
-        }
-        guard let url = http.url, let token = Self.extractToken(from: http, url: url) else {
-            throw APIError.invalidResponse
-        }
-        try await tokens.saveToken(token)
     }
 
     // MARK: - Generic send
@@ -69,9 +59,9 @@ public actor APIClient {
         do {
             return try await attempt()
         } catch APIError.unauthorized {
-            // Missing or expired token → log in with the shared password and retry once.
-            guard let password = autoLoginPassword else { throw APIError.unauthorized }
-            try await login(password: password)
+            // The token was rejected (and already purged by `perform`). Acquire a
+            // fresh one via App Attest and retry exactly once.
+            try await acquireToken()
             return try await attempt()
         }
     }
@@ -92,14 +82,103 @@ public actor APIClient {
         request.httpMethod = endpoint.method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if endpoint.requiresAuth {
-            guard let token = await tokens.authToken() else { throw APIError.unauthorized }
-            request.setValue("\(Self.cookieName)=\(token)", forHTTPHeaderField: "Cookie")
+            let token = try await validBearer()
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         if let body {
             request.httpBody = body
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         return request
+    }
+
+    /// The current bearer, acquiring one first if we don't have it yet.
+    private func validBearer() async throws -> String {
+        if let token = await tokens.authToken() { return token }
+        try await acquireToken()
+        guard let token = await tokens.authToken() else { throw APIError.unauthorized }
+        return token
+    }
+
+    // MARK: - Token acquisition (App Attest)
+
+    private func acquireToken() async throws {
+        // Dev/Simulator bypass — the server only honors it outside production.
+        if let secret = devBypassSecret {
+            try await tokens.saveToken(try await requestDevBypassToken(secret: secret))
+            return
+        }
+
+        guard let attestor, let keyStore, attestor.isSupported else {
+            // No attestation available (e.g. Simulator without a bypass configured).
+            throw APIError.unauthorized
+        }
+
+        if let keyId = await keyStore.attestKeyId() {
+            do {
+                try await tokens.saveToken(try await refreshToken(keyId: keyId, attestor: attestor))
+                return
+            } catch APIError.conflict {
+                // The server no longer recognizes this key → fall through to re-enroll.
+                await keyStore.clearAttestKeyId()
+            }
+        }
+        try await tokens.saveToken(try await enroll(attestor: attestor, keyStore: keyStore))
+    }
+
+    /// First-launch enrollment: generate a Secure-Enclave key, attest it over a
+    /// fresh challenge, persist the keyId, and return the first bearer token.
+    private func enroll(attestor: any AppAttesting, keyStore: any AttestKeyStoring) async throws -> String {
+        let keyId = try await attestor.generateKey()
+        let challenge = try await fetchChallenge()
+        let hash = Self.clientDataHash(challenge.challenge)
+        let attestation = try await attestor.attestKey(keyId, clientDataHash: hash)
+        let response: TokenResponse = try await postPublic(
+            .attestRegister,
+            body: AttestRegisterRequest(keyId: keyId,
+                                        attestation: attestation.base64EncodedString(),
+                                        challengeId: challenge.challengeId)
+        )
+        try await keyStore.saveAttestKeyId(keyId)
+        return response.token
+    }
+
+    /// Refresh a token for an already-enrolled device via an assertion. Throws
+    /// `APIError.conflict` (409) if the server doesn't recognize the key.
+    private func refreshToken(keyId: String, attestor: any AppAttesting) async throws -> String {
+        let challenge = try await fetchChallenge()
+        let hash = Self.clientDataHash(challenge.challenge)
+        let assertion = try await attestor.generateAssertion(keyId, clientDataHash: hash)
+        let response: TokenResponse = try await postPublic(
+            .attestToken,
+            body: AttestAssertRequest(keyId: keyId,
+                                      assertion: assertion.base64EncodedString(),
+                                      challengeId: challenge.challengeId)
+        )
+        return response.token
+    }
+
+    private func fetchChallenge() async throws -> ChallengeResponse {
+        let request = try await makeRequest(.attestChallenge, body: nil)
+        return try decode(try await perform(request))
+    }
+
+    private func requestDevBypassToken(secret: String) async throws -> String {
+        var request = try await makeRequest(.attestToken, body: nil)
+        request.setValue(secret, forHTTPHeaderField: "x-attest-dev-bypass")
+        let response: TokenResponse = try decode(try await perform(request))
+        return response.token
+    }
+
+    /// POST to a public endpoint with a JSON body and decode the response.
+    private func postPublic<Body: Encodable & Sendable, Response: Decodable & Sendable>(
+        _ endpoint: Endpoint, body: Body
+    ) async throws -> Response {
+        try decode(try await perform(makeRequest(endpoint, body: try encode(body))))
+    }
+
+    private static func clientDataHash(_ challenge: String) -> Data {
+        Data(SHA256.hash(data: Data(challenge.utf8)))
     }
 
     // MARK: - Transport
@@ -126,22 +205,6 @@ public actor APIClient {
     }
 
     // MARK: - Helpers
-
-    /// Pull the `calorie-auth` value out of the response's Set-Cookie header.
-    /// HTTP/2 (Vercel) lowercases header names, so find Set-Cookie
-    /// case-insensitively and hand it to the cookie parser under the canonical key.
-    private static func extractToken(from http: HTTPURLResponse, url: URL) -> String? {
-        var setCookie: String?
-        for (key, value) in http.allHeaderFields {
-            if (key as? String)?.caseInsensitiveCompare("Set-Cookie") == .orderedSame {
-                setCookie = value as? String
-                break
-            }
-        }
-        guard let setCookie else { return nil }
-        let cookies = HTTPCookie.cookies(withResponseHeaderFields: ["Set-Cookie": setCookie], for: url)
-        return cookies.first(where: { $0.name == cookieName })?.value
-    }
 
     private func decode<T: Decodable>(_ data: Data) throws -> T {
         do { return try decoder.decode(T.self, from: data) }

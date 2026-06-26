@@ -10,44 +10,61 @@
 import Foundation
 import Security
 
-public actor KeychainStore: TokenProviding {
+public actor KeychainStore: TokenProviding, AttestKeyStoring {
 
     public let service: String
     private let account = "calorie-auth-token"
+    /// The App Attest enrollment keyId. Persisted (ThisDeviceOnly, no iCloud) so
+    /// the device enrolls once; the bearer token is re-derived from it on demand.
+    private let keyIdAccount = "appattest-key-id"
 
     public init(service: String = "com.aidashcreated.caloriecounter") {
         self.service = service
     }
 
-    // MARK: - TokenProviding
+    // MARK: - TokenProviding (the short-lived bearer token)
 
     public func authToken() async -> String? {
-        loadItem().flatMap { String(data: $0, encoding: .utf8) }
+        loadItem(account).flatMap { String(data: $0, encoding: .utf8) }
     }
 
     public func saveToken(_ token: String) throws {
-        try saveItem(Data(token.utf8))
+        try saveItem(Data(token.utf8), account: account)
     }
 
     public func tokenRejected() async {
-        try? deleteItem()
+        try? deleteItem(account)
     }
 
     public func deleteToken() throws {
-        try deleteItem()
+        try deleteItem(account)
+    }
+
+    // MARK: - AttestKeyStoring (the durable enrollment keyId)
+
+    public func attestKeyId() async -> String? {
+        loadItem(keyIdAccount).flatMap { String(data: $0, encoding: .utf8) }
+    }
+
+    public func saveAttestKeyId(_ keyId: String) throws {
+        try saveItem(Data(keyId.utf8), account: keyIdAccount)
+    }
+
+    public func clearAttestKeyId() async {
+        try? deleteItem(keyIdAccount)
     }
 
     // MARK: - SecItem primitives (update-first / add-on-not-found)
 
-    private func saveItem(_ data: Data) throws {
+    private func saveItem(_ data: Data, account: String) throws {
         let accessible = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         let status: OSStatus
-        if loadItem() != nil {
+        if loadItem(account) != nil {
             let attrs: [String: Any] = [kSecValueData as String: data,
                                         kSecAttrAccessible as String: accessible]
-            status = SecItemUpdate(baseQuery() as CFDictionary, attrs as CFDictionary)
+            status = SecItemUpdate(baseQuery(account) as CFDictionary, attrs as CFDictionary)
         } else {
-            var q = baseQuery()
+            var q = baseQuery(account)
             q[kSecValueData as String] = data
             q[kSecAttrAccessible as String] = accessible
             status = SecItemAdd(q as CFDictionary, nil)
@@ -55,8 +72,8 @@ public actor KeychainStore: TokenProviding {
         guard status == errSecSuccess else { throw KeychainError.saveFailed(status) }
     }
 
-    private func loadItem() -> Data? {
-        var q = baseQuery()
+    private func loadItem(_ account: String) -> Data? {
+        var q = baseQuery(account)
         q[kSecReturnData as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: AnyObject?
@@ -64,14 +81,14 @@ public actor KeychainStore: TokenProviding {
         return result as? Data
     }
 
-    private func deleteItem() throws {
-        let status = SecItemDelete(baseQuery() as CFDictionary)
+    private func deleteItem(_ account: String) throws {
+        let status = SecItemDelete(baseQuery(account) as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainError.deleteFailed(status)
         }
     }
 
-    private func baseQuery() -> [String: Any] {
+    private func baseQuery(_ account: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: service,
          kSecAttrAccount as String: account]

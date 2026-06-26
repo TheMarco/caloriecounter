@@ -123,3 +123,23 @@ actor RecordingTokenStore: TokenProviding {
     func saveToken(_ token: String) async throws { self.token = token; saves += 1 }
     func tokenRejected() async { token = nil; rejections += 1 }
 }
+
+/// Records the enrolled App Attest keyId so tests can assert enroll vs refresh.
+actor RecordingKeyStore: AttestKeyStoring {
+    private(set) var keyId: String?
+    private(set) var clears = 0
+    init(_ keyId: String? = nil) { self.keyId = keyId }
+    func attestKeyId() async -> String? { keyId }
+    func saveAttestKeyId(_ keyId: String) async throws { self.keyId = keyId }
+    func clearAttestKeyId() async { keyId = nil; clears += 1 }
+}
+
+/// Deterministic App Attest stub — fixed keyId + opaque attestation/assertion
+/// blobs, so the client's enroll/refresh flow is testable without a device.
+struct MockAttestor: AppAttesting {
+    var supported = true
+    var isSupported: Bool { supported }
+    func generateKey() async throws -> String { "mock-key" }
+    func attestKey(_ keyId: String, clientDataHash: Data) async throws -> Data { Data("attest-\(keyId)".utf8) }
+    func generateAssertion(_ keyId: String, clientDataHash: Data) async throws -> Data { Data("assert-\(keyId)".utf8) }
+}

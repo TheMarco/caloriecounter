@@ -332,14 +332,45 @@ public final class AppContainer {
     }
 
     // MARK: - Real composition root
-    /// Shared proxy password. TEMPORARY: hardcoded so the app auto-authenticates with
-    /// no login screen (single-user, pre-release). Replace with a real login / secret
-    /// before distributing — anyone with the binary can read this.
-    private static let proxyPassword = "sub2marco"
+
+    /// DEBUG-only App Attest dev-bypass secret, read from the environment (set
+    /// `ATTEST_DEV_BYPASS` in the Xcode scheme to match the local `next dev`
+    /// server). The Simulator can't perform App Attest, so this is how it obtains
+    /// a token. Always nil in release builds, and the production server ignores it.
+    static var attestDevBypassSecret: String? {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["ATTEST_DEV_BYPASS"]
+        #else
+        nil
+        #endif
+    }
+
+    /// API base URL. Production by default; in DEBUG point at a local proxy by
+    /// setting `API_BASE_URL` (e.g. http://localhost:3000) in the scheme.
+    static var apiEnvironment: APIEnvironment {
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["API_BASE_URL"], let url = URL(string: raw) {
+            return APIEnvironment(baseURL: url)
+        }
+        #endif
+        return .production
+    }
 
     public convenience init() throws {
         let keychain = KeychainStore()
-        let client = APIClient(tokens: keychain, autoLoginPassword: AppContainer.proxyPassword)
+        // The app proves its authenticity with Apple App Attest (no account, no
+        // shipped secret). On the Simulator attestation is unsupported, so a
+        // DEBUG dev-bypass token is used instead.
+        #if os(iOS)
+        let attestor: (any AppAttesting)? = DeviceCheckAttestor()
+        #else
+        let attestor: (any AppAttesting)? = nil
+        #endif
+        let client = APIClient(environment: AppContainer.apiEnvironment,
+                               tokens: keychain,
+                               keyStore: keychain,
+                               attestor: attestor,
+                               devBypassSecret: AppContainer.attestDevBypassSecret)
         let store = (AppContainer.isUITest || AppContainer.isDemo)
             ? try SwiftDataStore.make(inMemory: true)
             : try SwiftDataStore.make(url: AppContainer.storeURL())
@@ -462,19 +493,16 @@ public final class AppContainer {
         }
     }
 
-    /// Whether the plate-photo proxy has a stored auth token.
+    /// Whether the proxy currently has a stored bearer token.
     public func isPhotoProxyAuthenticated() async -> Bool {
         await keychain.authToken() != nil
     }
 
-    /// Exchange the shared password for the proxy token (stored in the Keychain).
-    public func authenticatePhotoProxy(password: String) async throws {
-        try await apiClient.login(password: password)
-    }
-
-    /// Clear the stored proxy token (sign out of the photo feature).
+    /// Clear the stored proxy token AND the App Attest enrollment, so the next
+    /// request re-enrolls from scratch.
     public func signOutPhotoProxy() async {
         await keychain.tokenRejected()
+        await keychain.clearAttestKeyId()
     }
 
     private static func storeURL() -> URL? {

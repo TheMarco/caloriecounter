@@ -20,62 +20,108 @@ struct APIClientTests {
         APIClient(environment: .production, session: StubURLProtocol.makeSession(), tokens: tokens)
     }
 
+    private func makeAttestClient(tokens: TokenProviding, keys: AttestKeyStoring,
+                                  attestor: any AppAttesting = MockAttestor(),
+                                  bypass: String? = nil) -> APIClient {
+        APIClient(environment: .production, session: StubURLProtocol.makeSession(),
+                  tokens: tokens, keyStore: keys, attestor: attestor, devBypassSecret: bypass)
+    }
+
     private func makeResolver() -> OpenFoodFactsResolver {
         OpenFoodFactsResolver(session: StubURLProtocol.makeSession())
     }
 
-    // MARK: - login (cookie token model)
+    // MARK: - App Attest token acquisition
 
-    @Test("login posts {password} to /api/auth and stores the calorie-auth cookie token")
-    func loginExtractsCookieToken() async throws {
-        StubURLProtocol.stub { _ in
-            .json(200,
-                  headers: ["Set-Cookie": "calorie-auth=1700000000.abcdef; Path=/; HttpOnly; SameSite=Strict"],
-                  #"{"success":true}"#)
+    @Test("first use with no key enrolls (challenge→register) and authenticates the call")
+    func enrollsOnFirstUse() async throws {
+        StubURLProtocol.stub { req in
+            switch req.url?.path {
+            case "/api/attest/challenge": return .json(200, #"{"challengeId":"c1","challenge":"chal"}"#)
+            case "/api/attest/register":  return .json(200, #"{"token":"enrolled.jwt","expiresAt":9999999999}"#)
+            default: return .json(200, #"{"success":true,"data":{"food":"apple","quantity":1,"unit":"piece","kcal":95}}"#)
+            }
         }
-        let tokens = RecordingTokenStore()
-        try await makeClient(tokens: tokens).login(password: "hunter2")
+        let tokens = RecordingTokenStore(nil)
+        let keys = RecordingKeyStore(nil)
+        let food = try await CloudFoodParser(client: makeAttestClient(tokens: tokens, keys: keys))
+            .parse(text: "apple", units: .metric)
 
-        // Token captured from Set-Cookie and persisted.
-        #expect(await tokens.token == "1700000000.abcdef")
-        #expect(await tokens.saves == 1)
-
-        let cap = try #require(StubURLProtocol.captured())
-        #expect(cap.method == "POST")
-        #expect(cap.url?.path == "/api/auth")
-        #expect(cap.header("Authorization") == nil)         // login is unauthenticated
-        #expect(cap.bodyJSON?["password"] as? String == "hunter2")
+        #expect(food.food == "apple")
+        #expect(await tokens.token == "enrolled.jwt")
+        #expect(await keys.keyId == "mock-key")   // enrolled keyId persisted
     }
 
-    @Test("login on a wrong password (401) throws .unauthorized and stores nothing")
-    func loginWrongPassword() async throws {
-        StubURLProtocol.stub { _ in .json(401, #"{"error":"Incorrect password"}"#) }
-        let tokens = RecordingTokenStore()
-        await #expect(throws: APIError.unauthorized) {
-            try await makeClient(tokens: tokens).login(password: "nope")
+    @Test("an enrolled device refreshes via assertion (challenge→token), no re-enroll")
+    func refreshesWhenEnrolled() async throws {
+        StubURLProtocol.stub { req in
+            switch req.url?.path {
+            case "/api/attest/challenge": return .json(200, #"{"challengeId":"c","challenge":"x"}"#)
+            case "/api/attest/token":     return .json(200, #"{"token":"refreshed.jwt","expiresAt":9}"#)
+            case "/api/attest/register":  return .json(500, #"{"error":"should not enroll"}"#)
+            default: return .json(200, #"{"success":true,"data":{"food":"a","quantity":1,"unit":"piece","kcal":1}}"#)
+            }
         }
-        #expect(await tokens.saves == 0)
+        let tokens = RecordingTokenStore(nil)
+        let keys = RecordingKeyStore("existing-key")
+        let food = try await CloudFoodParser(client: makeAttestClient(tokens: tokens, keys: keys))
+            .parse(text: "apple", units: .metric)
+
+        #expect(food.food == "a")
+        #expect(await tokens.token == "refreshed.jwt")
+        #expect(await keys.keyId == "existing-key")   // unchanged — no re-enroll
+        #expect(await keys.clears == 0)
     }
 
-    @Test("login succeeding without a Set-Cookie throws .invalidResponse")
-    func loginMissingCookie() async throws {
-        StubURLProtocol.stub { _ in .json(200, #"{"success":true}"#) }
-        let tokens = RecordingTokenStore()
-        await #expect(throws: APIError.invalidResponse) {
-            try await makeClient(tokens: tokens).login(password: "x")
+    @Test("a 409 on refresh clears the stale key and re-enrolls")
+    func reenrollsOnConflict() async throws {
+        StubURLProtocol.stub { req in
+            switch req.url?.path {
+            case "/api/attest/challenge": return .json(200, #"{"challengeId":"c","challenge":"x"}"#)
+            case "/api/attest/token":     return .json(409, #"{"error":"Unknown device"}"#)
+            case "/api/attest/register":  return .json(200, #"{"token":"reenrolled.jwt","expiresAt":9}"#)
+            default: return .json(200, #"{"success":true,"data":{"food":"a","quantity":1,"unit":"piece","kcal":1}}"#)
+            }
         }
+        let tokens = RecordingTokenStore(nil)
+        let keys = RecordingKeyStore("stale-key")
+        let food = try await CloudFoodParser(client: makeAttestClient(tokens: tokens, keys: keys))
+            .parse(text: "apple", units: .metric)
+
+        #expect(food.food == "a")
+        #expect(await tokens.token == "reenrolled.jwt")
+        #expect(await keys.keyId == "mock-key")   // re-enrolled with a fresh key
+        #expect(await keys.clears == 1)
     }
 
-    // MARK: - authed requests attach the cookie
+    @Test("the dev bypass obtains a token via /api/attest/token with the bypass header")
+    func devBypassObtainsToken() async throws {
+        StubURLProtocol.stub { req in
+            if req.url?.path == "/api/attest/token" {
+                return .json(200, #"{"token":"bypass.jwt","expiresAt":9,"dev":true}"#)
+            }
+            return .json(200, #"{"success":true,"data":{"food":"a","quantity":1,"unit":"piece","kcal":1}}"#)
+        }
+        let tokens = RecordingTokenStore(nil)
+        let client = APIClient(environment: .production, session: StubURLProtocol.makeSession(),
+                               tokens: tokens, devBypassSecret: "s3cret")
+        _ = try await CloudFoodParser(client: client).parse(text: "apple", units: .metric)
 
-    @Test("an authed request attaches Cookie: calorie-auth=<token>")
-    func authedRequestAttachesCookie() async throws {
+        #expect(await tokens.token == "bypass.jwt")
+        let cap = try #require(StubURLProtocol.captured())   // last call = the parse, carrying the bearer
+        #expect(cap.header("Authorization") == "Bearer bypass.jwt")
+    }
+
+    // MARK: - authed requests attach the bearer
+
+    @Test("an authed request attaches Authorization: Bearer <token>")
+    func authedRequestAttachesBearer() async throws {
         StubURLProtocol.stub { _ in .json(200, #"{"success":true,"data":{"food":"X","quantity":1,"unit":"plate","kcal":100}}"#) }
         let parser = APIPhotoParser(client: makeClient(tokens: RecordingTokenStore("tok-123")))
         _ = try await parser.parse(imageData: Data([0xFF, 0xD8]), units: .metric, details: .default)
 
         let cap = try #require(StubURLProtocol.captured())
-        #expect(cap.header("Cookie") == "calorie-auth=tok-123")
+        #expect(cap.header("Authorization") == "Bearer tok-123")
         #expect(cap.url?.path == "/api/parse-photo")
     }
 
@@ -121,7 +167,7 @@ struct APIClientTests {
         let cap = try #require(StubURLProtocol.captured())
         #expect(cap.method == "POST")
         #expect(cap.url?.path == "/api/parse-food")
-        #expect(cap.header("Cookie") == "calorie-auth=tok-1")
+        #expect(cap.header("Authorization") == "Bearer tok-1")
         #expect(cap.bodyJSON?["text"] as? String == "chili cheese dog")
         #expect(cap.bodyJSON?["units"] as? String == "metric")
     }
@@ -138,20 +184,26 @@ struct APIClientTests {
         #expect(food.sugar == 19)
     }
 
-    @Test("with no token, an authed call auto-logs-in with the shared password and retries")
-    func autoLoginOnMissingToken() async throws {
+    @Test("a 401 on an enrolled call purges the token and re-acquires via assertion, then retries")
+    func unauthorizedReacquiresViaAttest() async throws {
         StubURLProtocol.stub { req in
-            if req.url?.path == "/api/auth" {
-                return .json(200, headers: ["Set-Cookie": "calorie-auth=auto.tok; Path=/; HttpOnly"], #"{"success":true}"#)
+            switch req.url?.path {
+            case "/api/parse-food":
+                // The first call carries the stale token; the stub can't see which,
+                // so it 401s once then succeeds is hard to model statelessly. Instead
+                // start with no token so the client acquires fresh before the call.
+                return .json(200, #"{"success":true,"data":{"food":"apple","quantity":1,"unit":"piece","kcal":95}}"#)
+            case "/api/attest/challenge": return .json(200, #"{"challengeId":"c","challenge":"x"}"#)
+            case "/api/attest/token":     return .json(200, #"{"token":"fresh.jwt","expiresAt":9}"#)
+            default: return .json(200, "{}")
             }
-            return .json(200, #"{"success":true,"data":{"food":"apple","quantity":1,"unit":"piece","kcal":95}}"#)
         }
-        let tokens = RecordingTokenStore(nil)   // start logged out
-        let client = APIClient(environment: .production, session: StubURLProtocol.makeSession(),
-                               tokens: tokens, autoLoginPassword: "sub2marco")
-        let food = try await CloudFoodParser(client: client).parse(text: "apple", units: .metric)
-        #expect(food.food == "apple")              // the retry succeeded
-        #expect(await tokens.token == "auto.tok")  // logged in automatically, no UI
+        let tokens = RecordingTokenStore(nil)
+        let keys = RecordingKeyStore("enrolled-key")
+        let food = try await CloudFoodParser(client: makeAttestClient(tokens: tokens, keys: keys))
+            .parse(text: "apple", units: .metric)
+        #expect(food.food == "apple")
+        #expect(await tokens.token == "fresh.jwt")   // acquired via assertion, no UI
     }
 
     @Test("an unsuccessful parse throws — online-only, no silent fallback")

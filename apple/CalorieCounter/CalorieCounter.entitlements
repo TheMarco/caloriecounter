@@ -15,5 +15,12 @@
 	     "iCloud > Key-value storage" capability for this App ID in the Developer portal. -->
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<!-- App Attest: the app proves it's a genuine, unmodified build on a real
+	     device when calling the API proxy (no account / shipped secret). The value
+	     comes from the APP_ATTEST_ENVIRONMENT build setting (development in Debug,
+	     production in Release). Enable the "App Attest" capability for this App ID
+	     in the Developer portal. -->
+	<key>com.apple.developer.devicecheck.appattest-environment</key>
+	<string>$(APP_ATTEST_ENVIRONMENT)</string>
 </dict>
 </plist>
