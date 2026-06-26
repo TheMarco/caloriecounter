@@ -24,6 +24,11 @@ public final class SubscriptionManager {
 
     /// Whether the user currently holds an active Pro entitlement.
     public private(set) var isSubscribed = false
+    /// True once the entitlement has been determined at least once (or is known
+    /// up-front via a forced/pinned flag). Until then the free-tier gate gives the
+    /// benefit of the doubt and does NOT block — a real subscriber must never be
+    /// locked out while StoreKit is still warming up at cold launch.
+    public private(set) var entitlementResolved = false
     /// Loaded products — prices and terms come from the store, already localized.
     public private(set) var products: [Product] = []
     public private(set) var isLoadingProducts = false
@@ -33,14 +38,24 @@ public final class SubscriptionManager {
     /// Demo / UI-test / `-subscribed`: pretend Pro so nothing is gated and no
     /// StoreKit calls are made.
     private let forced: Bool
+    /// `-gate`: pin as a non-subscriber so the free-tier paywall can actually be
+    /// exercised even when a leftover entitlement exists (a StoreKit-test or sandbox
+    /// purchase from a prior run). Products still load, so the paywall shows real plans.
+    private let pinnedUnsubscribed: Bool
     private var listener: Task<Void, Never>?
 
     public init(bypassed: Bool = false) {
-        forced = bypassed || ProcessInfo.processInfo.arguments.contains("-subscribed")
+        let args = ProcessInfo.processInfo.arguments
+        forced = bypassed || args.contains("-subscribed")
+        pinnedUnsubscribed = !forced && args.contains("-gate")
         if forced {
             isSubscribed = true
+            entitlementResolved = true
             return
         }
+        // `-gate` knows the answer up-front (not subscribed); otherwise the entitlement
+        // resolves asynchronously in the first `refresh()` below.
+        entitlementResolved = pinnedUnsubscribed
         listener = listenForTransactions()
         Task { await refresh() }
     }
@@ -67,7 +82,8 @@ public final class SubscriptionManager {
     /// StoreKit which products this Apple ID currently owns; each result is a
     /// verified, signed transaction.
     public func updateEntitlement() async {
-        if forced { isSubscribed = true; return }
+        if forced { isSubscribed = true; entitlementResolved = true; return }
+        if pinnedUnsubscribed { isSubscribed = false; entitlementResolved = true; return }
         var active = false
         for await result in Transaction.currentEntitlements {
             guard case .verified(let txn) = result,
@@ -77,6 +93,7 @@ public final class SubscriptionManager {
             active = true
         }
         isSubscribed = active
+        entitlementResolved = true
     }
 
     /// Buy a plan. Returns true once the purchase verifies and Pro is unlocked.

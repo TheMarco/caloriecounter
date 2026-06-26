@@ -70,7 +70,11 @@ public final class AppContainer {
 
     /// Whether the user may log another NEW food entry right now.
     public var canLogFood: Bool {
-        subscription.isSubscribed || freeTier.count < Constants.freeFoodEntryLimit
+        if subscription.isSubscribed { return true }
+        // Don't gate while the entitlement is still resolving at cold launch — a real
+        // subscriber would otherwise be locked out for the first moment after launch.
+        if !subscription.entitlementResolved { return true }
+        return freeTier.count < Constants.freeFoodEntryLimit
     }
 
     /// Call when the user initiates logging a NEW food entry. Returns true if allowed
