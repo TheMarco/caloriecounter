@@ -2,12 +2,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { BarcodeResponse } from '@/types';
 import OpenAI from 'openai';
+import { guardProxy } from '@/lib/proxyGuard';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const guard = await guardProxy(request);
+    if (!guard.ok) {
+      return NextResponse.json<BarcodeResponse>({ success: false, error: guard.error }, { status: guard.status });
+    }
+
     const { code } = await params;
 
     // Validate barcode format (basic validation)

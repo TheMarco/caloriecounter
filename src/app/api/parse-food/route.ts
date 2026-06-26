@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { ParseFoodResponse } from '@/types';
+import { guardProxy } from '@/lib/proxyGuard';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,6 +10,11 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await guardProxy(request);
+    if (!guard.ok) {
+      return NextResponse.json<ParseFoodResponse>({ success: false, error: guard.error }, { status: guard.status });
+    }
+
     const { text, units = 'metric' } = await request.json();
 
     if (!text || typeof text !== 'string' || text.trim().length < 2) {

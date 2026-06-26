@@ -9,7 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
+    "jose": "^6.2.3",
     "next": "15.4.10",
+    "node-app-attest": "^1.0.1",
     "openai": "^5.8.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

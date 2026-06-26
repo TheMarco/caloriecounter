@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { ParseFoodResponse } from '@/types';
+import { guardProxy } from '@/lib/proxyGuard';
 
 // Fallback parsing without OpenAI (basic response)
 function fallbackParsing(): NextResponse<ParseFoodResponse> {
@@ -12,6 +13,11 @@ function fallbackParsing(): NextResponse<ParseFoodResponse> {
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await guardProxy(request);
+    if (!guard.ok) {
+      return NextResponse.json<ParseFoodResponse>({ success: false, error: guard.error }, { status: guard.status });
+    }
+
     console.log('📡 Parse photo API called');
     const { imageData, units = 'metric', details } = await request.json();
 
