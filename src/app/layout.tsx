@@ -40,7 +40,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0c0d10",
+  // Match the browser chrome to the active appearance. (System-driven; the
+  // in-page toggle overrides the page colors but not this OS-level bar.)
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0c0d10" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f7" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
@@ -51,11 +56,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" style={{ backgroundColor: "#0c0d10", color: "#f4f5f7" }}>
-      <body
-        className="antialiased"
-        style={{ backgroundColor: "#0c0d10", color: "#f4f5f7" }}
-      >
+    <html lang="en">
+      <body className="antialiased">
         {children}
         {/* Unregister any service worker left over from the retired PWA so
             returning visitors aren't served a stale cached app shell. */}

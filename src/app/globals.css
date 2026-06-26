@@ -1,11 +1,68 @@
 @import "tailwindcss";
 
 /* ───────────────────────────────────────────────────────────────────────
-   Calorie Tracker — marketing site
-   The web project is now a single public landing page (plus the iOS app's
-   API backend). Styling mirrors the iOS app: near-black backdrop (#0C0D10),
-   matte cards (#16181D), sage-green accent (#57B58C), macro accents.
+   The Last Calorie Tracker — marketing site
+   The web project is a single public landing page (plus the iOS app's API
+   backend). Styling mirrors the iOS app, and like the app it supports BOTH
+   appearances. The palette is taken straight from the app's Theme.swift:
+     app backdrop   #0C0D10 (dark)  /  #F4F5F7 (light)
+     content cards  #16181D (dark)  /  #FFFFFF (light)
+     card border    white@8% (dark) /  black@12% (light)
+     sage accent    #57B58C (both)
+
+   Theme resolution (matches the request exactly):
+     • Default = the visitor's system setting, via `prefers-color-scheme`.
+       Pure CSS, so there is no flash and no JS needed on load.
+     • The header toggle sets `data-theme="light|dark"` on <html>, which
+       overrides the media query for the rest of the visit.
+     • Nothing is persisted, so a reload / return visit drops the override and
+       follows the system setting again.
    ─────────────────────────────────────────────────────────────────────── */
+
+/* Dark is the base (no media query needed); light overrides below. Tokens live
+   on :root so both the page chrome (html/body) and the .ct wrapper read them. */
+:root {
+  --app: #0c0d10;        /* page backdrop                */
+  --surface: #16181d;    /* matte content card           */
+  --surface-2: #0e1014;  /* slightly recessed section bg */
+  --ink: #f4f5f7;        /* primary text (opacity = muted)*/
+  --accent-ink: #73c2a1; /* sage used as TEXT (legible on the active bg) */
+  --card-border: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
+
+/* System light — only when the user hasn't manually overridden the theme. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --app: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #eef0f4;
+    --ink: #14161b;
+    --accent-ink: #2a825c; /* darker sage so it stays legible on white */
+    --card-border: rgba(0, 0, 0, 0.12);
+    color-scheme: light;
+  }
+}
+
+/* Manual overrides from the toggle win over the media query. */
+[data-theme="light"] {
+  --app: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --ink: #14161b;
+  --accent-ink: #2a825c;
+  --card-border: rgba(0, 0, 0, 0.12);
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --app: #0c0d10;
+  --surface: #16181d;
+  --surface-2: #0e1014;
+  --ink: #f4f5f7;
+  --accent-ink: #73c2a1;
+  --card-border: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
 
 * {
   box-sizing: border-box;
@@ -16,15 +73,15 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
-  background-color: #0c0d10;
-  color: #f4f5f7;
+  background-color: var(--app);
+  color: var(--ink);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background: #0c0d10;
-  color: #f4f5f7;
+  background: var(--app);
+  color: var(--ink);
   /* Match the iOS app: Apple's system font (SF Pro / San Francisco) on Apple
      devices, with native fallbacks elsewhere since SF can't be redistributed. */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
@@ -42,18 +99,16 @@ body {
   outline-offset: 2px;
 }
 
-/* Brand tokens + components scoped to the landing page wrapper. */
+/* Brand tokens + components scoped to the landing page wrapper. The themeable
+   colors (--app/--surface/--ink/--accent-ink) are inherited from :root so the
+   wrapper follows the active appearance; only the static macro hues live here. */
 .ct {
-  --app: #0c0d10;
-  --surface: #16181d;
   --calorie: #57b58c;
   --calorie-2: #73c2a1;
   --protein: #cc7c8c;
   --carbs: #6e9ac8;
   --fat: #cfa85c;
   --over: #e0594f;
-  --ink: #f4f5f7;
-  --muted: #9aa0aa;
   background: var(--app);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
@@ -61,9 +116,16 @@ body {
 
 .ct-card {
   background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--card-border);
   border-radius: 26px;
 }
+
+/* In light mode a soft shadow lifts the card off the backdrop (mirrors the
+   app's SoftCard, which only shadows in light). Dark mode stays flat. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .ct-card { box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.18); }
+}
+[data-theme="light"] .ct-card { box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.18); }
 
 .ct-grad {
   background: linear-gradient(120deg, #8fd4b6 0%, #57b58c 55%, #4fae84 100%);
@@ -72,6 +134,8 @@ body {
   color: transparent;
 }
 
+/* The phone bezel stays black in both appearances — a real device frame, and it
+   keeps the screenshots looking like product shots on a light page too. */
 .ct-phone {
   border-radius: 2.4rem;
   background: #000;
@@ -85,11 +149,39 @@ body {
 
 .ct-phone img { display: block; width: 100%; height: auto; }
 
+/* Light/dark screenshot swap. Only emitted when both variants exist (see
+   LIGHT_SHOTS_READY in page.tsx); follows the toggle AND the system default,
+   the same resolution order as the color tokens above. */
+.ct-phone img.shot-light { display: none; }
+[data-theme="light"] .ct-phone img.shot-dark { display: none; }
+[data-theme="light"] .ct-phone img.shot-light { display: block; }
+[data-theme="dark"] .ct-phone img.shot-dark { display: block; }
+[data-theme="dark"] .ct-phone img.shot-light { display: none; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .ct-phone img.shot-dark { display: none; }
+  :root:not([data-theme]) .ct-phone img.shot-light { display: block; }
+}
+
 /* Soft sage glow used behind the hero + section accents */
 .ct-glow {
   background: radial-gradient(closest-side, rgba(87, 181, 140, 0.5), transparent);
   filter: blur(40px);
 }
+
+/* Theme-toggle icon: show the icon for the appearance that's currently active.
+   Driven by the same media-query / data-theme order, so it's correct on first
+   paint (no JS) and updates instantly when toggled. */
+.icon-sun, .icon-moon { transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.2s; }
+.icon-moon { display: none; }
+.icon-sun { display: block; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .icon-sun { display: none; }
+  :root:not([data-theme]) .icon-moon { display: block; }
+}
+[data-theme="light"] .icon-sun { display: none; }
+[data-theme="light"] .icon-moon { display: block; }
+[data-theme="dark"] .icon-sun { display: block; }
+[data-theme="dark"] .icon-moon { display: none; }
 
 @keyframes ctRise {
   from { opacity: 0; transform: translateY(20px); }

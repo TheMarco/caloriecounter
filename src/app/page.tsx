@@ -1,15 +1,28 @@
 /* eslint-disable @next/next/no-img-element */
 //
 // The Last Calorie Tracker — marketing landing page.
-// A static, SEO-friendly server component styled to match the iOS app: near-black
-// backdrop, matte cards, sage-green accent, the app's own food-photo hero.
+// A static, SEO-friendly server component styled to match the iOS app. It
+// adapts to light/dark: colors come from CSS tokens (see globals.css) that
+// follow the visitor's system setting by default and the header toggle when
+// used. Text shades are `var(--ink)` at an opacity; surfaces are
+// `var(--app)` / `var(--surface)` — never hardcoded white/black — so a single
+// markup tree renders correctly in both appearances.
 //
 
 import type { ReactNode } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const SHOT = "/screenshots/app";
 const W = 720;
 const H = 1564;
+
+// Light-appearance screenshots live alongside the dark ones with the SAME
+// filenames, under /screenshots/white/ instead of /screenshots/app/. When true,
+// each PhoneShot emits both variants and CSS swaps them to follow the toggle +
+// system setting (see `.ct-phone img.shot-*` in globals.css). Set to false if the
+// light set is ever removed, and every shot falls back to its dark variant.
+const LIGHT_SHOTS_READY = true;
+const SHOT_LIGHT = "/screenshots/white";
 
 /* ────────────────────────────── icons ────────────────────────────── */
 
@@ -86,9 +99,14 @@ const FAQ = [
 /* ───────────────────────────── helpers ───────────────────────────── */
 
 function PhoneShot({ src, alt, className = "", eager = false }: { src: string; alt: string; className?: string; eager?: boolean }) {
+  const loading = eager ? "eager" : "lazy";
+  const lightSrc = LIGHT_SHOTS_READY ? src.replace(SHOT, SHOT_LIGHT) : null;
   return (
     <div className={`ct-phone ${className}`}>
-      <img src={src} alt={alt} width={W} height={H} loading={eager ? "eager" : "lazy"} decoding="async" />
+      <img className={lightSrc ? "shot-dark" : undefined} src={src} alt={alt} width={W} height={H} loading={loading} decoding="async" />
+      {lightSrc && (
+        <img className="shot-light" src={lightSrc} alt={alt} width={W} height={H} loading={loading} decoding="async" />
+      )}
     </div>
   );
 }
@@ -107,7 +125,7 @@ function ComingSoonBadge({ className = "" }: { className?: string }) {
 
 function SectionTag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-[#57b58c]/30 bg-[#57b58c]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#73c2a1]">
+    <span className="inline-flex items-center gap-2 rounded-full border border-[#57b58c]/30 bg-[#57b58c]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--accent-ink)]">
       {children}
     </span>
   );
@@ -119,21 +137,24 @@ export default function Home() {
   return (
     <div className="ct min-h-screen w-full overflow-x-hidden antialiased">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0c0d10]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-[var(--ink)]/5 bg-[var(--app)]/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <a href="#top" className="flex items-center gap-2.5">
             <img src="/app-icon.webp" alt="" width={32} height={32} className="h-8 w-8 rounded-[9px]" />
             <span className="text-[15px] font-semibold tracking-tight">The Last Calorie Tracker</span>
           </a>
-          <nav className="hidden items-center gap-7 text-sm text-white/65 md:flex">
-            <a href="#features" className="transition hover:text-white">Features</a>
-            <a href="#privacy" className="transition hover:text-white">Privacy</a>
-            <a href="#pricing" className="transition hover:text-white">Pricing</a>
-            <a href="#value" className="transition hover:text-white">Value</a>
+          <nav className="hidden items-center gap-7 text-sm text-[var(--ink)]/65 md:flex">
+            <a href="#features" className="transition hover:text-[var(--ink)]">Features</a>
+            <a href="#privacy" className="transition hover:text-[var(--ink)]">Privacy</a>
+            <a href="#pricing" className="transition hover:text-[var(--ink)]">Pricing</a>
+            <a href="#value" className="transition hover:text-[var(--ink)]">Value</a>
           </nav>
-          <a href="#pricing" className="rounded-full bg-[#57b58c] px-4 py-2 text-sm font-semibold text-[#06140d] transition hover:bg-[#73c2a1]">
-            Coming soon
-          </a>
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
+            <a href="#pricing" className="rounded-full bg-[#57b58c] px-4 py-2 text-sm font-semibold text-[#06140d] transition hover:bg-[#73c2a1]">
+              Coming soon
+            </a>
+          </div>
         </div>
       </header>
 
@@ -141,30 +162,30 @@ export default function Home() {
       <section id="top" className="relative overflow-hidden">
         <img src="/hero-food.webp" alt="" aria-hidden width={1400} height={2488}
           className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0c0d10]/70 via-[#0c0d10]/85 to-[#0c0d10]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--app)]/70 via-[var(--app)]/85 to-[var(--app)]" />
         <div className="ct-glow pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[620px] -translate-x-1/2 opacity-60" />
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-16 pt-16 md:grid-cols-2 md:pb-24 md:pt-24">
           <div className="ct-rise">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/75">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--ink)]/15 bg-[var(--ink)]/5 px-3 py-1.5 text-xs font-medium text-[var(--ink)]/75">
               <span className="h-1.5 w-1.5 rounded-full bg-[#57b58c]" /> Coming soon to the App Store
             </span>
             <h1 className="mt-5 text-[2.6rem] font-bold leading-[1.05] tracking-tight sm:text-6xl">
               Track what you eat.<br />
               <span className="ct-grad">Keep it to yourself.</span>
             </h1>
-            <p className="mt-5 max-w-md text-lg leading-relaxed text-white/70">
+            <p className="mt-5 max-w-md text-lg leading-relaxed text-[var(--ink)]/70">
               The Last Calorie Tracker logs meals by voice, photo, barcode, or text — and AI does the math in
               seconds. No account. No analytics. Your food diary never leaves your iPhone.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <ComingSoonBadge />
-              <a href="#features" className="rounded-2xl border border-white/15 px-5 py-3.5 text-sm font-semibold text-white/90 transition hover:bg-white/5">
+              <a href="#features" className="rounded-2xl border border-[var(--ink)]/15 px-5 py-3.5 text-sm font-semibold text-[var(--ink)]/90 transition hover:bg-[var(--ink)]/5">
                 See how it works
               </a>
             </div>
-            <p className="mt-5 text-sm text-white/45">
-              On-device · No account · <span className="text-white/70">$5.99/mo</span> · 10 logs free · Cancel anytime
+            <p className="mt-5 text-sm text-[var(--ink)]/45">
+              On-device · No account · <span className="text-[var(--ink)]/70">$5.99/mo</span> · 10 logs free · Cancel anytime
             </p>
           </div>
 
@@ -189,7 +210,7 @@ export default function Home() {
                 <Icon className="h-6 w-6" />
               </span>
               <h3 className="mt-4 text-base font-semibold">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-white/55">{body}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--ink)]/55">{body}</p>
             </div>
           ))}
         </div>
@@ -201,8 +222,8 @@ export default function Home() {
           <div className="order-2 lg:order-1">
             <SectionTag><Bolt className="h-3.5 w-3.5" /> Effortless logging</SectionTag>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Log a meal in seconds — four ways.</h2>
-            <p className="mt-4 max-w-md text-white/65">
-              Tap the green <span className="font-semibold text-[#73c2a1]">+</span> and pick whatever’s fastest.
+            <p className="mt-4 max-w-md text-[var(--ink)]/65">
+              Tap the green <span className="font-semibold text-[var(--accent-ink)]">+</span> and pick whatever’s fastest.
               Every method ends on the same confirm-and-adjust screen, so nothing is saved until you say so.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -212,7 +233,7 @@ export default function Home() {
                     <Icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-3 font-semibold">{title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-white/55">{body}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--ink)]/55">{body}</p>
                 </div>
               ))}
             </div>
@@ -225,7 +246,7 @@ export default function Home() {
       </section>
 
       {/* ── AI parsing ── */}
-      <section className="border-y border-white/5 bg-[#0e1014]">
+      <section className="border-y border-[var(--ink)]/5 bg-[var(--surface-2)]">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-2">
           <div className="flex justify-center">
             <PhoneShot src={`${SHOT}/app-09.webp`} alt="AI estimate for a sandwich with adjustable macros" className="w-full max-w-[300px]" />
@@ -241,10 +262,10 @@ export default function Home() {
                 ["Barcodes are measured data", "Packaged foods use real label values, with an on-device “Verify with label” scan to make them stick."],
               ].map(([t, b]) => (
                 <li key={t} className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#57b58c]/15 text-[#73c2a1]">
+                  <span className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#57b58c]/15 text-[var(--accent-ink)]">
                     <Check className="h-4 w-4" />
                   </span>
-                  <span><span className="font-semibold">{t}.</span> <span className="text-white/60">{b}</span></span>
+                  <span><span className="font-semibold">{t}.</span> <span className="text-[var(--ink)]/60">{b}</span></span>
                 </li>
               ))}
             </ul>
@@ -258,7 +279,7 @@ export default function Home() {
           <div className="order-2 lg:order-1">
             <SectionTag><Chart className="h-3.5 w-3.5" /> Your day, your trends</SectionTag>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">The whole day at a glance — then the bigger picture.</h2>
-            <p className="mt-4 max-w-md text-white/65">
+            <p className="mt-4 max-w-md text-[var(--ink)]/65">
               A hero ring shows net calories against your goal, with protein, carbs, and fat tracked
               alongside. History turns weeks of logs into plain, honest insights — no streaks, scores,
               or guilt trips.
@@ -274,7 +295,7 @@ export default function Home() {
                   <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg" style={{ background: `${color}22`, color }}>
                     <Icon className="h-5 w-5" />
                   </span>
-                  <span className="text-sm font-medium text-white/85">{label}</span>
+                  <span className="text-sm font-medium text-[var(--ink)]/85">{label}</span>
                 </div>
               ))}
             </div>
@@ -287,7 +308,7 @@ export default function Home() {
       </section>
 
       {/* ── Privacy ── */}
-      <section id="privacy" className="relative scroll-mt-20 overflow-hidden border-y border-white/5">
+      <section id="privacy" className="relative scroll-mt-20 overflow-hidden border-y border-[var(--ink)]/5">
         <div className="ct-glow pointer-events-none absolute -right-20 top-0 h-96 w-96 opacity-40" />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
@@ -295,14 +316,14 @@ export default function Home() {
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">
               Fully AI-powered.<br /><span className="ct-grad">Nobody’s watching.</span>
             </h2>
-            <p className="mt-5 max-w-lg text-lg text-white/65">
+            <p className="mt-5 max-w-lg text-lg text-[var(--ink)]/65">
               Most “AI calorie” apps want an account, then quietly build a profile of everything you eat.
               The Last Calorie Tracker does the opposite: the intelligence runs for you, and the record stays with you.
             </p>
-            <div className="mt-8 overflow-hidden rounded-2xl border border-white/10">
+            <div className="mt-8 overflow-hidden rounded-2xl border border-[var(--ink)]/10">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-white/5 text-white/50">
+                  <tr className="bg-[var(--ink)]/5 text-[var(--ink)]/50">
                     <th className="px-4 py-3 font-medium">Data</th>
                     <th className="px-4 py-3 font-medium">Where it lives</th>
                     <th className="px-4 py-3 font-medium">Leaves device?</th>
@@ -310,16 +331,16 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {PRIVACY_ROWS.map(([a, b, c]) => (
-                    <tr key={a} className="border-t border-white/5">
-                      <td className="px-4 py-3 text-white/85">{a}</td>
-                      <td className="px-4 py-3 text-white/55">{b}</td>
-                      <td className="px-4 py-3 text-[#73c2a1]">{c}</td>
+                    <tr key={a} className="border-t border-[var(--ink)]/5">
+                      <td className="px-4 py-3 text-[var(--ink)]/85">{a}</td>
+                      <td className="px-4 py-3 text-[var(--ink)]/55">{b}</td>
+                      <td className="px-4 py-3 text-[var(--accent-ink)]">{c}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-white/40">
+            <p className="mt-4 text-sm text-[var(--ink)]/40">
               No accounts, no analytics identity, no server-side profile. The free-log counter syncs through
               your own iCloud — still without an account.
             </p>
@@ -337,27 +358,27 @@ export default function Home() {
           <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
             Start free. Go Pro for less than a coffee a month.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-white/60">
-            Your first <span className="font-semibold text-white">10 food logs are free</span>. After that, Pro
+          <p className="mx-auto mt-4 max-w-xl text-[var(--ink)]/60">
+            Your first <span className="font-semibold text-[var(--ink)]">10 food logs are free</span>. After that, Pro
             unlocks unlimited logging and every input method — with no account to create.
           </p>
         </div>
 
         <div className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
           <div className="ct-card p-7">
-            <p className="text-sm font-medium text-white/55">Monthly</p>
-            <p className="mt-3 text-4xl font-bold">$5.99<span className="text-lg font-medium text-white/45">/mo</span></p>
-            <p className="mt-2 text-sm text-white/50">Flexible. Cancel anytime.</p>
+            <p className="text-sm font-medium text-[var(--ink)]/55">Monthly</p>
+            <p className="mt-3 text-4xl font-bold">$5.99<span className="text-lg font-medium text-[var(--ink)]/45">/mo</span></p>
+            <p className="mt-2 text-sm text-[var(--ink)]/50">Flexible. Cancel anytime.</p>
           </div>
           <div className="relative ct-card overflow-hidden p-7" style={{ borderColor: "rgba(87,181,140,0.5)" }}>
-            <span className="absolute right-5 top-6 rounded-full bg-[#57b58c]/15 px-2.5 py-1 text-xs font-bold text-[#73c2a1]">Save 58%</span>
-            <p className="text-sm font-medium text-white/55">Yearly</p>
-            <p className="mt-3 text-4xl font-bold">$29.99<span className="text-lg font-medium text-white/45">/yr</span></p>
-            <p className="mt-2 text-sm text-white/50">Best value — about $2.50/mo.</p>
+            <span className="absolute right-5 top-6 rounded-full bg-[#57b58c]/15 px-2.5 py-1 text-xs font-bold text-[var(--accent-ink)]">Save 58%</span>
+            <p className="text-sm font-medium text-[var(--ink)]/55">Yearly</p>
+            <p className="mt-3 text-4xl font-bold">$29.99<span className="text-lg font-medium text-[var(--ink)]/45">/yr</span></p>
+            <p className="mt-2 text-sm text-[var(--ink)]/50">Best value — about $2.50/mo.</p>
           </div>
         </div>
 
-        <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/55">
+        <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-[var(--ink)]/55">
           {["10 logs free", "No account needed", "Restore on any device", "Cancel anytime"].map((t) => (
             <span key={t} className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-[#57b58c]" /> {t}</span>
           ))}
@@ -365,41 +386,41 @@ export default function Home() {
       </section>
 
       {/* ── Value / comparison ── */}
-      <section id="value" className="scroll-mt-20 border-t border-white/5 bg-[#0e1014]">
+      <section id="value" className="scroll-mt-20 border-t border-[var(--ink)]/5 bg-[var(--surface-2)]">
         <div className="mx-auto max-w-5xl px-5 py-20">
           <div className="text-center">
             <SectionTag>Unbeatable value</SectionTag>
             <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
               The same AI calorie tracking. A fraction of the price.
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-white/60">
-              At <span className="font-semibold text-white">$5.99/month</span>, The Last Calorie Tracker sits below
+            <p className="mx-auto mt-4 max-w-xl text-[var(--ink)]/60">
+              At <span className="font-semibold text-[var(--ink)]">$5.99/month</span>, The Last Calorie Tracker sits below
               mainstream plans and far under the aggressive AI calorie apps — without skimping on features.
             </p>
           </div>
 
           <div className="mt-12 space-y-2.5">
             {COMPARISON.map(({ app, price, label, verdict, self }) => (
-              <div key={app} className={`rounded-2xl border p-4 ${self ? "border-[#57b58c]/50 bg-[#57b58c]/10" : "border-white/10 bg-[#16181d]"}`}>
+              <div key={app} className={`rounded-2xl border p-4 ${self ? "border-[#57b58c]/50 bg-[#57b58c]/10" : "border-[var(--ink)]/10 bg-[var(--surface)]"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={`text-sm font-semibold ${self ? "text-white" : "text-white/85"}`}>{app}</span>
+                    <span className={`text-sm font-semibold ${self ? "text-[var(--ink)]" : "text-[var(--ink)]/85"}`}>{app}</span>
                     {self && <span className="rounded-full bg-[#57b58c] px-2 py-0.5 text-[11px] font-bold text-[#06140d]">You</span>}
                   </div>
-                  <span className={`text-sm font-semibold tabular-nums ${self ? "text-[#73c2a1]" : "text-white/70"}`}>{label}</span>
+                  <span className={`text-sm font-semibold tabular-nums ${self ? "text-[var(--accent-ink)]" : "text-[var(--ink)]/70"}`}>{label}</span>
                 </div>
                 <div className="mt-2.5 flex items-center gap-3">
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[var(--ink)]/5">
                     <div className="h-full rounded-full"
-                      style={{ width: `${Math.max(8, (price / MAX_PRICE) * 100)}%`, background: self ? "linear-gradient(90deg,#4fae84,#73c2a1)" : "rgba(255,255,255,0.25)" }} />
+                      style={{ width: `${Math.max(8, (price / MAX_PRICE) * 100)}%`, background: self ? "linear-gradient(90deg,#4fae84,#73c2a1)" : "color-mix(in oklab, var(--ink) 28%, transparent)" }} />
                   </div>
-                  <span className={`w-44 flex-none text-right text-xs ${self ? "font-semibold text-[#73c2a1]" : "text-white/45"}`}>{verdict}</span>
+                  <span className={`w-44 flex-none text-right text-xs ${self ? "font-semibold text-[var(--accent-ink)]" : "text-[var(--ink)]/45"}`}>{verdict}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          <p className="mt-6 text-xs leading-relaxed text-white/35">
+          <p className="mt-6 text-xs leading-relaxed text-[var(--ink)]/35">
             Competitor pricing is approximate, gathered from public App Store listings and third-party
             write-ups, and varies by region and over time. Several rivals push annual plans (e.g. MyFitnessPal
             Premium+ ~$79.99/yr, Lose It ~$39.99/yr, Foodnoms ~$40/yr); Cal AI’s monthly is commonly $9.99
@@ -416,23 +437,23 @@ export default function Home() {
             <details key={q} className="ct-card group p-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
                 {q}
-                <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white/5 text-white/60 transition group-open:rotate-45">+</span>
+                <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[var(--ink)]/5 text-[var(--ink)]/60 transition group-open:rotate-45">+</span>
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-white/60">{a}</p>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--ink)]/60">{a}</p>
             </details>
           ))}
         </div>
       </section>
 
       {/* ── Final CTA ── */}
-      <section className="relative overflow-hidden border-t border-white/5">
+      <section className="relative overflow-hidden border-t border-[var(--ink)]/5">
         <img src="/hero-food.webp" alt="" aria-hidden width={1400} height={2488} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
-        <div className="absolute inset-0 bg-[#0c0d10]/85" />
+        <div className="absolute inset-0 bg-[var(--app)]/85" />
         <div className="ct-glow pointer-events-none absolute bottom-0 left-1/2 h-80 w-[600px] -translate-x-1/2 opacity-50" />
         <div className="relative mx-auto max-w-3xl px-5 py-24 text-center">
           <img src="/app-icon.webp" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-[18px] shadow-2xl" />
           <h2 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">Eat well. Stay private.</h2>
-          <p className="mx-auto mt-4 max-w-md text-lg text-white/65">
+          <p className="mx-auto mt-4 max-w-md text-lg text-[var(--ink)]/65">
             The Last Calorie Tracker is coming soon to the App Store. Private by design, powered by AI, $5.99 a month.
           </p>
           <div className="mt-8 flex justify-center">
@@ -442,22 +463,22 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/5">
+      <footer className="border-t border-[var(--ink)]/5">
         <div className="mx-auto max-w-6xl px-5 py-12">
           <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
             <div className="flex items-center gap-2.5">
               <img src="/app-icon.webp" alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />
               <span className="font-semibold">The Last Calorie Tracker</span>
             </div>
-            <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/55">
-              <a href="#features" className="hover:text-white">Features</a>
-              <a href="#privacy" className="hover:text-white">Privacy</a>
-              <a href="#pricing" className="hover:text-white">Pricing</a>
-              <a href="#value" className="hover:text-white">Value</a>
-              <a href="/privacy" className="hover:text-white">Privacy Policy</a>
+            <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--ink)]/55">
+              <a href="#features" className="hover:text-[var(--ink)]">Features</a>
+              <a href="#privacy" className="hover:text-[var(--ink)]">Privacy</a>
+              <a href="#pricing" className="hover:text-[var(--ink)]">Pricing</a>
+              <a href="#value" className="hover:text-[var(--ink)]">Value</a>
+              <a href="/privacy" className="hover:text-[var(--ink)]">Privacy Policy</a>
             </nav>
           </div>
-          <div className="mt-8 border-t border-white/5 pt-6 text-xs leading-relaxed text-white/40">
+          <div className="mt-8 border-t border-[var(--ink)]/5 pt-6 text-xs leading-relaxed text-[var(--ink)]/40">
             <p>© 2026 Unthinking AI, LLC. Built by Marco van Hylckama Vlieg. The Last Calorie Tracker is not yet available; “coming soon to the App Store.”</p>
             <p className="mt-2">
               Nutrition data from Open Food Facts (ODbL). Food analysis powered by OpenAI. Calorie and macro

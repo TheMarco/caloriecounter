@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { ThemeToggle } from "../ThemeToggle";
 
 // The Last Calorie Tracker — Privacy Policy.
 // Static server component, styled with the shared `.ct` design system. The content
@@ -29,15 +30,15 @@ export const metadata: Metadata = {
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-24 border-t border-white/5 pt-10">
-      <h2 className="text-2xl font-bold tracking-tight text-white">{title}</h2>
-      <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-white/70">{children}</div>
+    <section id={id} className="scroll-mt-24 border-t border-[var(--ink)]/5 pt-10">
+      <h2 className="text-2xl font-bold tracking-tight text-[var(--ink)]">{title}</h2>
+      <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-[var(--ink)]/70">{children}</div>
     </section>
   );
 }
 
 function Em({ children }: { children: ReactNode }) {
-  return <span className="font-semibold text-white/90">{children}</span>;
+  return <span className="font-semibold text-[var(--ink)]/90">{children}</span>;
 }
 
 // Rows: [what, where it lives, leaves your device?]
@@ -58,37 +59,40 @@ export default function PrivacyPolicy() {
   return (
     <div className="ct min-h-screen w-full overflow-x-hidden antialiased">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0c0d10]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-[var(--ink)]/5 bg-[var(--app)]/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
           <Link href="/" className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/app-icon.webp" alt="" width={32} height={32} className="h-8 w-8 rounded-[9px]" />
             <span className="text-[15px] font-semibold tracking-tight">The Last Calorie Tracker</span>
           </Link>
-          <Link href="/" className="text-sm text-white/65 transition hover:text-white">
-            ← Back to site
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
+            <Link href="/" className="text-sm text-[var(--ink)]/65 transition hover:text-[var(--ink)]">
+              ← Back to site
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-5 py-16">
         {/* ── Title ── */}
-        <p className="text-xs font-semibold uppercase tracking-wider text-[#73c2a1]">Privacy Policy</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-ink)]">Privacy Policy</p>
         <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
           Your food diary is{" "}
           <span className="ct-grad">nobody’s business but yours.</span>
         </h1>
-        <p className="mt-5 text-lg leading-relaxed text-white/70">
+        <p className="mt-5 text-lg leading-relaxed text-[var(--ink)]/70">
           The Last Calorie Tracker (“the app,” “we,” “us”) is built privacy-first. There is no account,
           and the diary you build stays on your iPhone. This page explains exactly what the app does and
           does not do with your information.
         </p>
-        <p className="mt-3 text-sm text-white/45">Last updated: {UPDATED}</p>
+        <p className="mt-3 text-sm text-[var(--ink)]/45">Last updated: {UPDATED}</p>
 
         {/* ── The short version ── */}
         <div className="ct-card mt-10 p-6">
-          <h2 className="text-base font-semibold text-white">The short version</h2>
-          <ul className="mt-4 space-y-2.5 text-[15px] leading-relaxed text-white/70">
+          <h2 className="text-base font-semibold text-[var(--ink)]">The short version</h2>
+          <ul className="mt-4 space-y-2.5 text-[15px] leading-relaxed text-[var(--ink)]/70">
             {[
               "No account, no sign-up, no email, no password — and no user profile on our servers.",
               "Your food log, weights, goals, and settings live only on your device.",
@@ -111,7 +115,7 @@ export default function PrivacyPolicy() {
             <p>
               The Last Calorie Tracker is an iOS app published by <Em>Unthinking AI, LLC</Em>. If you have
               any question about this policy or your privacy, contact us at{" "}
-              <a href={`mailto:${CONTACT}`} className="text-[#73c2a1] underline-offset-2 hover:underline">
+              <a href={`mailto:${CONTACT}`} className="text-[var(--accent-ink)] underline-offset-2 hover:underline">
                 {CONTACT}
               </a>
               .
@@ -154,10 +158,10 @@ export default function PrivacyPolicy() {
               The app reaches the network only to do the thing you asked: turn a meal you logged into a
               nutrition estimate, or look up a barcode. Here is the complete picture:
             </p>
-            <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+            <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--ink)]/10">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-white/5 text-white/50">
+                  <tr className="bg-[var(--ink)]/5 text-[var(--ink)]/50">
                     <th className="px-4 py-3 font-medium">Data</th>
                     <th className="px-4 py-3 font-medium">Where it lives</th>
                     <th className="px-4 py-3 font-medium">Leaves device?</th>
@@ -165,10 +169,10 @@ export default function PrivacyPolicy() {
                 </thead>
                 <tbody>
                   {DATA_ROWS.map(([a, b, c]) => (
-                    <tr key={a} className="border-t border-white/5 align-top">
-                      <td className="px-4 py-3 text-white/85">{a}</td>
-                      <td className="px-4 py-3 text-white/55">{b}</td>
-                      <td className="px-4 py-3 text-[#73c2a1]">{c}</td>
+                    <tr key={a} className="border-t border-[var(--ink)]/5 align-top">
+                      <td className="px-4 py-3 text-[var(--ink)]/85">{a}</td>
+                      <td className="px-4 py-3 text-[var(--ink)]/55">{b}</td>
+                      <td className="px-4 py-3 text-[var(--accent-ink)]">{c}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -316,7 +320,7 @@ export default function PrivacyPolicy() {
               accounts and don’t hold a profile tied to your identity, in practice your data is already in
               your hands: it’s on your device, you can export it, and you can delete it by removing the app.
               If you still have a request or question, email us at{" "}
-              <a href={`mailto:${CONTACT}`} className="text-[#73c2a1] underline-offset-2 hover:underline">
+              <a href={`mailto:${CONTACT}`} className="text-[var(--accent-ink)] underline-offset-2 hover:underline">
                 {CONTACT}
               </a>{" "}
               and we’ll help.
@@ -344,7 +348,7 @@ export default function PrivacyPolicy() {
           <Section id="contact" title="Contact us">
             <p>
               Questions about your privacy or this policy? Email{" "}
-              <a href={`mailto:${CONTACT}`} className="text-[#73c2a1] underline-offset-2 hover:underline">
+              <a href={`mailto:${CONTACT}`} className="text-[var(--accent-ink)] underline-offset-2 hover:underline">
                 {CONTACT}
               </a>
               . We read every message.
@@ -354,7 +358,7 @@ export default function PrivacyPolicy() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/5">
+      <footer className="border-t border-[var(--ink)]/5">
         <div className="mx-auto max-w-3xl px-5 py-10">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <Link href="/" className="flex items-center gap-2.5">
@@ -362,7 +366,7 @@ export default function PrivacyPolicy() {
               <img src="/app-icon.webp" alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />
               <span className="font-semibold">The Last Calorie Tracker</span>
             </Link>
-            <p className="text-xs text-white/40">© 2026 Unthinking AI, LLC. All rights reserved.</p>
+            <p className="text-xs text-[var(--ink)]/40">© 2026 Unthinking AI, LLC. All rights reserved.</p>
           </div>
         </div>
       </footer>
