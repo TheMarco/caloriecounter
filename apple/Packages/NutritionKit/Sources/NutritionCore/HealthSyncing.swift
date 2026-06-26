@@ -41,6 +41,38 @@ public struct WeightConflict: Sendable, Equatable, Identifiable {
     }
 }
 
+/// A read-only diagnostic snapshot of one workout HealthKit can see, including how
+/// (if at all) its active energy resolved and whether it clears the offer floor.
+/// Powers the in-app "check recent workouts" troubleshooter — never used for the
+/// actual offer flow.
+public struct WorkoutProbe: Sendable, Identifiable {
+    public enum EnergySource: String, Sendable {
+        case statistics   // per-workout HKStatistics (HKWorkoutBuilder era)
+        case samples      // associated activeEnergyBurned samples
+        case totalEnergy  // legacy HKWorkout.totalEnergyBurned
+        case none         // no active energy could be resolved
+    }
+    public let id: String
+    public let activityName: String
+    public let endDate: Date
+    public let durationMinutes: Int
+    public let kcal: Double
+    public let energySource: EnergySource
+    /// Whether it clears the duration + energy floor (i.e. would be offered).
+    public let qualifies: Bool
+
+    public init(id: String, activityName: String, endDate: Date, durationMinutes: Int,
+                kcal: Double, energySource: EnergySource, qualifies: Bool) {
+        self.id = id
+        self.activityName = activityName
+        self.endDate = endDate
+        self.durationMinutes = durationMinutes
+        self.kcal = kcal
+        self.energySource = energySource
+        self.qualifies = qualifies
+    }
+}
+
 /// Writing this app's nutrition/weight to Apple Health, importing weight back,
 /// and removing this app's previously written Health data. HealthKit samples are
 /// immutable, so edits delete-and-recreate this app's data (matched by metadata).
@@ -87,4 +119,14 @@ public protocol HealthSyncing: Sendable {
 
     /// Current availability + authorization snapshot.
     func authorizationSummary() async -> HealthAuthorizationSummary
+
+    /// Read-only diagnostic: every workout HealthKit returns since `start`, annotated
+    /// with how its energy resolved and whether it qualifies — for the in-app
+    /// "why didn't my workout show?" check. `[]` when unavailable/unauthorized.
+    func probeRecentWorkouts(since start: Date) async -> [WorkoutProbe]
+}
+
+public extension HealthSyncing {
+    /// Default for mocks/non-HealthKit conformers — the real one lives in NutritionHealth.
+    func probeRecentWorkouts(since start: Date) async -> [WorkoutProbe] { [] }
 }

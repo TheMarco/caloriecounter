@@ -77,6 +77,16 @@ struct AppleHealthDetailView: View {
                     if settings.healthWorkoutOffsetEnabled {
                         Text("After a longer walk or workout, we’ll offer to add its calories to that day’s offset. Reads workouts only — never written back. If your goal already assumes an activity level, offsetting can double-count.")
                             .font(.caption).foregroundStyle(.secondary)
+                        Button {
+                            Task {
+                                working = true
+                                statusMessage = await container.workoutOffsetDiagnostics()
+                                working = false
+                            }
+                        } label: {
+                            Label(working ? "Checking…" : "Check recent workouts", systemImage: "stethoscope")
+                        }
+                        .disabled(working)
                     }
                 } header: {
                     Text("Sync")

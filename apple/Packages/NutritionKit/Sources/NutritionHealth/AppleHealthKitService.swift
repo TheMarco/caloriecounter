@@ -13,10 +13,16 @@
 import Foundation
 import HealthKit
 import NutritionCore
+import os
 
 public actor AppleHealthKitService: HealthSyncing {
     private let store = HKHealthStore()
     private let appVersion: String
+
+    #if DEBUG
+    /// Filter the Xcode console by category "Workouts" to trace offset detection.
+    private static let log = Logger(subsystem: "com.aidashcreated.caloriecounter", category: "Workouts")
+    #endif
 
     public init(appVersion: String? = nil) {
         self.appVersion = appVersion
@@ -175,19 +181,85 @@ public actor AppleHealthKitService: HealthSyncing {
             sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)])
         let workouts = try await descriptor.result(for: store)
 
-        return workouts.compactMap { w -> WorkoutSample? in
+        #if DEBUG
+        Self.log.debug("recentWorkouts: HealthKit returned \(workouts.count, privacy: .public) workout(s) in the lookback window")
+        #endif
+
+        var offers: [WorkoutSample] = []
+        for w in workouts {
             // Active energy burned. Without it we can't offset, so skip the workout.
-            guard let kcal = w.statistics(for: activeEnergyType)?
-                .sumQuantity()?.doubleValue(for: .kilocalorie()), kcal > 0 else { return nil }
+            let kcal = await resolveActiveEnergy(for: w).kcal
             let minutes = Int((w.duration / 60).rounded())
-            guard WorkoutSample.qualifiesAsRealWorkout(durationMinutes: minutes, kcal: kcal) else { return nil }
-            return WorkoutSample(
+            let qualifies = kcal > 0 && WorkoutSample.qualifiesAsRealWorkout(durationMinutes: minutes, kcal: kcal)
+            #if DEBUG
+            Self.log.debug("  • \(Self.activityName(for: w.workoutActivityType), privacy: .public): \(minutes, privacy: .public) min, \(kcal, privacy: .public) kcal → \(qualifies ? "OFFER" : "skip", privacy: .public)")
+            #endif
+            guard qualifies else { continue }
+            offers.append(WorkoutSample(
                 id: w.uuid.uuidString,
                 date: LocalDate.key(for: w.endDate),
                 activityName: Self.activityName(for: w.workoutActivityType),
                 start: w.startDate, end: w.endDate,
-                durationMinutes: minutes, kcal: kcal.rounded())
+                durationMinutes: minutes, kcal: kcal.rounded()))
         }
+        return offers
+    }
+
+    /// Resolve a workout's active energy as robustly as possible, reporting which
+    /// source won. Modern `HKWorkoutBuilder` workouts expose it via `statistics(for:)`,
+    /// but manually-added and many third-party workouts only carry separate associated
+    /// samples or the deprecated `totalEnergyBurned` total — so a real session would
+    /// otherwise be silently dropped. Try all three, in order of fidelity.
+    private func resolveActiveEnergy(for w: HKWorkout) async -> (kcal: Double, source: WorkoutProbe.EnergySource) {
+        // 1) Per-workout statistics (HKWorkoutBuilder era — e.g. current Apple Watch).
+        if let kcal = w.statistics(for: activeEnergyType)?
+            .sumQuantity()?.doubleValue(for: .kilocalorie()), kcal > 0 {
+            return (kcal, .statistics)
+        }
+        // 2) Active-energy samples explicitly associated with this workout.
+        let predicate = HKQuery.predicateForObjects(from: w)
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: activeEnergyType, predicate: predicate)],
+            sortDescriptors: [])
+        if let samples = try? await descriptor.result(for: store) {
+            let kcal = samples.reduce(0.0) { $0 + $1.quantity.doubleValue(for: .kilocalorie()) }
+            if kcal > 0 { return (kcal, .samples) }
+        }
+        // 3) Deprecated top-level total (older / manually-entered workouts). The
+        // deprecation warning here is expected and intentional — this is the last-
+        // resort fallback for workouts that predate per-workout statistics; do not
+        // remove it.
+        if let total = w.totalEnergyBurned?.doubleValue(for: .kilocalorie()), total > 0 {
+            return (total, .totalEnergy)
+        }
+        return (0, .none)
+    }
+
+    /// Read-only diagnostic: annotate every workout in the window with its resolved
+    /// energy (and source) and whether it qualifies — for the in-app troubleshooter.
+    public func probeRecentWorkouts(since start: Date) async -> [WorkoutProbe] {
+        guard isAvailable() else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: nil)
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.workout(predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)])
+        guard let workouts = try? await descriptor.result(for: store) else { return [] }
+
+        var probes: [WorkoutProbe] = []
+        for w in workouts {
+            let (kcal, source) = await resolveActiveEnergy(for: w)
+            let minutes = Int((w.duration / 60).rounded())
+            let qualifies = kcal > 0 && WorkoutSample.qualifiesAsRealWorkout(durationMinutes: minutes, kcal: kcal)
+            probes.append(WorkoutProbe(
+                id: w.uuid.uuidString,
+                activityName: Self.activityName(for: w.workoutActivityType),
+                endDate: w.endDate,
+                durationMinutes: minutes,
+                kcal: kcal.rounded(),
+                energySource: source,
+                qualifies: qualifies))
+        }
+        return probes
     }
 
     private var workoutObserver: HKObserverQuery?

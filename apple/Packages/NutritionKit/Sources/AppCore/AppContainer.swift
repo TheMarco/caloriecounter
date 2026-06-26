@@ -162,6 +162,46 @@ public final class AppContainer {
         return workouts.filter { !settings.isWorkoutHandled($0.id) }
     }
 
+    /// Human-readable troubleshooter for the in-app "Check recent workouts" button:
+    /// what HealthKit can actually see in the lookback window, and why each workout
+    /// did or didn't become an offer (energy source, the floor, already-handled, or
+    /// — when nothing comes back — the likely missing READ permission).
+    public func workoutOffsetDiagnostics() async -> String {
+        guard healthSync.isAvailable() else {
+            return "Apple Health isn't available on this device."
+        }
+        guard settings.healthWorkoutOffsetEnabled else {
+            return "“Offset calories from workouts” is off. Turn it on above first."
+        }
+        let hours = Constants.workoutLookbackHours
+        let since = Date().addingTimeInterval(-Double(hours) * 3600)
+        let probes = await healthSync.probeRecentWorkouts(since: since)
+
+        guard !probes.isEmpty else {
+            return """
+            No workouts found in the last \(hours) hours.
+
+            If you definitely finished one, the app probably wasn't granted read access. Open Settings ▸ Health ▸ Data Access & Devices ▸ CalorieCounter and make sure BOTH “Workouts” and “Active Energy” are ON. iOS only asks once, and these default to off.
+            """
+        }
+
+        var lines = ["Found \(probes.count) workout\(probes.count == 1 ? "" : "s") in the last \(hours)h:\n"]
+        for p in probes {
+            let status: String
+            if settings.isWorkoutHandled(p.id) {
+                status = "already added or dismissed"
+            } else if p.qualifies {
+                status = "✓ should be offered on Today"
+            } else if p.kcal <= 0 {
+                status = "no Active Energy data — turn on “Active Energy” read access"
+            } else {
+                status = "below the \(Constants.minWorkoutMinutes)-min / \(Int(Constants.minWorkoutKcal))-kcal minimum"
+            }
+            lines.append("• \(p.activityName): \(p.durationMinutes) min, \(Int(p.kcal)) kcal — \(status)")
+        }
+        return lines.joined(separator: "\n")
+    }
+
     /// Accept an offer: add the workout's calories to its day's offset and mark it
     /// handled. Stacks on any existing offset for that day.
     public func applyWorkoutOffset(_ workout: WorkoutSample) async {

@@ -13,6 +13,7 @@ struct TodayView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.colorScheme) private var scheme
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.scenePhase) private var scenePhase
     /// Shows a transient undo toast (hosted by the dock container).
     var presentUndo: (String, @escaping () -> Void) -> Void = { _, _ in }
     /// Opens Settings (the top-right gear).
@@ -53,6 +54,13 @@ struct TodayView: View {
                 await m.load()
                 latestWeightKg = (try? await container.store.latestWeight())?.weightKg
                 workoutOffers = await container.pendingWorkoutOffers()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                // Returning to the app after a workout: re-check for new offers, since
+                // a foreground resume doesn't bump dataVersion on its own.
+                if phase == .active {
+                    Task { workoutOffers = await container.pendingWorkoutOffers() }
+                }
             }
             .fullScreenCover(isPresented: $showWizard) {
                 SetupWizardView(allowsCancel: true) {}
