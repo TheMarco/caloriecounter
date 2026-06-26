@@ -113,7 +113,7 @@ struct HelpView: View {
             HelpItem(icon: "wifi", tint: .gray, title: "What leaves your device",
                      text: "Only the words or photo you submit for recognition are sent — securely — to do the parsing, and barcode lookups query the public food database. Your diary itself is never uploaded."),
         ]),
-        HelpSection(title: "CalorieCounter Pro", rows: [
+        HelpSection(title: "Calorie Tracker Pro", rows: [
             HelpItem(icon: "gift.fill", tint: .purple, title: "Free to start",
                      text: "Your first \(Constants.freeFoodEntryLimit) food logs are free. After that, Pro unlocks unlimited logging and every input method."),
             HelpItem(icon: "infinity", tint: .purple, title: "What Pro includes",

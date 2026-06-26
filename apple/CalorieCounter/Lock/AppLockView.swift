@@ -15,7 +15,7 @@ struct AppLockView: View {
             Image(systemName: "lock.fill")
                 .font(.system(size: 56, weight: .semibold))
                 .foregroundStyle(.tint)
-            Text("CalorieCounter is locked")
+            Text("Calorie Tracker is locked")
                 .font(.title3.weight(.semibold))
             Text("Authenticate to view your nutrition data.")
                 .font(.footnote)

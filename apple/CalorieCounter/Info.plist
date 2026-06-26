@@ -13,7 +13,7 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleDisplayName</key>
-	<string>CalorieCounter</string>
+	<string>Calorie Tracker</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -35,16 +35,16 @@
 	<!-- Capture flows land in Phase 8; the usage strings are declared now so the
 	     shipping Info.plist is complete and App-Store-ready from the start. -->
 	<key>NSCameraUsageDescription</key>
-	<string>CalorieCounter uses the camera to scan barcodes and photograph meals and nutrition labels so it can log their calories and macros.</string>
+	<string>Calorie Tracker uses the camera to scan barcodes and photograph meals and nutrition labels so it can log their calories and macros.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>CalorieCounter uses the microphone so you can describe what you ate by voice.</string>
+	<string>Calorie Tracker uses the microphone so you can describe what you ate by voice.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>CalorieCounter transcribes your voice on device to turn spoken meals into food entries.</string>
+	<string>Calorie Tracker transcribes your voice on device to turn spoken meals into food entries.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>CalorieCounter can use Face ID to lock the app so only you can open your food log.</string>
+	<string>Calorie Tracker can use Face ID to lock the app so only you can open your food log.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>CalorieCounter reads your weight from Apple Health so your weigh-ins can appear in the app, and reads completed workouts to offer adding their calories to your daily offset. Workouts are read only — never changed.</string>
+	<string>Calorie Tracker reads your weight from Apple Health so your weigh-ins can appear in the app, and reads completed workouts to offer adding their calories to your daily offset. Workouts are read only — never changed.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>CalorieCounter can save your meals, macros, and weigh-ins to Apple Health. This is optional and you choose what to share.</string>
+	<string>Calorie Tracker can save your meals, macros, and weigh-ins to Apple Health. This is optional and you choose what to share.</string>
 </dict>
 </plist>

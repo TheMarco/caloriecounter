@@ -197,7 +197,7 @@ public final class AppContainer {
             return """
             No workouts found in the last \(hours) hours.
 
-            If you definitely finished one, the app probably wasn't granted read access. Open Settings ▸ Health ▸ Data Access & Devices ▸ CalorieCounter and make sure BOTH “Workouts” and “Active Energy” are ON. iOS only asks once, and these default to off.
+            If you definitely finished one, the app probably wasn't granted read access. Open Settings ▸ Health ▸ Data Access & Devices ▸ Calorie Tracker and make sure BOTH “Workouts” and “Active Energy” are ON. iOS only asks once, and these default to off.
             """
         }
 

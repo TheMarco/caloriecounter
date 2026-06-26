@@ -46,7 +46,7 @@ struct CSVExporterTests {
 
     @Test("filename carries the date")
     func filename() {
-        #expect(CSVExporter.filename(today: "2026-06-22") == "calorie-counter-data-2026-06-22.csv")
+        #expect(CSVExporter.filename(today: "2026-06-22") == "calorie-tracker-data-2026-06-22.csv")
     }
 
     @Test("an all-empty dataset yields just the header")

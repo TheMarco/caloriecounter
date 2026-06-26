@@ -150,7 +150,7 @@ struct AppleHealthDetailView: View {
         }
         .navigationTitle("Apple Health")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Remove all CalorieCounter data from Apple Health?",
+        .confirmationDialog("Remove all Calorie Tracker data from Apple Health?",
                             isPresented: $showRemoveConfirm, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
                 Task { await container.removeAllHealthData(); statusMessage = "Removed this app’s data from Apple Health." }

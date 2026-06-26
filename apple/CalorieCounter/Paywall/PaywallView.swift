@@ -70,7 +70,7 @@ struct PaywallView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .shadow(color: .black.opacity(0.2), radius: 12, y: 4)
             VStack(spacing: 6) {
-                Text("CalorieCounter Pro")
+                Text("Calorie Tracker Pro")
                     .font(.largeTitle.weight(.bold))
                     .multilineTextAlignment(.center)
                 Text("You've used your \(Constants.freeFoodEntryLimit) free entries. Go Pro for unlimited logging.")

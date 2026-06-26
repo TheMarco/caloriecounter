@@ -27,7 +27,7 @@ public final class AppLockManager {
     /// Present biometry and unlock on success (or when biometry is unavailable).
     /// Returns whether the app is now unlocked.
     @discardableResult
-    public func authenticate(reason: String = "Unlock CalorieCounter") async -> Bool {
+    public func authenticate(reason: String = "Unlock Calorie Tracker") async -> Bool {
         switch await gate.authenticate(reason: reason) {
         case .success, .unavailable:
             isLocked = false

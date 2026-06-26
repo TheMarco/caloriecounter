@@ -57,9 +57,9 @@ public enum CSVExporter {
         return String(format: "%02d:%02d", c.hour ?? 0, c.minute ?? 0)
     }
 
-    /// Default export filename: `calorie-counter-data-YYYY-MM-DD.csv`.
+    /// Default export filename: `calorie-tracker-data-YYYY-MM-DD.csv`.
     public static func filename(today: String = LocalDate.today()) -> String {
-        "calorie-counter-data-\(today).csv"
+        "calorie-tracker-data-\(today).csv"
     }
 
     static func hasData(_ day: DayTotals) -> Bool {

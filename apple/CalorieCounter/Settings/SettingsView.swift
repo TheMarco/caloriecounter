@@ -82,7 +82,7 @@ struct SettingsView: View {
             Section {
                 if container.subscription.isSubscribed {
                     HStack {
-                        Label("CalorieCounter Pro", systemImage: "checkmark.seal.fill")
+                        Label("Calorie Tracker Pro", systemImage: "checkmark.seal.fill")
                             .foregroundStyle(DS.Macro.calories.tint)
                         Spacer()
                         Text("Active").foregroundStyle(.secondary)
@@ -262,7 +262,7 @@ struct SettingsView: View {
             container.dataDidChange()   // Today and History reload automatically
             importMessage = "Imported \(count) day\(count == 1 ? "" : "s") of data."
         } catch CSVImporter.ImportError.unrecognizedFormat {
-            importMessage = "That doesn't look like a CalorieCounter export CSV."
+            importMessage = "That doesn't look like a Calorie Tracker export CSV."
         } catch {
             importMessage = "No data rows found in that file."
         }

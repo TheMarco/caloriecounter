@@ -21,7 +21,7 @@ struct AboutView: View {
                         .frame(width: 96, height: 96)
                         .clipShape(RoundedRectangle(cornerRadius: 21, style: .continuous))
                         .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
-                    Text("CalorieCounter").font(.title2.weight(.semibold))
+                    Text("Calorie Tracker").font(.title2.weight(.semibold))
                     Text("Version \(version)").font(.footnote).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
