@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 import AppCore
 import NutritionCore
 
@@ -41,6 +42,14 @@ struct RootView: View {
                     }
                 }
                 .preferredColorScheme(container.settings.appearance.colorScheme)
+                // Also drive the window's override directly. SwiftUI's preferredColorScheme
+                // doesn't reach an already-presented sheet when the in-app picker changes,
+                // so the Settings screen wouldn't update its own theme live; a window
+                // override cascades to every presented sheet, just like a system switch.
+                .onAppear { applyAppearance(container.settings.appearance) }
+                .onChange(of: container.settings.appearance) { _, mode in
+                    applyAppearance(mode)
+                }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .background && lockEnabled {
                         lock.lock()
@@ -60,6 +69,17 @@ struct RootView: View {
             try? await Task.sleep(for: Self.splashMinimum)        // hold at least the minimum…
             while !ready { try? await Task.sleep(for: .milliseconds(50)) }   // …and never fade into a still-loading app
             withAnimation(.easeInOut(duration: Self.splashFade)) { splashDone = true }
+        }
+    }
+
+    /// Force the chosen appearance on every window so it reaches presented sheets live.
+    @MainActor private func applyAppearance(_ mode: AppearanceMode) {
+        let style = mode.uiUserInterfaceStyle
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            for window in windowScene.windows {
+                window.overrideUserInterfaceStyle = style
+            }
         }
     }
 

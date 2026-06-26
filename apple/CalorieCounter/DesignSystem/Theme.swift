@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import NutritionCore
 
 extension AppearanceMode {
@@ -13,6 +14,18 @@ extension AppearanceMode {
     var colorScheme: ColorScheme? {
         switch self {
         case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+
+    /// UIKit style for the window-level override. Applied to the window so the choice
+    /// reaches presented sheets live — a presenter's `.preferredColorScheme` does not
+    /// propagate to an already-presented sheet, but a window override cascades to it
+    /// just like a system light/dark switch.
+    var uiUserInterfaceStyle: UIUserInterfaceStyle {
+        switch self {
+        case .system: return .unspecified
         case .light: return .light
         case .dark: return .dark
         }
