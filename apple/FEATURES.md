@@ -56,6 +56,13 @@ Four capture methods plus one-tap re-logging. Every method ends in the same **co
 - If the product exists but has no nutrition data, the app estimates from the product name instead of failing.
 - Barcode entries are treated as **measured data** (high confidence) — not subject to the AI "learning" corrections. Changing quantity/unit recalculates live.
 
+#### Verify with label
+A trust layer on top of any barcode result — make a packaged food honest and "stick":
+- Every barcode result offers a small **"Verify with label"** action. When the lookup was only an estimate (Open Food Facts knew the product but had no nutrition), label scanning is **promoted as the primary call-to-action** — though you can still add the estimate as-is.
+- The label scan is **fully on-device**: Apple's Vision OCR reads the Nutrition Facts panel and a built-in parser extracts serving size + calories/protein/carbs/fat. Nothing leaves the phone.
+- A **comparison screen** shows the current values next to the scanned ones (differences highlighted) — nothing changes until you confirm.
+- Confirmed values are **remembered locally for that barcode**. The next time you scan that product it shows **"Label verified"** and uses your trusted numbers instantly (no network).
+
 ### Photo
 - Square camera frame → take a photo of the meal. The image is center-cropped to 1024×1024 and analyzed by an **OpenAI vision model**.
 - **Portion context step** improves accuracy: pick a plate size (Small → XL), a serving type (Home / Restaurant / Fast-food / Snack), and an optional "I only ate about half" toggle.
