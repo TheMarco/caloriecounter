@@ -33,13 +33,22 @@ public final class FoodConfirmModel {
     @ObservationIgnored private var original: ParsedFood
     @ObservationIgnored private let store: any NutritionStoring
     @ObservationIgnored private let corrections: (any FoodCorrectionStoring)?
+    @ObservationIgnored private let barcodeLabels: (any BarcodeLabelStoring)?
+
+    /// The scanned barcode this food came from (nil unless it's a barcode result) —
+    /// the key under which a verified label is remembered.
+    public let barcode: String?
+    /// Whether the current values are trusted, user-confirmed label values for this
+    /// barcode. Drives the "Label verified" badge.
+    public private(set) var labelVerified: Bool
 
     /// True once a remembered per-food correction has been pre-applied — the view
     /// surfaces a subtle "we remembered your last edit" note.
     public private(set) var appliedRememberedCorrection = false
 
     public init(parsed: ParsedFood, method: InputMethod, store: any NutritionStoring,
-                corrections: (any FoodCorrectionStoring)? = nil) {
+                corrections: (any FoodCorrectionStoring)? = nil,
+                barcodeLabels: (any BarcodeLabelStoring)? = nil) {
         self.original = parsed
         self.food = parsed.food
         self.unit = parsed.unit
@@ -48,6 +57,9 @@ public final class FoodConfirmModel {
         self.method = method
         self.store = store
         self.corrections = corrections
+        self.barcodeLabels = barcodeLabels
+        self.barcode = parsed.barcode
+        self.labelVerified = parsed.labelVerified
     }
 
     public var quantity: Double { Double(quantityText) ?? 0 }
@@ -175,6 +187,47 @@ public final class FoodConfirmModel {
     /// rather than a confident one.
     public var isLowConfidenceEstimate: Bool {
         nutritionConfidence == .estimated && (original.confidence ?? 1) < 0.5
+    }
+
+    // MARK: - Verify with label (packaged-food trust)
+
+    /// A barcode result the user can verify against its printed label — offered as a
+    /// small action on every (not-yet-verified) barcode result.
+    public var canVerifyWithLabel: Bool {
+        method == .barcode && barcode != nil && !labelVerified
+    }
+
+    /// A barcode whose database lookup was only an estimate (Open Food Facts knew the
+    /// product but had no nutrition). For these we promote label scanning as the
+    /// PRIMARY action — but never block a plain Add.
+    public var isLowConfidenceBarcode: Bool {
+        canVerifyWithLabel && original.nutritionConfidence == .estimated
+    }
+
+    /// Adopt user-confirmed label values: remember them for this barcode (so the next
+    /// scan is pre-verified) and replace the working values with the label's
+    /// (one serving, trusted, flagged label-verified). Called from the comparison
+    /// screen's "Use label values".
+    public func applyLabel(_ facts: LabelFacts, now: Date = Date()) async {
+        let name = food.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let code = barcode {
+            await barcodeLabels?.saveVerifiedLabel(
+                VerifiedLabel(barcode: code, name: name, facts: facts, updatedAt: now)
+            )
+        }
+        original = ParsedFood(
+            food: name, quantity: 1, unit: "serving",
+            kcal: facts.kcal, fat: facts.fat, carbs: facts.carbs, protein: facts.protein,
+            notes: "Per serving: \(facts.servingDescription)",
+            nutritionConfidence: .label,
+            barcode: barcode, labelVerified: true
+        )
+        food = name
+        unit = "serving"
+        quantityText = "1"
+        components = []
+        userBreakdownEdited = false
+        labelVerified = true
     }
 
     private func round2(_ v: Double) -> Double { (v * 100).rounded() / 100 }

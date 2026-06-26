@@ -71,6 +71,58 @@ struct FoodConfirmModelTests {
         #expect(model.kcal == 110)    // 1 slice == 1 serving == 110
     }
 
+    // MARK: - Verify with label
+
+    @Test("a low-confidence barcode (estimated) promotes label verification")
+    func lowConfidenceBarcodePromotesLabel() throws {
+        let parsed = ParsedFood(food: "Cola", quantity: 1, unit: "serving", kcal: 140,
+                                nutritionConfidence: .estimated, barcode: "111")
+        let model = FoodConfirmModel(parsed: parsed, method: .barcode, store: try makeStore())
+        #expect(model.canVerifyWithLabel)
+        #expect(model.isLowConfidenceBarcode)
+    }
+
+    @Test("a high-confidence barcode offers verify but does not promote it")
+    func highConfidenceBarcodeOffersVerify() throws {
+        let parsed = ParsedFood(food: "Yogurt", quantity: 1, unit: "serving", kcal: 100,
+                                nutritionConfidence: .barcode, barcode: "222")
+        let model = FoodConfirmModel(parsed: parsed, method: .barcode, store: try makeStore())
+        #expect(model.canVerifyWithLabel)
+        #expect(!model.isLowConfidenceBarcode)
+    }
+
+    @Test("non-barcode input never offers verify-with-label")
+    func nonBarcodeHasNoVerify() throws {
+        let parsed = ParsedFood(food: "Salad", quantity: 1, unit: "bowl", kcal: 200,
+                                nutritionConfidence: .estimated)
+        let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())
+        #expect(!model.canVerifyWithLabel)
+        #expect(!model.isLowConfidenceBarcode)
+    }
+
+    @Test("applyLabel adopts the values, flags verified, and remembers them for the barcode")
+    func applyLabelPersistsAndUpdates() async throws {
+        let labels = MockBarcodeLabelStore()
+        let parsed = ParsedFood(food: "Cola", quantity: 1, unit: "serving", kcal: 140,
+                                nutritionConfidence: .estimated, barcode: "111")
+        let model = FoodConfirmModel(parsed: parsed, method: .barcode, store: try makeStore(),
+                                     barcodeLabels: labels)
+        let facts = LabelFacts(servingDescription: "1 can (355 ml)", kcal: 150, protein: 0, carbs: 39, fat: 0)
+        await model.applyLabel(facts, now: Date(timeIntervalSince1970: 5))
+
+        // Working values now reflect the label, flagged verified, no longer promotable.
+        #expect(model.labelVerified)
+        #expect(model.kcal == 150)
+        #expect(model.carbs == 39)
+        #expect(!model.canVerifyWithLabel)                          // already verified
+        #expect(model.makeEntry().nutritionConfidence == .label)
+
+        // Remembered under the barcode so the next scan is pre-verified.
+        let stored = try #require(await labels.verifiedLabel(for: "111"))
+        #expect(stored.facts.kcal == 150)
+        #expect(stored.name == "Cola")
+    }
+
     @Test("zero quantity zeroes everything")
     func zeroQuantity() throws {
         let model = FoodConfirmModel(parsed: parsed, method: .text, store: try makeStore())

@@ -26,6 +26,13 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
     /// Optional ingredient breakdown for compound foods (a matched dish's recipe
     /// or the model's itemization). Transient — flattened to totals on save.
     public var components: [FoodComponent]?
+    /// The scanned barcode this food resolved from (nil for non-barcode input).
+    /// Runtime-only — carries the code through to the confirm screen so a "Verify
+    /// with label" can key its trusted values by product. Not part of the wire format.
+    public var barcode: String? = nil
+    /// Whether these values came from a user-confirmed nutrition label for this
+    /// barcode (drives the "Label verified" badge). Runtime-only.
+    public var labelVerified: Bool = false
 
     public init(
         food: String,
@@ -41,7 +48,9 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         sodium: Double? = nil,
         sugar: Double? = nil,
         nutritionConfidence: NutritionConfidence? = nil,
-        components: [FoodComponent]? = nil
+        components: [FoodComponent]? = nil,
+        barcode: String? = nil,
+        labelVerified: Bool = false
     ) {
         self.food = food
         self.quantity = quantity
@@ -57,6 +66,15 @@ public struct ParsedFood: Codable, Sendable, Equatable, Hashable {
         self.sugar = sugar
         self.nutritionConfidence = nutritionConfidence
         self.components = components
+        self.barcode = barcode
+        self.labelVerified = labelVerified
+    }
+
+    // `barcode` and `labelVerified` are runtime-only flow state, deliberately
+    // excluded from Codable so the wire format is unchanged.
+    private enum CodingKeys: String, CodingKey {
+        case food, quantity, unit, kcal, fat, carbs, protein
+        case confidence, notes, fiber, sodium, sugar, nutritionConfidence, components
     }
 
     /// A copy whose top-line macros equal the sum of its components (used after a

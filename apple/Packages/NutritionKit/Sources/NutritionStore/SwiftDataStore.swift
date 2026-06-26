@@ -222,9 +222,36 @@ extension SwiftDataStore: FoodCorrectionStoring {
     }
 }
 
+// MARK: - Verified-label memory (additive — see BarcodeLabelRecord)
+
+extension SwiftDataStore: BarcodeLabelStoring {
+    /// Upsert a verified label by its barcode. Best-effort like correction memory —
+    /// a failure is swallowed rather than breaking the save flow.
+    public func saveVerifiedLabel(_ label: VerifiedLabel) async {
+        let code = label.barcode
+        let descriptor = FetchDescriptor<BarcodeLabelRecord>(predicate: #Predicate { $0.barcode == code })
+        do {
+            if let existing = try modelContext.fetch(descriptor).first {
+                existing.update(from: label)
+            } else {
+                modelContext.insert(BarcodeLabelRecord(from: label))
+            }
+            try modelContext.save()
+        } catch {
+            // Verified-label memory is a convenience; never let it break a save flow.
+        }
+    }
+
+    public func verifiedLabel(for barcode: String) async -> VerifiedLabel? {
+        let code = barcode
+        let descriptor = FetchDescriptor<BarcodeLabelRecord>(predicate: #Predicate { $0.barcode == code })
+        return (try? modelContext.fetch(descriptor).first)?.toDomain()
+    }
+}
+
 public extension SwiftDataStore {
     /// The model types this store manages.
-    static var schemaTypes: [any PersistentModel.Type] { [EntryRecord.self, DayOffsetRecord.self, WeightRecord.self, CorrectionRecord.self] }
+    static var schemaTypes: [any PersistentModel.Type] { [EntryRecord.self, DayOffsetRecord.self, WeightRecord.self, CorrectionRecord.self, BarcodeLabelRecord.self] }
 
     /// Build a store. `inMemory` for tests/previews; an explicit `url` overrides
     /// (used by the app to place the on-disk store under Application Support with
@@ -235,7 +262,7 @@ public extension SwiftDataStore {
             return ModelConfiguration(isStoredInMemoryOnly: inMemory)
         }()
         let container = try ModelContainer(
-            for: EntryRecord.self, DayOffsetRecord.self, WeightRecord.self, CorrectionRecord.self,
+            for: EntryRecord.self, DayOffsetRecord.self, WeightRecord.self, CorrectionRecord.self, BarcodeLabelRecord.self,
             configurations: configuration
         )
         return SwiftDataStore(modelContainer: container)

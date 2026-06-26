@@ -47,7 +47,12 @@ struct CompositeBarcodeResolverTests {
             estimate: { name, _ in await recorder.record(name); return estimated }
         )
         let food = try await composite.resolve(code: "2", units: .metric)
-        #expect(food == estimated)
+        // The fallback estimate is still a barcode result, so the code is stamped on
+        // it (enabling "Verify with label" on the confirm screen).
+        var expected = estimated
+        expected.barcode = "2"
+        #expect(food == expected)
+        #expect(food.barcode == "2")
         #expect(await recorder.name == "Cola")
     }
 

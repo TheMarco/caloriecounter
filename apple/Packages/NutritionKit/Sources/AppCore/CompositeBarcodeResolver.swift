@@ -25,7 +25,11 @@ public struct CompositeBarcodeResolver: BarcodeResolving {
             guard let estimate else {
                 throw OpenFoodFactsError.missingNutriments(productName: productName)
             }
-            return try await estimate(productName, units)
+            // Low-confidence path (estimated from the name) — still a barcode result,
+            // so carry the code so the confirm screen can offer "Verify with label".
+            var food = try await estimate(productName, units)
+            food.barcode = code
+            return food
         }
     }
 }

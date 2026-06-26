@@ -222,7 +222,8 @@ struct APIClientTests {
         let food = try await makeResolver().resolve(code: "5000112637922", units: .metric)
         #expect(food == ParsedFood(food: "Greek Yogurt", quantity: 100, unit: "g",
                                    kcal: 59, fat: 0.4, carbs: 3.6, protein: 10,
-                                   nutritionConfidence: .barcode))   // no fiber/sodium/sugar in this payload → nil
+                                   nutritionConfidence: .barcode,
+                                   barcode: "5000112637922"))   // code carried through; no fiber/sodium/sugar → nil
 
         let cap = try #require(StubURLProtocol.captured())
         #expect(cap.url?.absoluteString == "https://world.openfoodfacts.org/api/v0/product/5000112637922.json")

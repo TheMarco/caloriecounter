@@ -48,10 +48,11 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
 
         let name = Self.displayName(for: product)
         guard let nutriments = product.nutriments,
-              let food = parsedFood(name: name, nutriments: nutriments,
+              var food = parsedFood(name: name, nutriments: nutriments,
                                     servingGrams: product.servingQuantity, servingSize: product.servingSize) else {
             throw OpenFoodFactsError.missingNutriments(productName: name)
         }
+        food.barcode = code   // carry the code through so the confirm screen can verify-with-label
         return food
     }
 

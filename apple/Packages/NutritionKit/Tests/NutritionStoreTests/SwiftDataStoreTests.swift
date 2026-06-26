@@ -243,7 +243,7 @@ struct SwiftDataStoreTests {
     @Test("schemaTypes lists every persistent model")
     func schemaTypesListed() {
         let names = SwiftDataStore.schemaTypes.map { String(describing: $0) }
-        #expect(Set(names) == ["EntryRecord", "DayOffsetRecord", "WeightRecord", "CorrectionRecord"])
+        #expect(Set(names) == ["EntryRecord", "DayOffsetRecord", "WeightRecord", "CorrectionRecord", "BarcodeLabelRecord"])
     }
 
     @Test("searchPreviousFoods breaks frequency ties by recency and honors the limit")

@@ -44,6 +44,10 @@ public final class AppContainer {
     /// store conforms to FoodCorrectionStoring, so this is the same SwiftData store
     /// (in-memory in test/demo); FoodConfirmModel pre-applies and remembers through it.
     public var corrections: any FoodCorrectionStoring { store }
+    /// User-verified nutrition labels, keyed by barcode — the same local SwiftData
+    /// store. Drives "Verify with label": confirmed values are remembered here and
+    /// reused (as "Label verified") on the next scan of that product.
+    public var barcodeLabels: any BarcodeLabelStoring { store }
     /// Whether HealthKit exists on this device — cached once at launch so views
     /// never call the (potentially slow) availability check during a render.
     public let isHealthAvailable: Bool
@@ -343,6 +347,9 @@ public final class AppContainer {
             primary: OpenFoodFactsResolver(),
             estimate: { name, units in try await cloudParser.parse(text: name, units: units) }
         )
+        // Outermost layer: user-verified labels win over the database/estimate, so a
+        // re-scan of a verified product returns its trusted values instantly.
+        let verifiedBarcode = VerifiedLabelBarcodeResolver(labels: store, fallback: barcode)
         let offline = AppContainer.isUITest || AppContainer.isDemo
         self.init(
             store: store,
@@ -355,7 +362,7 @@ public final class AppContainer {
             // deterministic offline heuristic (no network).
             foodParser: offline ? HeuristicFoodParser() : cloudParser,
             photoParser: APIPhotoParser(client: client),
-            barcodeResolver: barcode,
+            barcodeResolver: verifiedBarcode,
             settings: SettingsStore(defaultUnits: .deviceDefault),
             healthSync: offline ? MockHealthSyncService() : AppleHealthKitService()
         )

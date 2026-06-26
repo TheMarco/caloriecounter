@@ -40,7 +40,8 @@ struct FoodConfirmView: View {
         .task {
             if model == nil {
                 let m = FoodConfirmModel(parsed: parsed, method: method,
-                                         store: container.store, corrections: container.corrections)
+                                         store: container.store, corrections: container.corrections,
+                                         barcodeLabels: container.barcodeLabels)
                 await m.loadRememberedCorrection()   // pre-apply your last edit for this food
                 model = m
             }
@@ -63,8 +64,12 @@ private struct ConfirmForm: View {
     @State private var saving = false
     @State private var revealed = false
 
+    @State private var showLabelScan = false
+    @State private var pendingScan: ScannedLabel?
+
     /// The capture-method phrasing for the badge's source row.
     private var sourceLabel: String {
+        if model.labelVerified { return "Label verified" }
         switch model.method {
         case .barcode: return "Barcode"
         case .label:   return "Label"
@@ -125,6 +130,10 @@ private struct ConfirmForm: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            if model.canVerifyWithLabel {
+                verifySection
             }
 
             Section("Food") {
@@ -193,6 +202,62 @@ private struct ConfirmForm: View {
                 .disabled(model.food.trimmingCharacters(in: .whitespaces).isEmpty || model.quantity <= 0 || saving)
             }
         }
+        .fullScreenCover(isPresented: $showLabelScan) {
+            LabelScanView(
+                onParsed: { facts in showLabelScan = false; pendingScan = ScannedLabel(facts: facts) },
+                onCancel: { showLabelScan = false }
+            )
+        }
+        .sheet(item: $pendingScan) { scan in
+            LabelComparisonView(
+                productName: model.food,
+                current: currentFacts,
+                scanned: scan.facts,
+                onUse: {
+                    pendingScan = nil
+                    Task { await model.applyLabel(scan.facts); Haptics.saved() }
+                },
+                onKeep: { pendingScan = nil }
+            )
+        }
+    }
+
+    /// "Verify with label" — a quiet action on any barcode result, promoted to a
+    /// prominent primary call-to-action when the database lookup was only an estimate.
+    @ViewBuilder
+    private var verifySection: some View {
+        if model.isLowConfidenceBarcode {
+            Section {
+                Button {
+                    Haptics.adjusted(); showLabelScan = true
+                } label: {
+                    Label("Scan the label", systemImage: "doc.text.viewfinder")
+                        .frame(maxWidth: .infinity)
+                        .font(.headline)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(DS.Macro.calories.tint)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            } footer: {
+                Text("We couldn't find full nutrition for this product. Scan its label to be sure — or add the estimate as-is.")
+            }
+        } else {
+            Section {
+                Button {
+                    Haptics.adjusted(); showLabelScan = true
+                } label: {
+                    Label("Verify with label", systemImage: "doc.text.viewfinder")
+                }
+            } footer: {
+                Text("Scan the product's nutrition label to confirm these values on-device.")
+            }
+        }
+    }
+
+    /// The values we currently have, packaged for the comparison's "Current" column.
+    private var currentFacts: LabelFacts {
+        LabelFacts(servingDescription: detailText,
+                   kcal: model.kcal, protein: model.protein, carbs: model.carbs, fat: model.fat)
     }
 
     private var parsedNamePlaceholder: String { "This food" }
@@ -357,4 +422,10 @@ private struct BreakdownRow: View {
     private static func gramText(_ grams: Double) -> String {
         grams == grams.rounded() ? String(Int(grams)) : String(format: "%.1f", grams)
     }
+}
+
+/// Wraps scanned label facts so they can drive an item-based comparison sheet.
+private struct ScannedLabel: Identifiable {
+    let id = UUID()
+    let facts: LabelFacts
 }
