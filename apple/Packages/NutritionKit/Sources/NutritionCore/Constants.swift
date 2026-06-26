@@ -57,6 +57,10 @@ public enum Constants {
     /// Drop handled-workout ledger entries older than this (keeps it from growing).
     public static let workoutLedgerRetentionDays = 35
 
+    // MARK: - Free tier (subscription)
+    /// Food entries a non-subscriber may log before CalorieCounter Pro is required.
+    public static let freeFoodEntryLimit = 10
+
     // MARK: - Target clamping
     public static func clamp(_ value: Double, min lower: Double, max upper: Double) -> Double {
         Swift.min(Swift.max(value, lower), upper)

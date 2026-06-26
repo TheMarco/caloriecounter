@@ -84,6 +84,8 @@ schemes:
         CalorieCounter: all
     run:
       config: Debug
+      # StoreKit testing in Xcode/simulator without App Store Connect.
+      storeKitConfiguration: CalorieCounter.storekit
     test:
       config: Debug
       targets:

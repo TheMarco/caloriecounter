@@ -33,6 +33,13 @@ public final class AppContainer {
     /// Apple Health integration (behind a seam; a no-op mock in tests/demo).
     public let healthSync: any HealthSyncing
 
+    /// StoreKit 2 subscription state — "is this person Pro?", answered on-device.
+    public let subscription: SubscriptionManager
+    /// The free-entry tally (iCloud-backed, no account).
+    public let freeTier: FreeTierCounter
+    /// Drives the paywall sheet from anywhere — a blocked log raises it.
+    public var isPaywallPresented = false
+
     /// Per-food correction memory — the app's record of *your* numbers. The local
     /// store conforms to FoodCorrectionStoring, so this is the same SwiftData store
     /// (in-memory in test/demo); FoodConfirmModel pre-applies and remembers through it.
@@ -49,6 +56,35 @@ public final class AppContainer {
 
     /// Signal that stored data changed; triggers dependent views to reload.
     public func dataDidChange() { dataVersion &+= 1 }
+
+    // MARK: - Free-tier gate (10 food entries, then Pro)
+
+    /// Free food logs still available (0 once the limit is hit; irrelevant for Pro).
+    public var freeFoodEntriesRemaining: Int {
+        max(0, Constants.freeFoodEntryLimit - freeTier.count)
+    }
+
+    /// Whether the user may log another NEW food entry right now.
+    public var canLogFood: Bool {
+        subscription.isSubscribed || freeTier.count < Constants.freeFoodEntryLimit
+    }
+
+    /// Call when the user initiates logging a NEW food entry. Returns true if allowed
+    /// (the caller proceeds); false if blocked — the paywall is raised.
+    @discardableResult
+    public func beginFoodLog() -> Bool {
+        if canLogFood { return true }
+        isPaywallPresented = true
+        return false
+    }
+
+    /// Record a new, user-initiated food entry against the free allowance. No-op for
+    /// Pro users. Deliberately NOT called for undo-restores, CSV imports, demo seeds,
+    /// or onboarding's sample meal — only the real "+ / relog a usual" paths.
+    public func didLogFood() {
+        guard !subscription.isSubscribed else { return }
+        freeTier.increment()
+    }
 
     // MARK: - Apple Health sync glue (opt-in; each is a no-op unless its toggle is
     // on AND HealthKit is available. Failures are swallowed — never block local use.)
@@ -192,7 +228,9 @@ public final class AppContainer {
         photoParser: any PhotoParsing,
         barcodeResolver: any BarcodeResolving,
         settings: SettingsStore,
-        healthSync: any HealthSyncing
+        healthSync: any HealthSyncing,
+        subscription: SubscriptionManager? = nil,
+        freeTier: FreeTierCounter? = nil
     ) {
         self.store = store
         self.keychain = keychain
@@ -203,6 +241,13 @@ public final class AppContainer {
         self.settings = settings
         self.healthSync = healthSync
         self.isHealthAvailable = healthSync.isAvailable()
+        // Demo / UI-test builds (and unit tests) bypass StoreKit so nothing is gated
+        // and no network is touched — except under `-gate`, which exercises the paywall.
+        let underUnitTest = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        self.subscription = subscription ?? SubscriptionManager(
+            bypassed: underUnitTest || ((AppContainer.isUITest || AppContainer.isDemo) && !AppContainer.isGateTest)
+        )
+        self.freeTier = freeTier ?? FreeTierCounter()
     }
 
     /// Launch in a clean, deterministic state for UI tests (in-memory store, no
@@ -222,6 +267,12 @@ public final class AppContainer {
     /// `-onboarding` alongside `-uitest`.
     public static var forcesOnboarding: Bool {
         ProcessInfo.processInfo.arguments.contains("-onboarding")
+    }
+
+    /// Exercise the paywall gate: don't bypass StoreKit (so the user reads as NOT Pro)
+    /// and start with the free allowance spent. Pass `-gate` (with `-demo` for data).
+    public static var isGateTest: Bool {
+        ProcessInfo.processInfo.arguments.contains("-gate")
     }
 
     // MARK: - Real composition root

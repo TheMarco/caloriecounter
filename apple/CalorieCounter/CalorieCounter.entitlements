@@ -10,5 +10,10 @@
 	<array/>
 	<key>com.apple.developer.healthkit.background-delivery</key>
 	<true/>
+	<!-- iCloud key-value storage backs the free-entry counter so it survives delete +
+	     reinstall and follows the user's Apple ID — no account needed. Enable the
+	     "iCloud > Key-value storage" capability for this App ID in the Developer portal. -->
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
 </dict>
 </plist>

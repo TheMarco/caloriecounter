@@ -5,6 +5,7 @@
 //
 
 import SwiftUI
+import StoreKit
 import UniformTypeIdentifiers
 import AppCore
 import NutritionCore
@@ -21,6 +22,8 @@ struct SettingsView: View {
     @State private var showImporter = false
     @State private var importMessage: String?
     @State private var showWizard = false
+    @State private var showPaywall = false
+    @State private var showManageSubscription = false
 
     var body: some View {
         NavigationStack {
@@ -63,12 +66,43 @@ struct SettingsView: View {
                 .fullScreenCover(isPresented: $showWizard) {
                     SetupWizardView(allowsCancel: true) {}
                 }
+                .sheet(isPresented: $showPaywall) { PaywallView() }
+                .manageSubscriptionsSheet(isPresented: $showManageSubscription)
         }
     }
 
     private func settingsForm(settings: SettingsStore) -> some View {
         @Bindable var settings = settings
         return Form {
+            Section {
+                if container.subscription.isSubscribed {
+                    HStack {
+                        Label("CalorieCounter Pro", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(DS.Macro.calories.tint)
+                        Spacer()
+                        Text("Active").foregroundStyle(.secondary)
+                    }
+                    Button("Manage Subscription") { showManageSubscription = true }
+                } else {
+                    HStack {
+                        Label("Free plan", systemImage: "flame")
+                        Spacer()
+                        Text("\(min(container.freeTier.count, Constants.freeFoodEntryLimit)) of \(Constants.freeFoodEntryLimit) free entries used")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Label("Upgrade to Pro", systemImage: "sparkles")
+                    }
+                    Button("Restore Purchases") {
+                        Task { await container.subscription.restore() }
+                    }
+                }
+            } header: {
+                Text("Subscription")
+            }
+
             Section {
                 Button {
                     showWizard = true

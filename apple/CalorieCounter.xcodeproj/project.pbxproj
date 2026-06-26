@@ -56,6 +56,7 @@
 		F7C56333132490527F79A7EE /* SettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A13C42EFB457743B31125F /* SettingsUITests.swift */; };
 		FC09B65C891F6CFC25B2A6D7 /* AmountField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0DBFA2A2394895AD33DEDF /* AmountField.swift */; };
 		FD01AEFF1C21DEB7CC698ED7 /* CaptureDock.swift in Sources */ = {isa = PBXBuildFile; fileRef = C571B11FF044E4B39045E284 /* CaptureDock.swift */; };
+		FEF9CFFF1C7627240B719735 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 265C0EA89DBE3DE77F381858 /* PaywallView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +82,7 @@
 		141F83104F5F734B31527E9E /* WeightConflictSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightConflictSheet.swift; sourceTree = "<group>"; };
 		212E881285C06FBE917A6E9C /* ConfidenceBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfidenceBadge.swift; sourceTree = "<group>"; };
 		22A51BD1A52160761020193D /* UndoToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoToast.swift; sourceTree = "<group>"; };
+		265C0EA89DBE3DE77F381858 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		2C21FB4F72C0E5857473CCE1 /* LogWeightSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWeightSheet.swift; sourceTree = "<group>"; };
 		2D40788EDBEB586B5F670A2F /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
 		31FEF4F62F3154FF83305493 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
@@ -205,6 +207,14 @@
 			path = DesignSystem;
 			sourceTree = "<group>";
 		};
+		7824A3BF447079B217BA110A /* Paywall */ = {
+			isa = PBXGroup;
+			children = (
+				265C0EA89DBE3DE77F381858 /* PaywallView.swift */,
+			);
+			path = Paywall;
+			sourceTree = "<group>";
+		};
 		87484DA4E2714A960AABEEDC /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -221,6 +231,7 @@
 				B3C638309D3B050052EDD08C /* History */,
 				13AE1E359945C06D2210D6F4 /* Input */,
 				12420AF49F3099D99D25743B /* Lock */,
+				7824A3BF447079B217BA110A /* Paywall */,
 				0A0AB31666857AAC23B6796B /* Settings */,
 				D1F0182EC9AD10DE9732071C /* Setup */,
 				2F66CA15A40627DDC1C287DC /* Today */,
@@ -419,6 +430,7 @@
 				A4FBB6F4B1C370C38E2D8271 /* MealCard.swift in Sources */,
 				6AB698C6BAA50C2D4457A833 /* Motion.swift in Sources */,
 				88EE50FD65767487E4A1DAD7 /* NutritionChart.swift in Sources */,
+				FEF9CFFF1C7627240B719735 /* PaywallView.swift in Sources */,
 				7BD50311C99265FE48D8E855 /* PhotoCaptureView.swift in Sources */,
 				C08E3916C7BC9501EF9C9DDB /* PrivacyAtAGlance.swift in Sources */,
 				5E202DDFFDBAC5C9C940B131 /* RootView.swift in Sources */,

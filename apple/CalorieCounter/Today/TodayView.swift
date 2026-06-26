@@ -194,8 +194,10 @@ struct TodayView: View {
 
     /// Re-log a usual and offer to undo it.
     private func relogUsual(_ usual: Entry, in model: TodayModel) {
+        guard container.beginFoodLog() else { return }   // gate: a relog is a new food entry
         Task {
             let fresh = await model.relog(usual)
+            container.didLogFood()
             await container.healthSyncFood(fresh)
             container.dataDidChange()
             presentUndo("Logged") {

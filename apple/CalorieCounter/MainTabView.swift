@@ -35,6 +35,7 @@ struct MainTabView: View {
     }
 
     var body: some View {
+        @Bindable var container = container
         ZStack(alignment: .bottom) {
             // The selected screen. At accessibility sizes the scroll content reserves
             // REAL space for the dock (see `tabBarBottomClearance`) so it ends above the
@@ -90,6 +91,7 @@ struct MainTabView: View {
         .sheet(item: $activeInput) { method in
             InputFlowView(method: method) { entry in
                 container.dataDidChange()
+                container.didLogFood()             // count it toward the free allowance
                 tab = .today                       // the meal drops onto Today
                 flashJustLogged(entry.id)
                 presentUndo("Logged") { undoSave(entry) }
@@ -97,6 +99,15 @@ struct MainTabView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(showsDoneButton: true)
+        }
+        .sheet(isPresented: $container.isPaywallPresented) {
+            PaywallView()
+        }
+        .task {
+            // Dev: `-show-paywall` previews the paywall on launch.
+            if ProcessInfo.processInfo.arguments.contains("-show-paywall") {
+                container.isPaywallPresented = true
+            }
         }
         .undoToast(
             isPresented: Binding(get: { pendingUndo != nil }, set: { if !$0 { pendingUndo = nil } }),
@@ -133,7 +144,13 @@ struct MainTabView: View {
     // MARK: - Capture fan
 
     private func closeCapture() { showCapture = false }
-    private func toggleCapture() { showCapture.toggle() }
+    /// Opening the capture fan is the entry point for logging — so it's the gate: if
+    /// the free allowance is spent (and not Pro), raise the paywall instead. Closing
+    /// is always allowed.
+    private func toggleCapture() {
+        if showCapture { showCapture = false }
+        else if container.beginFoodLog() { showCapture = true }
+    }
 
     // MARK: - Undo (centralized so it works from any tab)
 
