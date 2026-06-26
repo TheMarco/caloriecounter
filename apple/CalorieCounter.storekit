@@ -15,7 +15,7 @@
         {
           "adHocOffers" : [],
           "codeOffers" : [],
-          "displayPrice" : "4.99",
+          "displayPrice" : "5.99",
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "10000001",
@@ -41,7 +41,7 @@
         {
           "adHocOffers" : [],
           "codeOffers" : [],
-          "displayPrice" : "39.99",
+          "displayPrice" : "29.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "10000002",

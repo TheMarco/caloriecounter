@@ -294,9 +294,9 @@ private struct PaywallPlan: Identifiable {
     /// Illustrative values for design preview only (`-show-paywall`); real prices
     /// always come from App Store Connect.
     static let placeholders: [PaywallPlan] = [
-        PaywallPlan(id: SubscriptionManager.monthlyID, name: "Monthly", price: "$3.99",
+        PaywallPlan(id: SubscriptionManager.monthlyID, name: "Monthly", price: "$5.99",
                     perPeriod: "per month", badge: nil, trial: "7-day free trial", product: nil),
-        PaywallPlan(id: SubscriptionManager.yearlyID, name: "Yearly", price: "$39.99",
-                    perPeriod: "per year", badge: "Save 16%", trial: "7-day free trial", product: nil),
+        PaywallPlan(id: SubscriptionManager.yearlyID, name: "Yearly", price: "$29.99",
+                    perPeriod: "per year", badge: "Save 58%", trial: "7-day free trial", product: nil),
     ]
 }
