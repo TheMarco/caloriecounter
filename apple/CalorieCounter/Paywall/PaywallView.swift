@@ -11,10 +11,9 @@ import StoreKit
 import AppCore
 import NutritionCore
 
-// TODO: point these at your real, public URLs before submitting to App Review.
-// (Terms defaults to Apple's Standard EULA, which is acceptable; Privacy must be yours.)
+// Terms defaults to Apple's Standard EULA (acceptable for App Review); Privacy is ours.
 private let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-private let privacyURL = URL(string: "https://example.com/privacy")!
+private let privacyURL = URL(string: "https://calorietracker.ai-created.com/privacy")!
 
 struct PaywallView: View {
     @Environment(AppContainer.self) private var container

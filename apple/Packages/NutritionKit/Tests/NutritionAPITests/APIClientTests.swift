@@ -279,7 +279,7 @@ struct APIClientTests {
 
         let cap = try #require(StubURLProtocol.captured())
         #expect(cap.url?.absoluteString == "https://world.openfoodfacts.org/api/v0/product/5000112637922.json")
-        #expect(cap.header("User-Agent")?.contains("caloriecounter.ai-created.com") == true)
+        #expect(cap.header("User-Agent")?.contains("calorietracker.ai-created.com") == true)
     }
 
     @Test("product_name falls back to product_name_en then brands")

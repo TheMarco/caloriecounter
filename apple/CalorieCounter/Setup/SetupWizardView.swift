@@ -40,7 +40,7 @@ struct SetupWizardView: View {
 
     var body: some View {
         ZStack {
-            AppBackground()
+            FoodPhotoBackground()
             VStack(spacing: 0) {
                 header
                 ScrollView {
@@ -93,7 +93,9 @@ struct SetupWizardView: View {
             HStack(spacing: 6) {
                 ForEach(0..<stepCount, id: \.self) { i in
                     Capsule()
-                        .fill(i <= step ? AnyShapeStyle(DS.Macro.calories.linearGradient) : AnyShapeStyle(Color.secondary.opacity(0.25)))
+                        // Unfilled track: a touch stronger than the old `.secondary`
+                        // so it stays visible over the food photo, not just a solid bg.
+                        .fill(i <= step ? AnyShapeStyle(DS.Macro.calories.linearGradient) : AnyShapeStyle(Color.primary.opacity(0.28)))
                         .frame(height: 5)
                 }
             }
@@ -112,7 +114,10 @@ struct SetupWizardView: View {
             if !(dynamicTypeSize.isAccessibilitySize && step == 0) {
                 Text(subtitle)
                     .font(dynamicTypeSize.isAccessibilitySize ? .footnote : .subheadline)
-                    .foregroundStyle(.secondary)
+                    // Sits directly on the food photo — keep it high-contrast, the way
+                    // the paywall/help on-photo text does (vs. the faint `.secondary`
+                    // that only read well over the solid app background).
+                    .foregroundStyle(.primary.opacity(0.85))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -433,9 +438,11 @@ struct SetupWizardView: View {
                 }
             }
             Text("Based on a \(Int(GoalPlanner.tdee(profile))) kcal maintenance estimate.")
-                .font(.caption).foregroundStyle(.tertiary)
+                // Fine print on the food photo — `.tertiary` washes out, so use the
+                // same dimmed-but-legible on-photo caption tone the paywall uses.
+                .font(.caption).foregroundStyle(.primary.opacity(0.72))
             Text("These are estimates to get you started, not medical advice. If you have a health condition or specific goals, check with a doctor or registered dietitian.")
-                .font(.caption2).foregroundStyle(.tertiary)
+                .font(.caption2).foregroundStyle(.primary.opacity(0.72))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 4)
         }

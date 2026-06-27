@@ -21,7 +21,7 @@ public struct OpenFoodFactsResolver: BarcodeResolving {
     private let session: URLSession
     private let baseURL: URL
     /// OFF asks API clients to identify themselves; use the app's real host.
-    private static let userAgent = "CalorieCounter-iOS/1.0 (https://caloriecounter.ai-created.com)"
+    private static let userAgent = "CalorieCounter-iOS/1.0 (https://calorietracker.ai-created.com)"
 
     public init(session: URLSession = .shared,
                 baseURL: URL = URL(string: "https://world.openfoodfacts.org")!) {

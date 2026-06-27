@@ -40,7 +40,7 @@ struct CalendarView: View {
     var body: some View {
         VStack(spacing: 8) {
             LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(weekdaySymbols, id: \.self) { symbol in
+                ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
                     Text(symbol).font(.caption2).foregroundStyle(.secondary)
                 }
                 if let month {

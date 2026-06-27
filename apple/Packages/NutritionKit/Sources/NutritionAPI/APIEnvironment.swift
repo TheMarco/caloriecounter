@@ -9,6 +9,6 @@ public struct APIEnvironment: Sendable {
 
     public init(baseURL: URL) { self.baseURL = baseURL }
 
-    public static let production = APIEnvironment(baseURL: URL(string: "https://caloriecounter.ai-created.com")!)
+    public static let production = APIEnvironment(baseURL: URL(string: "https://calorietracker.ai-created.com")!)
     public static let development = APIEnvironment(baseURL: URL(string: "http://localhost:3000")!)
 }

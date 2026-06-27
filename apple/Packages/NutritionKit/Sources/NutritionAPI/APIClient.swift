@@ -119,7 +119,20 @@ public actor APIClient {
                 try await tokens.saveToken(try await refreshToken(keyId: keyId, attestor: attestor))
                 return
             } catch APIError.conflict {
-                // The server no longer recognizes this key → fall through to re-enroll.
+                // The server no longer recognizes this key → re-enroll below.
+                await keyStore.clearAttestKeyId()
+            } catch let error as APIError {
+                // A transport/server hiccup (not the key's fault) — keep the enrolled
+                // key and surface the failure so the caller can retry later, rather
+                // than burning a fresh attestation on a transient network error.
+                throw error
+            } catch {
+                // The stored Secure-Enclave key can't produce a valid assertion — most
+                // commonly a key enrolled in the *development* App Attest environment
+                // being used by a *production* (TestFlight / App Store) build, which
+                // fails locally with DCError.invalidKey. Discard the stale key and
+                // re-enroll with a fresh one in the current environment instead of
+                // getting permanently stuck.
                 await keyStore.clearAttestKeyId()
             }
         }

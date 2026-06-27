@@ -69,7 +69,7 @@ App target folders (`CalorieCounter/`): `Today/`, `History/`, `Input/`, `Setup/`
 
 The app never holds an OpenAI key. Text/voice/photo parsing goes through a **server
 proxy** — the Next.js app at the repo root — which holds the key server-side.
-`APIEnvironment` (in `NutritionAPI`): production `https://caloriecounter.ai-created.com`,
+`APIEnvironment` (in `NutritionAPI`): production `https://calorietracker.ai-created.com`,
 development `http://localhost:3000`. Barcodes hit Open Food Facts directly. Do **not**
 commit proxy credentials or keys into the repo.
 
