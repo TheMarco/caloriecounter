@@ -184,7 +184,7 @@ Entirely opt-in, off by default, with four independent toggles (Settings → App
 
 - **Free tier:** the first **10 food entries** are free. (Only food entries count — weights, offsets, and edits don't.)
 - After that, logging requires **CalorieCounter Pro**, presented via a branded paywall.
-- **Plans:** Monthly and Yearly, each with a **7-day free trial**. Real prices come from the App Store (localized); dev previews show $3.99/mo and $39.99/yr.
+- **Plans:** Monthly and Yearly (no free trial). Real prices come from the App Store (localized); the local StoreKit test config shows $5.99/mo and $29.99/yr.
 - **No account.** Built on **StoreKit 2** with on-device entitlement checks — no backend, no login. **Restore Purchases** and **Manage Subscription** are available in Settings and on the paywall.
 - The free-entry counter is stored in **iCloud key-value storage**, so it survives reinstalls and follows your Apple ID across devices — still without an account. It's monotonic (deleting entries doesn't refund free slots).
 - Settings shows your status: **Pro · Active** with Manage, or **Free plan · X of 10 used** with Upgrade / Restore.
