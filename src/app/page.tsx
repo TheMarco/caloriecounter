@@ -126,6 +126,26 @@ function Pic({ src, alt, className = "" }: { src: string; alt: string; className
   );
 }
 
+/* A lifestyle photo woven between the app sections: one framed food/life image
+   beside a short, on-brand line that ties it to the section it follows. `flip`
+   moves the photo to the right so the images zig-zag down the page; `surface`
+   gives it the matte band background used by the other accent sections. */
+function LifeBand({ src, alt, kicker, line, flip = false, surface = false }: {
+  src: string; alt: string; kicker: string; line: ReactNode; flip?: boolean; surface?: boolean;
+}) {
+  return (
+    <section className={surface ? "border-y border-[var(--ink)]/5 bg-[var(--surface-2)]" : ""}>
+      <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-14 md:grid-cols-2 md:gap-12 md:py-16">
+        <Pic src={src} alt={alt} className={flip ? "md:order-2" : ""} />
+        <div className={flip ? "md:order-1" : ""}>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-ink)]">{kicker}</span>
+          <p className="mt-3 text-xl font-medium leading-snug text-[var(--ink)]/80 sm:text-2xl">{line}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ComingSoonBadge({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-black px-5 py-3 ${className}`}>
@@ -231,10 +251,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Lifestyle gallery ── */}
+      {/* ── Made for real life ── */}
       <section className="border-y border-[var(--ink)]/5 bg-[var(--surface-2)]">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:py-20">
-          <div className="max-w-2xl">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 md:grid-cols-2 md:gap-12 md:py-20">
+          <div>
             <SectionTag><Heart className="h-3.5 w-3.5" /> Made for real life</SectionTag>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Track the food you actually eat.</h2>
             <p className="mt-4 text-[var(--ink)]/65">
@@ -242,16 +262,7 @@ export default function Home() {
               no performance, no audience. Just your real meals, kept to yourself.
             </p>
           </div>
-
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4">
-            <Pic src={`${PIC}/i4.webp`} alt="Checking the day’s calories in The Last Calorie Tracker over a healthy bowl" />
-            <Pic src={`${PIC}/i1.webp`} alt="A grilled salmon bowl with avocado, quinoa and greens" />
-          </div>
-          <div className="mt-3 grid grid-cols-3 gap-3 sm:mt-4 sm:gap-4">
-            <Pic src={`${PIC}/i2.webp`} alt="Grilled chicken with roasted sweet potato, asparagus and quinoa" />
-            <Pic src={`${PIC}/i3.webp`} alt="A falafel and hummus bowl with quinoa, cucumber and pickled onion" />
-            <Pic src={`${PIC}/i5.webp`} alt="Taking a breather after a workout at the gym" />
-          </div>
+          <Pic src={`${PIC}/i1.webp`} alt="A grilled salmon bowl with avocado, quinoa and greens" />
         </div>
       </section>
 
@@ -284,6 +295,14 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Life: in the moment ── */}
+      <LifeBand
+        src={`${PIC}/i4.webp`}
+        alt="Checking the day’s calories in The Last Calorie Tracker over a healthy bowl"
+        kicker="In the moment"
+        line="Log it before the first bite — a couple of taps, then the phone goes back in your pocket."
+      />
+
       {/* ── AI parsing ── */}
       <section className="border-y border-[var(--ink)]/5 bg-[var(--surface-2)]">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-2">
@@ -311,6 +330,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Life: real plates ── */}
+      <LifeBand
+        src={`${PIC}/i2.webp`}
+        alt="Grilled chicken with roasted sweet potato, asparagus and quinoa"
+        kicker="Real plates"
+        line="Photograph the whole plate and it splits into chicken, sweet potato, asparagus — each one yours to adjust."
+        flip
+      />
 
       {/* ── Today + History ── */}
       <section className="mx-auto max-w-6xl px-5 py-16">
@@ -345,6 +373,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Life: earned it back ── */}
+      <LifeBand
+        src={`${PIC}/i5.webp`}
+        alt="Taking a breather after a workout at the gym"
+        kicker="Earned it back"
+        line="Finished a workout? Have it offered back as a calorie offset — opt-in, straight from Apple Health."
+        surface
+      />
 
       {/* ── Privacy ── */}
       <section id="privacy" className="relative scroll-mt-20 overflow-hidden border-y border-[var(--ink)]/5">
@@ -389,6 +426,16 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Life: kept to yourself ── */}
+      <LifeBand
+        src={`${PIC}/i3.webp`}
+        alt="A falafel and hummus bowl with quinoa, cucumber and pickled onion"
+        kicker="Kept to yourself"
+        line="Whatever’s on your plate stays between you and your iPhone — no audience, no profile, no judgment."
+        flip
+        surface
+      />
 
       {/* ── Pricing ── */}
       <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20">
