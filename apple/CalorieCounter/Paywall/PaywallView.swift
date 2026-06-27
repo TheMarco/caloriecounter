@@ -55,7 +55,17 @@ struct PaywallView: View {
         // variants). The scrim flips with it so text stays legible either way.
         .presentationDragIndicator(.visible)
         .task { await sub.refresh() }
-        .onChange(of: sub.isSubscribed) { _, nowPro in if nowPro { dismiss() } }
+        .onChange(of: sub.isSubscribed) { _, nowPro in
+            guard nowPro else { return }
+            // A verified purchase (or restore) flips this to true, but StoreKit's own
+            // payment sheet is usually still animating away at that instant — a dismiss()
+            // issued mid-transition is silently dropped, which left the paywall lingering
+            // after subscribing. Defer a beat so it reliably closes once the user is Pro.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(450))
+                dismiss()
+            }
+        }
         .onAppear { if selectedID == nil { selectedID = defaultPlanID } }
     }
 
