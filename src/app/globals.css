@@ -162,6 +162,31 @@ body {
   :root:not([data-theme]) .ct-phone img.shot-light { display: block; }
 }
 
+/* Editorial lifestyle/food photo — a soft framed image (not a device bezel)
+   that swaps its dark/light variant with the theme, exactly like .ct-phone.
+   Each photo ships a -b (dark) and -w (light) variant under /lifestyle and
+   /lifestyle/white; the browser shows whichever matches the active appearance. */
+.ct-pic {
+  border-radius: 1.5rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  background: var(--surface);
+  box-shadow: 0 24px 60px -32px rgba(0, 0, 0, 0.5);
+}
+.ct-pic img { display: block; width: 100%; height: auto; transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .ct-pic:hover img { transform: scale(1.05); }
+}
+.ct-pic img.shot-light { display: none; }
+[data-theme="light"] .ct-pic img.shot-dark { display: none; }
+[data-theme="light"] .ct-pic img.shot-light { display: block; }
+[data-theme="dark"] .ct-pic img.shot-dark { display: block; }
+[data-theme="dark"] .ct-pic img.shot-light { display: none; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .ct-pic img.shot-dark { display: none; }
+  :root:not([data-theme]) .ct-pic img.shot-light { display: block; }
+}
+
 /* Soft sage glow used behind the hero + section accents */
 .ct-glow {
   background: radial-gradient(closest-side, rgba(87, 181, 140, 0.5), transparent);

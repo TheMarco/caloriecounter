@@ -111,6 +111,21 @@ function PhoneShot({ src, alt, className = "", eager = false }: { src: string; a
   );
 }
 
+/* Lifestyle / food photography. Same dark↔light swap as PhoneShot: each photo has a
+   dark (/lifestyle) and light (/lifestyle/white) variant under the SAME filename;
+   CSS shows whichever matches the appearance (see `.ct-pic img.shot-*` in globals.css). */
+const PIC = "/lifestyle";
+const PIC_LIGHT = "/lifestyle/white";
+
+function Pic({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
+  return (
+    <figure className={`ct-pic ${className}`}>
+      <img className="shot-dark" src={src} alt={alt} width={1448} height={1086} loading="lazy" decoding="async" />
+      <img className="shot-light" src={src.replace(PIC, PIC_LIGHT)} alt={alt} width={1448} height={1086} loading="lazy" decoding="async" />
+    </figure>
+  );
+}
+
 function ComingSoonBadge({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-black px-5 py-3 ${className}`}>
@@ -213,6 +228,30 @@ export default function Home() {
               <p className="mt-1.5 text-sm leading-relaxed text-[var(--ink)]/55">{body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Lifestyle gallery ── */}
+      <section className="border-y border-[var(--ink)]/5 bg-[var(--surface-2)]">
+        <div className="mx-auto max-w-6xl px-5 py-16 md:py-20">
+          <div className="max-w-2xl">
+            <SectionTag><Heart className="h-3.5 w-3.5" /> Made for real life</SectionTag>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Track the food you actually eat.</h2>
+            <p className="mt-4 text-[var(--ink)]/65">
+              From a salmon bowl to a post-gym shake — log it in seconds and get on with your day. No guilt,
+              no performance, no audience. Just your real meals, kept to yourself.
+            </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4">
+            <Pic src={`${PIC}/i4.webp`} alt="Checking the day’s calories in The Last Calorie Tracker over a healthy bowl" />
+            <Pic src={`${PIC}/i1.webp`} alt="A grilled salmon bowl with avocado, quinoa and greens" />
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-3 sm:mt-4 sm:gap-4">
+            <Pic src={`${PIC}/i2.webp`} alt="Grilled chicken with roasted sweet potato, asparagus and quinoa" />
+            <Pic src={`${PIC}/i3.webp`} alt="A falafel and hummus bowl with quinoa, cucumber and pickled onion" />
+            <Pic src={`${PIC}/i5.webp`} alt="Taking a breather after a workout at the gym" />
+          </div>
         </div>
       </section>
 
