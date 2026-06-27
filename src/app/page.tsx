@@ -562,6 +562,7 @@ export default function Home() {
               <a href="#pricing" className="hover:text-[var(--ink)]">Pricing</a>
               <a href="#value" className="hover:text-[var(--ink)]">Value</a>
               <a href="/privacy" className="hover:text-[var(--ink)]">Privacy Policy</a>
+              <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noreferrer" className="hover:text-[var(--ink)]">Terms of Use</a>
             </nav>
           </div>
           <div className="mt-8 border-t border-[var(--ink)]/5 pt-6 text-xs leading-relaxed text-[var(--ink)]/40">
