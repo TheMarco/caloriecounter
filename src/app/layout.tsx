@@ -6,7 +6,7 @@ const SITE_DESC =
   "Log meals by voice, photo, barcode, or text. AI does the math; your food diary never leaves your iPhone. No account, no tracking. $5.99/mo with 10 logs free. Coming soon to the App Store.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://caloriecounter.ai-created.com"),
+  metadataBase: new URL("https://calorietracker.ai-created.com"),
   title: SITE_TITLE,
   description: SITE_DESC,
   applicationName: "The Last Calorie Tracker",

@@ -366,8 +366,13 @@ export default function PrivacyPolicy() {
               <img src="/app-icon.webp" alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />
               <span className="font-semibold">The Last Calorie Tracker</span>
             </Link>
-            <p className="text-xs text-[var(--ink)]/40">© 2026 Unthinking AI, LLC. All rights reserved.</p>
+            <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--ink)]/55">
+              <Link href="/" className="transition hover:text-[var(--ink)]">Home</Link>
+              <Link href="/support" className="transition hover:text-[var(--ink)]">Support</Link>
+              <a href={`mailto:${CONTACT}`} className="transition hover:text-[var(--ink)]">Email us</a>
+            </nav>
           </div>
+          <p className="mt-8 border-t border-[var(--ink)]/5 pt-6 text-xs text-[var(--ink)]/40">© 2026 Unthinking AI, LLC. All rights reserved.</p>
         </div>
       </footer>
     </div>
