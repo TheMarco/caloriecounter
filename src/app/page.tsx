@@ -16,6 +16,9 @@ const SHOT = "/screenshots/app";
 const W = 720;
 const H = 1564;
 
+// Live on the App Store — the canonical product listing.
+const APP_STORE_URL = "https://apps.apple.com/app/the-last-calorie-tracker/id6784533063";
+
 // Light-appearance screenshots live alongside the dark ones with the SAME
 // filenames, under /screenshots/white/ instead of /screenshots/app/. When true,
 // each PhoneShot emits both variants and CSS swaps them to follow the toggle +
@@ -146,15 +149,16 @@ function LifeBand({ src, alt, kicker, line, flip = false, surface = false }: {
   );
 }
 
-function ComingSoonBadge({ className = "" }: { className?: string }) {
+function AppStoreButton({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-black px-5 py-3 ${className}`}>
+    <a href={APP_STORE_URL} target="_blank" rel="noreferrer"
+      className={`inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-black px-5 py-3 transition hover:bg-black/80 ${className}`}>
       <Apple className="h-7 w-7 text-white" />
       <span className="text-left leading-tight">
-        <span className="block text-[11px] uppercase tracking-wider text-white/55">Coming soon</span>
+        <span className="block text-[11px] uppercase tracking-wider text-white/55">Download on the</span>
         <span className="block text-base font-semibold text-white">App Store</span>
       </span>
-    </span>
+    </a>
   );
 }
 
@@ -186,8 +190,8 @@ export default function Home() {
           </nav>
           <div className="flex items-center gap-2.5">
             <ThemeToggle />
-            <a href="#pricing" className="rounded-full bg-[#57b58c] px-4 py-2 text-sm font-semibold text-[#06140d] transition hover:bg-[#73c2a1]">
-              Coming soon
+            <a href={APP_STORE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-[#57b58c] px-4 py-2 text-sm font-semibold text-[#06140d] transition hover:bg-[#73c2a1]">
+              Download
             </a>
           </div>
         </div>
@@ -203,7 +207,7 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-16 pt-16 md:grid-cols-2 md:pb-24 md:pt-24">
           <div className="ct-rise">
             <span className="inline-flex items-center gap-2 rounded-full border border-[var(--ink)]/15 bg-[var(--ink)]/5 px-3 py-1.5 text-xs font-medium text-[var(--ink)]/75">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#57b58c]" /> Coming soon to the App Store
+              <span className="h-1.5 w-1.5 rounded-full bg-[#57b58c]" /> Now on the App Store
             </span>
             <h1 className="mt-5 text-[2.6rem] font-bold leading-[1.05] tracking-tight sm:text-6xl">
               Track what you eat.<br />
@@ -214,7 +218,7 @@ export default function Home() {
               seconds. No account. No analytics. Your food diary never leaves your iPhone.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <ComingSoonBadge />
+              <AppStoreButton />
               <a href="#features" className="rounded-2xl border border-[var(--ink)]/15 px-5 py-3.5 text-sm font-semibold text-[var(--ink)]/90 transition hover:bg-[var(--ink)]/5">
                 See how it works
               </a>
@@ -540,10 +544,10 @@ export default function Home() {
           <img src="/app-icon.webp" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-[18px] shadow-2xl" />
           <h2 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">Eat well. Stay private.</h2>
           <p className="mx-auto mt-4 max-w-md text-lg text-[var(--ink)]/65">
-            The Last Calorie Tracker is coming soon to the App Store. Private by design, powered by AI, $5.99 a month.
+            The Last Calorie Tracker is on the App Store now. Private by design, powered by AI, $5.99 a month.
           </p>
           <div className="mt-8 flex justify-center">
-            <ComingSoonBadge />
+            <AppStoreButton />
           </div>
         </div>
       </section>
@@ -567,7 +571,7 @@ export default function Home() {
             </nav>
           </div>
           <div className="mt-8 border-t border-[var(--ink)]/5 pt-6 text-xs leading-relaxed text-[var(--ink)]/40">
-            <p>© 2026 Unthinking AI, LLC. Built by Marco van Hylckama Vlieg. The Last Calorie Tracker is not yet available; “coming soon to the App Store.”</p>
+            <p>© 2026 Unthinking AI, LLC. Built by Marco van Hylckama Vlieg. The Last Calorie Tracker is available on the App Store.</p>
             <p className="mt-2">
               Nutrition data from Open Food Facts (ODbL). Food analysis powered by OpenAI. Calorie and macro
               figures are estimates, not medical advice — consult a professional for dietary guidance.
@@ -585,6 +589,7 @@ export default function Home() {
             name: "The Last Calorie Tracker",
             applicationCategory: "HealthApplication",
             operatingSystem: "iOS",
+            installUrl: APP_STORE_URL,
             description:
               "Private, AI-powered calorie and macro tracker. Log meals by voice, photo, barcode, or text — on-device, with no account.",
             offers: [
