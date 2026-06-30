@@ -187,6 +187,21 @@ body {
   :root:not([data-theme]) .ct-pic img.shot-light { display: block; }
 }
 
+/* Official "Download on the App Store" badge — swaps with the theme exactly like
+   the screenshots above: the white lockup on the dark appearance, the black lockup
+   on light. Native artwork is 119.66×40; we scale by height and keep the ratio. */
+.ct-badge { display: inline-block; }
+.ct-badge img { display: block; height: 3rem; width: auto; }
+.ct-badge img.shot-light { display: none; }
+[data-theme="light"] .ct-badge img.shot-dark { display: none; }
+[data-theme="light"] .ct-badge img.shot-light { display: block; }
+[data-theme="dark"] .ct-badge img.shot-dark { display: block; }
+[data-theme="dark"] .ct-badge img.shot-light { display: none; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .ct-badge img.shot-dark { display: none; }
+  :root:not([data-theme]) .ct-badge img.shot-light { display: block; }
+}
+
 /* Soft sage glow used behind the hero + section accents */
 .ct-glow {
   background: radial-gradient(closest-side, rgba(87, 181, 140, 0.5), transparent);

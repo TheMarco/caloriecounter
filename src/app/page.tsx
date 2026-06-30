@@ -48,11 +48,6 @@ const Chart = (p: IconProps) => <I {...p} d="M4 20V4m0 16h16M8 16v-5m4 5V8m4 8v-
 const Heart = (p: IconProps) => <I {...p} d="M12 20s-7-4.4-9.2-8.5C1.3 8.6 2.7 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.3 0 4.7 3.1 3.2 6C19 15.6 12 20 12 20Z" />;
 const Check = (p: IconProps) => <I {...p} d="M5 12.5 10 17.5 19 7" />;
 const Bolt = (p: IconProps) => <I {...p} d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z" />;
-const Apple = ({ className }: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className ?? "h-6 w-6"} aria-hidden>
-    <path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.6 2.3 2.8 2.2 1.1 0 1.6-.7 2.9-.7 1.3 0 1.8.7 3 .7 1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.5-1-2.5-3.7ZM14.3 5.8c.6-.8 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.7-1.1 1.7-.9 2.7 1 0 2-.5 2.6-1.2Z" />
-  </svg>
-);
 
 /* ────────────────────────────── data ─────────────────────────────── */
 
@@ -150,14 +145,14 @@ function LifeBand({ src, alt, kicker, line, flip = false, surface = false }: {
 }
 
 function AppStoreButton({ className = "" }: { className?: string }) {
+  // Official Apple "Download on the App Store" badge. The white lockup shows on the
+  // dark appearance, the black lockup on light — swapped in CSS (.ct-badge), the same
+  // theme-resolution order as the screenshots.
   return (
     <a href={APP_STORE_URL} target="_blank" rel="noreferrer"
-      className={`inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-black px-5 py-3 transition hover:bg-black/80 ${className}`}>
-      <Apple className="h-7 w-7 text-white" />
-      <span className="text-left leading-tight">
-        <span className="block text-[11px] uppercase tracking-wider text-white/55">Download on the</span>
-        <span className="block text-base font-semibold text-white">App Store</span>
-      </span>
+      className={`ct-badge transition hover:opacity-80 ${className}`}>
+      <img className="shot-dark" src="/appstore-badge-white.svg" alt="Download on the App Store" width={120} height={40} />
+      <img className="shot-light" src="/appstore-badge-black.svg" alt="Download on the App Store" width={120} height={40} />
     </a>
   );
 }
